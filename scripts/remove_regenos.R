@@ -7,6 +7,8 @@
 source("scripts/gen_helpers.R")
 library(dplyr) 
 library(stringr)
+library(readr)
+
 
 
 
@@ -164,47 +166,47 @@ which(is.na(noregeno)) # should return integer(0)
 nrow(noregeno) == nrow(largedf) - k # 1569/1531 - should return TRUE
 
 
-# remove genotyped recaptures - only do this if you are ablsolutely sure you do not want to find new recapture events with this data
-leyte <- read_db("Leyte")
-recap <- leyte %>% tbl("clownfish") %>% 
-  filter(!is.na(cap_id)) %>% 
-  select(sample_id, cap_id) %>% 
-  collect()
+# # remove genotyped recaptures - only do this if you are ablsolutely sure you do not want to find new recapture events with this data
+# leyte <- read_db("Leyte")
+# recap <- leyte %>% tbl("clownfish") %>% 
+#   filter(!is.na(cap_id)) %>% 
+#   select(sample_id, cap_id) %>% 
+#   collect()
 
 
-########################################################################
-# # TEST - make sure a list was generated
-k <- nrow(recap)
-k # 277
+# ########################################################################
+# # # TEST - make sure a list was generated
+# k <- nrow(recap)
+# k # 277
 
 
 noregeno$drop <- NA # place holder
 #run through all of the SampleIDs that are found more than once and keep the one with the most loci
 # for testing b <- 1
-for(i in 1:max(recap$cap_id)){
-  # recap_drop is the line number from noregeno that matches an ID in the regeno_match list
-  X <- recap$sample_id[recap$cap_id == recap$cap_id[i]]
-  recap_drop <- which(noregeno$sample_id %in% X)
-  # df is the data frame that holds all of the regenotyped versions of the sample, pulled from noregeno
-  df <- noregeno[recap_drop, ]  
-  # the row number of df with the largest number of loci (p-1 indicates the column)
-  keep <- which.max(df$numloci) 
-  # convert the df number to the row number of large df
-  c <- recap_drop[keep]
-  # convert the drop column of the row to keep to not na
-  df$drop[keep] <- "KEEP"
-  # convert the drop column of large df to not na
-  noregeno$drop[c] <- "KEEP"
-  
-  # find the row numbers of noregeno that need to be dropped
-  # test e <- 2
-  for(e in 1:nrow(df)){
-    if(is.na(df$drop[e])){
-      f <-recap_drop[e]
-      noregeno$drop[f] <- "DROP"
-    }
-  }
-}
+# for(i in 1:max(recap$cap_id)){
+#   # recap_drop is the line number from noregeno that matches an ID in the regeno_match list
+#   X <- recap$sample_id[recap$cap_id == recap$cap_id[i]]
+#   recap_drop <- which(noregeno$sample_id %in% X)
+#   # df is the data frame that holds all of the regenotyped versions of the sample, pulled from noregeno
+#   df <- noregeno[recap_drop, ]  
+#   # the row number of df with the largest number of loci (p-1 indicates the column)
+#   keep <- which.max(df$numloci) 
+#   # convert the df number to the row number of large df
+#   c <- recap_drop[keep]
+#   # convert the drop column of the row to keep to not na
+#   df$drop[keep] <- "KEEP"
+#   # convert the drop column of large df to not na
+#   noregeno$drop[c] <- "KEEP"
+#   
+#   # find the row numbers of noregeno that need to be dropped
+#   # test e <- 2
+#   for(e in 1:nrow(df)){
+#     if(is.na(df$drop[e])){
+#       f <-recap_drop[e]
+#       noregeno$drop[f] <- "DROP"
+#     }
+#   }
+# }
 
 # convert all of the KEEPs to NAs 
 for(g in 1:nrow(noregeno)){

@@ -1,5 +1,5 @@
 # helper functions for working with this repository
-
+library(dplyr)
 # read_gene_sp ####
 #' read a genepop generated for ONE population
 #' @export
@@ -23,9 +23,9 @@ read_gen_sp <-  function(filename){
   loci <- unlist(strsplit(info[2], split=','))    
   
   # rename the dat columns
-  names(dat) <- c("names", "blank", loci)
+  names(dat) <- c("names", loci)
   
-  dat <- select(dat, -blank)
+  # dat <- select(dat, -blank)
   
   return(dat)	
 }
@@ -42,30 +42,34 @@ read_gen_sp <-  function(filename){
 
 
 samp_from_lig <- function(table_name){
+  
   lab <- read_db("Laboratory")
+  
   # connect ligation ids to digest ids
-  dig <- lab %>% 
+  lig <- lab %>% 
     tbl("ligation") %>% 
-    filter(ligation_id %in% table_name$names) %>% 
+    filter(ligation_id %in% table_name$ligation_id) %>% 
     select(ligation_id, digest_id) %>% 
     collect()
-  
+    
   # connect digest ids to extraction ids
-  extr <- lab %>% tbl("digest") %>% 
-    filter(digest_id %in% dig$digest_id) %>% 
-    select(digest_id, extraction_id) %>% 
+  dig <- lab %>% 
+    tbl("digest") %>% 
+    filter(digest_id %in% lig$digest_id) %>% 
+    select(extraction_id, digest_id) %>% 
     collect()
-  extr_id <- left_join(dig, extr, by = "digest_id")
-  # connect extraction ids to sample ids
-  samp <- lab %>% 
+  
+  extr <- lab %>% 
     tbl("extraction") %>% 
-    filter(extraction_id %in% extr_id$extraction_id) %>% 
+    filter(extraction_id %in% dig$extraction_id) %>% 
     select(extraction_id, sample_id) %>% 
-    collect() 
-  samp_id <- left_join(extr_id, samp, by = "extraction_id")
-  # remove unnecessary columns
-  samp_id <- samp_id[ , c("ligation_id", "sample_id")]
-  return(samp_id)
+    collect()
+  
+  mid <- left_join(lig, dig, by = "digest_id")
+  samp <- left_join(extr, mid, by = "extraction_id") %>% 
+    select(sample_id, ligation_id)
+  
+  return(samp)
 }
 
 # read_db ####
@@ -81,4 +85,41 @@ read_db <- function(db_name){
   
   db <- src_mysql(dbname = db_name, default.file = path.expand("~/myconfig.cnf"), port = 3306, create = F, host = NULL, user = NULL, password = NULL)
   return(db)
+}
+
+# lig_from_samp ####
+#' views all of the fish recaptured at a given site
+#' @export
+#' @name lig_from_samp
+#' @author Michelle Stuart
+#' @param x = list of sample_ids
+#' @examples 
+#' fish <- lig_from_samp(c("APCL13_516", "APCL13_517"))
+
+lig_from_samp <- function(sample_ids){
+  
+  lab <- read_db("Laboratory")
+  
+  extr <- lab %>% 
+    tbl("extraction") %>% 
+    filter(sample_id %in% sample_ids) %>% 
+    select(sample_id, extraction_id) %>% 
+    collect()
+  
+  dig <- lab %>% 
+    tbl("digest") %>% 
+    filter(extraction_id %in% extr$extraction_id) %>%
+    select(extraction_id, digest_id) %>% 
+    collect()
+  
+  lig <- lab %>% 
+    tbl("ligation") %>% 
+    filter(digest_id %in% dig$digest_id) %>%
+    select(ligation_id, digest_id) %>% 
+    collect()
+  
+  mid <- left_join(extr, dig, by = "extraction_id")
+  lig <- left_join(mid, lig, by = "digest_id") 
+  
+  return(lig)
 }
