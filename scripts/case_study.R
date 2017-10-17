@@ -35,7 +35,64 @@ multi <- big %>%
   
 # use the above list to narrow down the big list
 big <- big %>% 
-  filter(anem_id %in% multi$anem_id)
+  filter(anem_id %in% multi$anem_id) %>% 
+  select(anem_id, anem_obs, size, color, sample_id, cap_id, recap, everything())
+
+# define male/female
+big <- big %>% 
+  mutate(gender = ifelse(grepl("O", color), "male", "female")) %>%  # assign gender
+  filter(!is.na(sample_id)) %>%  # remove any missing sample_ids
+  mutate(year = substr(sample_id, 5,6)) # add a year column
+
+  # make a list of anemones
+  anems <- big %>% 
+    select(anem_id) %>% 
+    distinct()
+  
+# get a list of sample_ids of the fish present
+samps <- big %>% select(sample_id)
+
+# get ligation_ids for those fish
+ligs <- lig_from_samp(samps$sample_id)
+
+# attach lab record to fish - some fish have more than one ligation_id so the list grows
+big <- left_join(big, ligs, by = "sample_id")
+
+# which fish do not have ligation_ids
+need_work <- big %>% 
+  filter(is.na(ligation_id))
+# write.csv(need_work, file = "data/fish_need_work.csv")
+
+# remove those fish from the list
+big <- anti_join(big, need_work, by = "sample_id")
+
+# rank the fish and get the biggest male and biggest female for each anemone
+# males
+males <- data_frame()
+for (i in 1:nrow(anems)){
+  temp <- big %>% 
+    filter(anem_id == anems$anem_id[i], gender == "male")
+  j <- min_rank(desc(temp$size))
+  males <- rbind(males, temp[j, ])
+}
+
+# females
+females <- data_frame()
+for (i in 1:nrow(anems)){
+  temp <- big %>% 
+    filter(anem_id == anems$anem_id[i], gender == "female")
+  j <- min_rank(desc(temp$size))
+  females <- rbind(females, temp[j, ])
+}
+
+# # separate into years so that each year parent list includes that year and all previous years
+# yr <- c("2012", "2013", "2014", "2015", "2016", "2017")
+# 
+# for (i in length(yr)){
+#   
+#   
+# }
+
 
 
 # first individual case
