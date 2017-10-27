@@ -60,7 +60,9 @@ big <- left_join(big, ligs, by = "sample_id")
 
 # which fish do not have ligation_ids
 need_work <- big %>% 
-  filter(is.na(ligation_id))
+  filter(is.na(ligation_id)) %>% 
+  select(sample_id) %>% 
+  distinct
 # write.csv(need_work, file = "data/fish_need_work.csv")
 
 # remove those fish from the list
