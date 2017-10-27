@@ -1,5 +1,6 @@
 # helper functions for working with this repository
 library(dplyr)
+library(tidyr)
 # read_gene_sp ####
 #' read a genepop generated for ONE population
 #' @export
@@ -122,4 +123,41 @@ lig_from_samp <- function(sample_ids){
   lig <- left_join(mid, lig, by = "digest_id") 
   
   return(lig)
+}
+
+
+# genepop_to_csv ####
+#' find sample id from ligation id
+#' @export
+#' @name genepop_to_csv
+#' @author Michelle Stuart
+#' @param x = filename of genepop
+#' @examples 
+#' new_csv <- genepop_to_csv(filename)
+
+genepop_to_csv <- function(filename) {
+  
+  # read in the genepop
+  gendf <- read_gen_sp(filename)
+  
+  # cervus changes a genepop from one column containing 0202 format to 2 columns named A & B containing 2 and 2, comma separated.
+  
+  # remove names col
+  gen_noname <- gendf[ , 2:ncol(gendf)]
+  gen_name <- gendf[ , 1]
+  
+  # make a list of column names
+  col_list <- names(gen_noname)
+  
+  new <- data.frame(gen_name) #start with the names
+  for (i in 1:ncol(gen_noname)){
+    x <- paste(col_list[i], "A", sep = "")
+    y <- paste(col_list[i], "B", sep = "")
+    temp <- gen_noname %>% 
+      select(i)
+    temp <- temp %>% 
+      separate(1, into = c(x, y), sep = 2) # separate after 2 characters
+    new <- cbind(new, temp)
+  }
+  return(new)
 }
