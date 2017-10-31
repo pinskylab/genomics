@@ -59,3 +59,6 @@ loci <- names(gendf)
 for(i in 3:length(loci)){
   ????? # need to separate each column into A and B and remove the zeros
 }
+
+
+# test if github will work after transfer of ownership???
