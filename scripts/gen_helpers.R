@@ -50,23 +50,23 @@ samp_from_lig <- function(table_name){
   # connect ligation ids to digest ids
   lig <- lab %>% 
     tbl("ligation") %>% 
+    collect() %>% 
     filter(ligation_id %in% table_name$ligation_id) %>% 
-    select(ligation_id, digest_id) %>% 
-    collect()
+    select(ligation_id, digest_id)
     
   # connect digest ids to extraction ids
   dig <- lab %>% 
     tbl("digest") %>% 
+    collect() %>% 
     filter(digest_id %in% lig$digest_id) %>% 
-    select(extraction_id, digest_id) %>% 
-    collect()
-  
+    select(extraction_id, digest_id)
+    
   extr <- lab %>% 
     tbl("extraction") %>% 
+    collect() %>% 
     filter(extraction_id %in% dig$extraction_id) %>% 
-    select(extraction_id, sample_id) %>% 
-    collect()
-  
+    select(extraction_id, sample_id)
+    
   mid <- left_join(lig, dig, by = "digest_id")
   samp <- left_join(extr, mid, by = "extraction_id") %>% 
     select(sample_id, ligation_id)
