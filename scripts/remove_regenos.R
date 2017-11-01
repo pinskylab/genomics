@@ -1,7 +1,8 @@
 # This script is written to take the filtered genepop file from dDocent and 
-# 1) strip any named samples down to pure ligation number, 
-# 2) identify and remove re-genotyped samples based on number of loci (SNPs), 
-# 3) generate a new genepop file to be fed to cervus for identification of recaptures.
+# 1) read the genepop file into R as a data frame
+# 2) strip any named samples down to pure ligation number, 
+# 3) identify and remove re-genotyped samples based on number of loci (SNPs), 
+# 4) generate a new genepop file to be fed to cervus for identification of recaptures.
 
 # Set up workspace ---------------------------------------------
 source("scripts/gen_helpers.R")
@@ -9,23 +10,19 @@ library(dplyr)
 library(stringr)
 library(readr)
 
-
-
-
 # 1) Read the genepop  - double check genepop to make sure the word
 # pop separates the header from the data on line 3 - no quotes
 
 # locate the genepop file and read as data frame
-genfile <- "data/seq17_for_colony.gen"
-genedf <- read_gen_sp(genfile)
+genfile <- "data/seq17_03_SNPs.gen"
 
-### WAIT ### 
+#  PULLING DIRECTLY FROM AMPHIPRION DOESN'T WORK
+# # pull the genepop from amphiprion # I got this address by right clicking on the file in fetch and copying fetch address
+# url <- "sftp://michelles:@amphiprion.deenr.rutgers.edu/02-apcl-ddocent/APCL_analysis/17-03seq_cmdline/seq17_03_SNPs.gen"
+# userpwd <- read_file("~/amph.txt")
+# genedf <- RCurl::getURL(url, userpwd = userpwd)
 
-
-# # Strip out the ligation ID
-# 
-# # are any of names longer than a 5 digit ligation id?
-# genedf %>% filter(nchar(names) > 5) %>% count()
+genedf <- read_genepop(genfile)
 
 # create a search term to search for ligation ids within a name
 ligid <- "(.+)(L\\d\\d\\d\\d)" # an L followed by 4 digits, while APCL also contains an L, it shouldn't ever be followed by 4 digits, except in 2015...hmmm
