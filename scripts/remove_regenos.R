@@ -14,7 +14,7 @@ library(readr)
 # pop separates the header from the data on line 3 - no quotes
 
 # locate the genepop file and read as data frame
-genfile <- "data/seq17_03_SNPs.gen"
+genfile <- "data/seq17_03g95maf2q30dp15.gen"
 genedf <- read_genepop(genfile)
 
 
