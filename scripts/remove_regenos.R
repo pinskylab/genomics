@@ -17,63 +17,64 @@ library(readr)
 genfile <- "data/seq17_03_SNPs.gen"
 genedf <- read_genepop(genfile)
 
-# create a search term to search for ligation ids within a name
-ligid <- "(.+)(L\\d\\d\\d\\d)" # an L followed by 4 digits, while APCL also contains an L, it shouldn't ever be followed by 4 digits, except in 2015...hmmm
-# change all of the names to be just the ligation id
-# test - what does this search string find?
-# test <- str_detect(genedf$names, ligid)
 
+# 2) strip any named samples down to pure ligation number ---- 
+
+# create a search term to search for ligation ids within a name
+ligid <- "(.+)(L\\d\\d\\d\\d)" 
+
+# an L followed by 4 digits, while APCL also contains an L, it shouldn't ever be followed by 4 digits, except in 2015...apparently the sample_id numbers were truncated in 2015 samples for dDocent which is why we can only go by ligation_id to identify these samples.
+
+# TEST - what does this search string find?
+# test <- str_detect(genedf$names, ligid)
+# summary(test) # should be no FALSE
+
+# change all of the names to ligation id only
 genedf$names <- genedf$names %>% str_replace(ligid,"\\2")
 
 # TEST are any names still longer than 5 characters?
 which(nchar(genedf$names) > 5) # should be integer(0)
 
+genedf <- rename(genedf, ligation_id=names)
+
 # Add sample IDs ----------------------------------------------------------
 samples <- samp_from_lig(genedf)
-samples <- samples %>% 
-  rename(names = ligation_id)
 
 # Merge the two dataframes so that lig IDs match up -----------------------
-
-largedf <- left_join(genedf, samples, by = "names") %>% 
-  select(sample_id, names, everything()) # move the sample_id column to the beginning
+largedf <- left_join(genedf, samples, by = "ligation_id") %>% 
+  select(sample_id, ligation_id, everything()) # move the sample_id column to the beginning
 rm(samples)
 
-# # TEST - check the last 2 column names and that the number of rows hasn't changed
+# TEST - check the last 2 column names and that the number of rows hasn't changed
 # p <- ncol(largedf)
-# names(largedf[,(p-1):p]) # " dDocent_Contig_256998_105" "sample_id"    
+# names(largedf[,(p-1):p]) 
+# # "dDocent_Contig_245445_140" "dDocent_Contig_256998_105"
 # nrow(genedf) == nrow(largedf) # should be TRUE
 # # look for missing names
-# setdiff(genedf$names, largedf$names) # should be character(0)
-rm(genedf)
+# setdiff(genedf$ligation_id, largedf$ligation_id) # should be character(0)
+rm(genedf, ligid, genfile)
 
-# Remove samples with known issues ----------------------------------------
-
-# to remove samples with known issues, pull the data from the known issues database
-# open the laboratory database to retrieve sample info
-# suppressMessages(library(dplyr))
-leyte <- read_db("Leyte")
-
-iss <- leyte %>% tbl("known_issues") %>% collect()
-rm(leyte)
+# 3) Remove samples with known issues ----------------------------------------
+# pull in the known issues table
+iss <- lab %>% tbl("known_issues") %>% collect()
 
 # remove issues from largedf
 largedf <- largedf %>%
-  filter(!names %in% iss$Ligation_ID)
+  filter(!ligation_id %in% iss$ligation_id)
 
 
 # make sure all of the Ligation ids have sample ids
-which(is.na(largedf$sample_id)) # 1972- L3118 has no sample id, is a mixture of samples
-# should return integer(0), else largedf <- largedf %>% filter(!is.na(largedf$sample_id)) - 
+which(is.na(largedf$sample_id)) 
+# should return integer(0)
+# else trouble <- largedf %>% filter(is.na(largedf$sample_id)) - 
 # should be on the known issues table
 
-# # TEST - make sure no more match the list
+# TEST - make sure no more match the list
 # j <- largedf %>%
-#   filter(names %in% iss$Ligation_ID)
+#   filter(ligation_id %in% iss$ligation_id)
 # nrow(j) # should return 0
 # rm(j)
 rm(iss)
-
 
 # Remove regenotyped samples ----------------------------------------------
 
@@ -88,8 +89,6 @@ for(i in 1:nrow(largedf)){
   largedf$numloci[i] <- sum(!is.na(largedf[i,]))
 }
 
-### WAIT ###
-
 # # TEST - make sure all of the numloci were populated ----------------------
 # which(is.na(largedf$numloci)) # should return integer(0)
 
@@ -99,16 +98,21 @@ regenod <- largedf %>%
   filter(duplicated(largedf$sample_id)) %>%
   select(sample_id)
 
-# # TEST - make sure a list was generated
+# TEST - make sure a list was generated
 k <- nrow(regenod) # keep for later
-
-
 
 largedf$drop <- NA # place holder
 #run through all of the SampleIDs that are found more than once and keep the one with the most loci
-# for testing b <- 1
+# i <- 1 # test
+
+test <- largedf %>% 
+  filter(sample_id %in% regenod$sample_id) 
+  
+
+
+
 for(i in 1:nrow(regenod)){
-  # regeno_drop is the row number from largedf that matches an ID in the regeno_match list
+  # the row number from largedf that matches an ID in the regenod list
   regeno_drop <- which(largedf$sample_id == regenod[i,]) 
   # df is the data frame that holds all of the regenotyped versions of the sample, pulled from largedf
   df <- largedf[regeno_drop, ]  
