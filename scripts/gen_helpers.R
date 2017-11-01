@@ -26,7 +26,8 @@ read_genepop <-  function(filename){
   # rename the dat columns
   names(dat) <- c("names", loci)
   
-  # dat <- select(dat, -blank)
+  # if there is a comma, remove it
+  dat$names <- str_replace(dat$names, ",", "")
   
   return(dat)	
 }
