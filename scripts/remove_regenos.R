@@ -15,13 +15,6 @@ library(readr)
 
 # locate the genepop file and read as data frame
 genfile <- "data/seq17_03_SNPs.gen"
-
-#  PULLING DIRECTLY FROM AMPHIPRION DOESN'T WORK
-# # pull the genepop from amphiprion # I got this address by right clicking on the file in fetch and copying fetch address
-# url <- "sftp://michelles:@amphiprion.deenr.rutgers.edu/02-apcl-ddocent/APCL_analysis/17-03seq_cmdline/seq17_03_SNPs.gen"
-# userpwd <- read_file("~/amph.txt")
-# genedf <- RCurl::getURL(url, userpwd = userpwd)
-
 genedf <- read_genepop(genfile)
 
 # create a search term to search for ligation ids within a name
