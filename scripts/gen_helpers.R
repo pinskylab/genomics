@@ -1,24 +1,24 @@
 # helper functions for working with this repository
 library(dplyr)
 library(tidyr)
-# read_gene_sp ####
+
+# read_genepop ####
 #' read a genepop generated for ONE population
 #' @export
-#' @name read_gene_sp
+#' @name read_genepop
 #' @author Michelle Stuart
 #' @param x = filename
 #' @examples 
-#' genedf <- read_gene_sp("data/seq17_03_58loci.gen")
+#' genedf <- read_genepop("data/seq17_03_58loci.gen")
 
 # only works if Genepop has loci listed in 2nd line (separated by commas), has individual names separated from genotypes by a comma, and uses spaces between loci
-#also pop has to be on line 3, all lowercase
 # return a data frame: col 1 is individual name, col 2 is population, cols 3 to 2n+2 are pairs of columns with locus IDs
-read_gen_sp <-  function(filename){
+read_genepop <-  function(filename){
   # get all of the data
-  dat <- read.table(filename, skip = 3, sep = " ", stringsAsFactors = F, colClasses = "character") 
+  dat <- read.table(filename, skip = 2, sep = " ", stringsAsFactors = F, colClasses = "character") 
   
   # get the header info
-  info <- readLines(filename, n = 3) 
+  info <- readLines(filename, n = 2) 
   
   # define the loci names
   loci <- unlist(strsplit(info[2], split=','))    
