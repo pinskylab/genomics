@@ -4,7 +4,9 @@ library(stringr)
 library(tidyr)
 
 # locate data
-genfile <- "data/seq17_03g95maf2q30dp15.gen"
+# genfile <- "data/seq17_03g95maf2q30dp15.gen"
+# genfile <- "data/seq17dp15maf10.gen"
+genfile <- "data/seq17dp15maf5.gen"
 fst <- "data/reference.fasta"
 
 # read in data
@@ -24,9 +26,6 @@ list_of_snps <- list_of_snps %>%
   unite(contig, c(contig, and1, and2))
 
 
-
-  
-
 # count the number of SNPs per contig - can do this on the genepop
 count_snps <- list_of_snps %>% 
   group_by(contig) %>% 
@@ -34,4 +33,10 @@ count_snps <- list_of_snps %>%
 
 mean_snps <- count_snps %>% 
   summarise(mean = mean(num_snps))
+
+#211 base pairs
+
+test <- count_snps %>% 
+  mutate(percent = num_snps/211) %>% 
+  filter(percent < 0.05)
 
