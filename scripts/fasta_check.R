@@ -6,12 +6,13 @@ library(tidyr)
 # locate data
 # genfile <- "data/seq17_03g95maf2q30dp15.gen"
 # genfile <- "data/seq17dp15maf10.gen"
-genfile <- "data/seq17dp15maf5.gen"
-fst <- "data/reference.fasta"
+# genfile <- "data/seq17dp15maf5.gen"
+genfile <- "data/seq17mybaits.gen"
+# fst <- "data/reference.fasta"
 
 # read in data
 genepop <- read_genepop(genfile)
-fasta <- readLines(fst)
+# fasta <- readLines(fst)
 
 # format data
 
@@ -21,9 +22,11 @@ contig <- names(genepop)
 list_of_snps <- data_frame(contig) %>% 
   filter(contig != "names")
 # separate the names into contig and snp &  rejoin the names
-list_of_snps <- list_of_snps %>% 
-  separate(contig, c("contig", "and1", "and2","snp"), sep = "_")%>% 
+list_of_snps <- list_of_snps %>%
+  separate(contig, c("contig", "and1", "and2","snp"), sep = "_")%>%
   unite(contig, c(contig, and1, and2))
+
+# write.csv(list_of_snps, "data/533snpsformybaits.csv", row.names = F, quote = F)  
 
 
 # count the number of SNPs per contig - can do this on the genepop
@@ -39,4 +42,27 @@ mean_snps <- count_snps %>%
 test <- count_snps %>% 
   mutate(percent = num_snps/211) %>% 
   filter(percent < 0.05)
+
+# to make a list of snps to select in vcftools, combine list_of_snps from this run and the 809 snps
+saveRDS(list_of_snps, "data/533snps_list.Rdata")
+
+first <- readRDS("data/809snps.Rdata") %>% 
+  rename(contig = locus, 
+    snp = position)
+second <- readRDS("data/533snps_list.Rdata")
+
+full <- rbind(first, second)
+
+# get rid of white space before some names
+str_detect(contig, "( )(dDocent.+)")  
+
+full <- full %>% 
+  mutate(contig = str_replace(contig, "( )(dDocent.+)", "\\2"))
+
+full <- full %>% 
+  arrange(contig)
+  
+
+write.csv(full, "data/full_snps_list.csv", row.names = F, quote = F)
+
 

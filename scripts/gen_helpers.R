@@ -1,6 +1,7 @@
 # helper functions for working with this repository
 library(dplyr)
 library(tidyr)
+library(stringr)
 
 # read_genepop ####
 #' read a genepop generated for ONE population
@@ -127,38 +128,74 @@ lig_from_samp <- function(sample_ids){
 }
 
 
-# genepop_to_csv ####
-#' find sample id from ligation id
+# samp_to_site ####
+#' find site for a sample 
 #' @export
-#' @name genepop_to_csv
+#' @name samp_to_site
 #' @author Michelle Stuart
-#' @param x = filename of genepop
+#' @param x = sample_id
 #' @examples 
-#' new_csv <- genepop_to_csv(filename)
+#' new <- samp_to_site(sample)
 
-genepop_to_csv <- function(filename) {
+samp_to_site <- function(sample) {
+  leyte <- read_db("Leyte")
+  fish <- leyte %>% 
+    tbl("clownfish") %>% 
+    filter(sample_id == sample) %>% 
+    select(sample_id, anem_table_id) %>% 
+    collect()
+  anem <- leyte %>% 
+    tbl("anemones") %>% 
+    filter(anem_table_id == fish$anem_table_id) %>% 
+    select(anem_table_id, anem_id, dive_table_id) %>% 
+    collect()
+  fish <- left_join(fish, anem, by = "anem_table_id")
+  rm(anem)
+  dive <- leyte %>% 
+    tbl("diveinfo") %>% 
+    filter(dive_table_id == fish$dive_table_id) %>% 
+    select(dive_num, dive_table_id, site) %>% 
+    collect()
+  fish <- left_join(fish, dive, by = "dive_table_id")
+  rm(dive)
+  return(fish)
   
-  # read in the genepop
-  gendf <- read_gen_sp(filename)
-  
-  # cervus changes a genepop from one column containing 0202 format to 2 columns named A & B containing 2 and 2, comma separated.
-  
-  # remove names col
-  gen_noname <- gendf[ , 2:ncol(gendf)]
-  gen_name <- gendf[ , 1]
-  
-  # make a list of column names
-  col_list <- names(gen_noname)
-  
-  new <- data.frame(gen_name) #start with the names
-  for (i in 1:ncol(gen_noname)){
-    x <- paste(col_list[i], "A", sep = "")
-    y <- paste(col_list[i], "B", sep = "")
-    temp <- gen_noname %>% 
-      select(i)
-    temp <- temp %>% 
-      separate(1, into = c(x, y), sep = 2) # separate after 2 characters
-    new <- cbind(new, temp)
-  }
-  return(new)
 }
+
+# lig_from_samp ####
+#' views all of the fish recaptured at a given site
+#' @export
+#' @name lig_from_samp
+#' @author Michelle Stuart
+#' @param x = list of sample_ids
+#' @examples 
+#' fish <- lig_from_samp(c("APCL13_516", "APCL13_517"))
+
+lig_from_samp <- function(sample_ids){
+  
+  lab <- read_db("Laboratory")
+  
+  extr <- lab %>% 
+    tbl("extraction") %>% 
+    filter(sample_id %in% sample_ids) %>% 
+    select(sample_id, extraction_id) %>% 
+    collect()
+  
+  dig <- lab %>% 
+    tbl("digest") %>% 
+    filter(extraction_id %in% extr$extraction_id) %>%
+    select(extraction_id, digest_id) %>% 
+    collect()
+  
+  lig <- lab %>% 
+    tbl("ligation") %>% 
+    filter(digest_id %in% dig$digest_id) %>%
+    select(ligation_id, digest_id) %>% 
+    collect()
+  
+  mid <- left_join(extr, dig, by = "extraction_id")
+  lig <- left_join(mid, lig, by = "digest_id") 
+  
+  return(lig)
+}
+
