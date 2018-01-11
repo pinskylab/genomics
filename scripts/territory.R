@@ -175,7 +175,13 @@ for (i in x){
     filter(fish == i)
   # remove those fish from the fish table
   fish <- anti_join(fish, y, by = "fish_table_id")
-  # create a 
+  # create a table of coordinates
+  coords <- y %>% 
+    select(lat, lon)
+  # find the area
+  # areaPolygon(coords) - didn't work - https://stackoverflow.com/questions/12623577/converting-area-within-a-polygon-of-coordinates-to-metres
+  
+  
   
 }
   
