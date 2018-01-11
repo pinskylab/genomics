@@ -199,3 +199,54 @@ lig_from_samp <- function(sample_ids){
   return(lig)
 }
 
+anemid_latlong <- function(anem.table.id, latlondata) { #anem.table.id is one anem_table_id value, latlondata is table of GPX data from database (rather than making the function call it each time); will need to think a bit more clearly about how to handle different locations read for different visits to the same anem_id (or different with same anem_obs); for now, just letting every row in anem.Info get a lat-long
+  
+  #find the dive info and time for this anem observation
+  dive <- leyte %>%
+    tbl("anemones") %>%
+    select(anem_table_id, obs_time, dive_table_id, anem_id) %>%
+    collect() %>%
+    filter(anem_table_id %in% anem.table.id)
+  
+  # find the date info and gps unit for this anem observation
+  date <- leyte %>% 
+    tbl("diveinfo") %>% 
+    select(dive_table_id, date, gps, site) %>% 
+    collect() %>% 
+    filter(dive_table_id %in% dive$dive_table_id)
+  
+  #join with anem info, format obs time
+  anem <- left_join(dive, date, by = "dive_table_id") %>% 
+    separate(obs_time, into = c("hour", "minute", "second"), sep = ":") %>% #this line and the next directly from Michelle's code
+    mutate(gpx_hour = as.numeric(hour) - 8)
+  
+  # find the lat long for this anem observation
+  latloninfo <- latlondata %>%
+    filter(date %in% anem$date) %>% 
+    separate(time, into = c("hour", "minute", "second"), sep = ":") %>% 
+    filter(as.numeric(hour) == anem$gpx_hour & as.numeric(minute) == anem$minute) 
+  
+  latloninfo$lat <- as.numeric(latloninfo$lat)
+  latloninfo$lon <- as.numeric(latloninfo$lon)
+  
+  #often get multiple records for each anem_table_id (like if sit there for a while) - so multiple GPS points for same visit to an anemone, not differences across visits
+  dups_lat <- which(duplicated(latloninfo$lat)) #vector of positions of duplicate values
+  dups_lon <- which(duplicated(latloninfo$lon))
+  
+  #either take the mean of the lat/lon readings or the duplicated values, depending if there are duplicate points
+  if(length(dups_lat) == 0) { #if all latitude points are different
+    anem$lat <- round(mean(latloninfo$lat), digits = 5) #take the mean of the latitude values (digits = 5 b/c that is what Michelle had)
+    anem$lon <- round(mean(latloninfo$lon), digits = 5) #take the mean of the longitude values
+    #lat <- round(mean(latloninfo$lat), digits = 5) 
+    #lon <- round(mean(latloninfo$lon), digits = 5)
+  }else{
+    anem$lat <- latloninfo$lat[dups_lat[1]] #if are duplicates, take the value of the first duplicated point
+    anem$lon <- latloninfo$lon[dups_lon[1]]
+    #lat <- latloninfo$lat[dups_lat[1]] #if are duplicates, take the value of the first duplicated point
+    #lon <- latloninfo$lon[dups_lon[1]]
+  }
+  
+  return(anem)
+  
+}
+

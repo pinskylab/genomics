@@ -1,5 +1,6 @@
 # find recaptures and if they were caught on different anemones
-
+library(lubridate)
+library(geosphere)
 source("scripts/gen_helpers.R")
 
 # find recaptures
@@ -68,7 +69,7 @@ rm(i, w, x, y, z)
 anem <- leyte %>% 
   tbl("anemones") %>% 
   collect() %>% 
-  select(anem_id, anem_obs, anem_table_id) %>% 
+  select(anem_id, anem_obs, anem_table_id, obs_time, dive_table_id) %>% 
   filter(anem_table_id %in% fish$anem_table_id)
 fish <- left_join(fish, anem, by = "anem_table_id")
 rm(anem)
@@ -95,26 +96,89 @@ for (i in unique(fish$fish)){
   fish <- rbind(fish, x)
 }
 
-
-
-library(ggplot2)
-ggplot(data = fish) +
-  geom_bar(mapping = aes(x = at_home, 
-    fill = at_home,
-    xlabs = NULL, 
-    ylabs = NULL))+
-  ggtitle("Number of times a fish is caught on the same or different anemone")
+# library(ggplot2)
+# ggplot(data = fish) +
+#   geom_bar(mapping = aes(x = at_home, 
+#     fill = at_home,
+#     xlabs = NULL, 
+#     ylabs = NULL))+
+#   ggtitle("Number of times a fish is caught on the same or different anemone")
   
-# # change the fish numbers from their fti to a number - cant get this to work
-# x <- unique(fish$fish_id)
-# for (j in 1:length(x)){
-#   for (i in x){
-#     y <- fish$fish_id[fish$fish_id == i]
-#     fish <- anti_join(fish, y, by = "fish_table_id")
-#     y <- mutate(y, fish_id = j)
-#     fish <- rbind(fish, y)
-#    }
-#   }
+# looks like it is worth investigating territory sizes
+
+# remove fish with unknown anemones (-9999 or ????) or fish that don't move
+fish <- fish %>% 
+  filter(anem_id != "-9999" & anem_id != "????" & at_home != "same anemone")
+
+# for which fish did this leave only one observation?
+one <- fish %>% 
+  group_by(fish) %>% 
+  summarize(obs = n()) %>% 
+  filter(obs == 1)
+# remove those fish from the analysis
+fish <- fish %>% 
+  filter(!fish %in% one$fish)
+
+# # to use Allison's anemid_latlong data, need these 2 variables - not working
+# # latlondata is the GPX table from the database
+# latlondata <- leyte %>% tbl("GPX") %>% collect(n = Inf) # 264408
+# 
+# ati <- fish$anem_table_id
+# 
+# debugonce(anemid_latlong)
+# anem <- anemid_latlong(ati, latlondata)
+
+# find the date info and gps unit for this anem observation
+date <- leyte %>% 
+  tbl("diveinfo") %>% 
+  select(dive_table_id, date, gps, site) %>% 
+  collect() %>% 
+  filter(dive_table_id %in% fish$dive_table_id)
+
+#join with anem info, format obs time
+fish <- left_join(fish, date, by = "dive_table_id") %>% 
+  separate(obs_time, into = c("hour", "minute", "second"), sep = ":") %>% #this line and the next directly from Michelle's code
+  mutate(gpx_hour = as.numeric(hour) - 8)
+
+# find the lat long for this anem observation
+lat <- leyte %>%
+  tbl("GPX") %>%
+  mutate(gpx_date = date(time), 
+    gpx_hour = hour(time), 
+    minute = minute(time), 
+    second = second(time)
+    ) %>%
+  filter(gpx_date %in% fish$date,
+    gpx_hour %in% fish$gpx_hour, 
+    minute %in% fish$minute) %>% 
+  collect(n=Inf)
+lat <- lat %>%
+  mutate(lat = as.numeric(lat), 
+    lon = as.numeric(lon)) %>% 
+  select(-second) #remove the seconds from the table
+
+
+fish <- fish %>% 
+  mutate(minute = as.numeric(minute))
+# attach lat to anems - this should create 4 rows for every observation (475 *4 = 1900)
+fish <- left_join(fish, lat, by = c("gps" = "unit", "date" = "gpx_date", "gpx_hour", "minute"))
+fish <- distinct(fish)
+
+# create a list of remaining fish ids
+x <- unique(fish$fish)
+
+# create an empty data frame
+hold <- data.frame()
+for (i in x){
+  # create a table of the fish that match i
+  y <- fish %>% 
+    filter(fish == i)
+  # remove those fish from the fish table
+  fish <- anti_join(fish, y, by = "fish_table_id")
+  # create a 
+  
+}
+  
   
 
 
