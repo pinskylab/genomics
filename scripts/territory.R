@@ -156,12 +156,16 @@ lat <- lat %>%
   mutate(lat = as.numeric(lat), 
     lon = as.numeric(lon)) %>% 
   select(-second) #remove the seconds from the table
+sum_lat <- lat %>%
+  group_by(unit, gpx_date, gpx_hour, minute) %>% 
+  summarise(lat = mean(as.numeric(lat)),
+    lon = mean(as.numeric(lon)))
 
 
 fish <- fish %>% 
   mutate(minute = as.numeric(minute))
-# attach lat to anems - this should create 4 rows for every observation (475 *4 = 1900)
-fish <- left_join(fish, lat, by = c("gps" = "unit", "date" = "gpx_date", "gpx_hour", "minute"))
+# attach lat to anems 
+fish <- left_join(fish, sum_lat, by = c("gps" = "unit", "date" = "gpx_date", "gpx_hour", "minute"))
 fish <- distinct(fish)
 
 # create a list of remaining fish ids
@@ -177,9 +181,17 @@ for (i in x){
   fish <- anti_join(fish, y, by = "fish_table_id")
   # create a table of coordinates
   coords <- y %>% 
-    select(lat, lon)
+    select(as.double(lat), as.double(lon)) %>% 
+    arrange(lat, lon)
   # find the area
-  # areaPolygon(coords) - didn't work - https://stackoverflow.com/questions/12623577/converting-area-within-a-polygon-of-coordinates-to-metres
+  library(splancs)
+  plot(coords, type = "b")
+  z <- areapl(as.matrix(coords))
+  new <- y %>% 
+    slice(1:1) %>% 
+    select(fish, fish_table_id) %>% 
+    mutate(territory = z)
+
   
   
   
