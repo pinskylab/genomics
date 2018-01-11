@@ -178,8 +178,8 @@ for (i in x){
     filter(fish == i)
   # calculate the distance between anemones
   library(fields)
-    a <- as.matrix(y[j, c("lat", "lon")])
-    b <- as.matrix(y[j-1, c("lat", "lon")])
+    a <- as.matrix(y[1, c("lat", "lon")])
+    b <- as.matrix(y[2, c("lat", "lon")])
   alldists <- rdist.earth(as.matrix(y[1,c("lat", "lon")]), as.matrix(as.matrix(y[2,c("lat", "lon")])), miles=FALSE, R=6371) 
   distkm <- diag(alldists)
   new <- y %>% 
@@ -191,8 +191,9 @@ for (i in x){
   
 hold <- arrange(hold, territory)  
 
+# library(ggplot2)
 # ggplot(data = hold)+
-#   geom_point(mapping = aes(x = fish, y = territory))
+#   geom_bar(mapping = aes(x = territory), width = 1)
 
 
   
