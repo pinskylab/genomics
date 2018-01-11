@@ -1,6 +1,5 @@
 # find recaptures and if they were caught on different anemones
 library(lubridate)
-library(geosphere)
 source("scripts/gen_helpers.R")
 
 # find recaptures
@@ -177,27 +176,23 @@ for (i in x){
   # create a table of the fish that match i
   y <- fish %>% 
     filter(fish == i)
-  # remove those fish from the fish table
-  fish <- anti_join(fish, y, by = "fish_table_id")
-  # create a table of coordinates
-  coords <- y %>% 
-    select(as.double(lat), as.double(lon)) %>% 
-    arrange(lat, lon)
-  # find the area
-  library(splancs)
-  plot(coords, type = "b")
-  z <- areapl(as.matrix(coords))
+  # calculate the distance between anemones
+  library(fields)
+    a <- as.matrix(y[j, c("lat", "lon")])
+    b <- as.matrix(y[j-1, c("lat", "lon")])
+  alldists <- rdist.earth(as.matrix(y[1,c("lat", "lon")]), as.matrix(as.matrix(y[2,c("lat", "lon")])), miles=FALSE, R=6371) 
+  distkm <- diag(alldists)
   new <- y %>% 
-    slice(1:1) %>% 
-    select(fish, fish_table_id) %>% 
-    mutate(territory = z)
+    select(fish) %>% 
+    mutate(territory = distkm) %>% 
+    distinct()
+  hold <- rbind(hold, new)
+  }
+  
+hold <- arrange(hold, territory)  
 
-  
-  
-  
-}
-  
-  
+# ggplot(data = hold)+
+#   geom_point(mapping = aes(x = fish, y = territory))
 
 
   
