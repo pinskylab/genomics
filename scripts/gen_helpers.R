@@ -54,20 +54,20 @@ samp_from_lig <- function(table_name){
     collect() %>% 
     filter(ligation_id %in% table_name$ligation_id) %>% 
     select(ligation_id, digest_id)
-    
+  
   # connect digest ids to extraction ids
   dig <- lab %>% 
     tbl("digest") %>% 
     collect() %>% 
     filter(digest_id %in% lig$digest_id) %>% 
     select(extraction_id, digest_id)
-    
+  
   extr <- lab %>% 
     tbl("extraction") %>% 
     collect() %>% 
     filter(extraction_id %in% dig$extraction_id) %>% 
     select(extraction_id, sample_id)
-    
+  
   mid <- left_join(lig, dig, by = "digest_id")
   samp <- left_join(extr, mid, by = "extraction_id") %>% 
     select(sample_id, ligation_id)
@@ -141,19 +141,19 @@ samp_to_site <- function(sample) {
   leyte <- read_db("Leyte")
   fish <- leyte %>% 
     tbl("clownfish") %>% 
-    filter(sample_id == sample) %>% 
+    filter(sample_id %in% sample) %>% 
     select(sample_id, anem_table_id) %>% 
     collect()
   anem <- leyte %>% 
     tbl("anemones") %>% 
-    filter(anem_table_id == fish$anem_table_id) %>% 
+    filter(anem_table_id %in% fish$anem_table_id) %>% 
     select(anem_table_id, anem_id, dive_table_id) %>% 
     collect()
   fish <- left_join(fish, anem, by = "anem_table_id")
   rm(anem)
   dive <- leyte %>% 
     tbl("diveinfo") %>% 
-    filter(dive_table_id == fish$dive_table_id) %>% 
+    filter(dive_table_id %in% fish$dive_table_id) %>% 
     select(dive_num, dive_table_id, site) %>% 
     collect()
   fish <- left_join(fish, dive, by = "dive_table_id")
@@ -250,3 +250,42 @@ anemid_latlong <- function(anem.table.id, latlondata) { #anem.table.id is one an
   
 }
 
+# full_meta ####
+#' add field data for a sample 
+#' @export
+#' @name full_meta
+#' @author Michelle Stuart
+#' @param x = a table that contains a column called sample_ids
+#' @examples 
+#' new <- samp_to_field_meta(lost$sample_id)
+
+full_meta <- function(sample_ids){
+  samps <- db %>% 
+    tbl("clownfish") %>% 
+    filter(sample_id %in% sample_ids) %>% 
+    select(fish_table_id, anem_table_id, size, sample_id, color, cap_id, recap, tag_id, fish_obs_time, collector, notes) %>% 
+    collect() %>% 
+    rename(fish_notes = notes, 
+      fish_collector = collector)
+  
+  anem <- db %>% 
+    tbl("anemones") %>% 
+    filter(anem_table_id %in% samps$anem_table_id) %>% 
+    select(anem_table_id, dive_table_id, obs_time, anem_id, anem_obs, collector, notes) %>% 
+    collect() %>% 
+    rename(anem_notes = notes, 
+      anem_obs_time = obs_time, 
+      anem_collector = collector)
+  
+  samps <- left_join(samps, anem, by = "anem_table_id")
+  rm(anem)
+  dive <- db %>% 
+    tbl("diveinfo") %>% 
+    filter(dive_table_id %in% samps$dive_table_id) %>% 
+    select(dive_table_id, dive_num, date, site, gps, divers) %>% 
+    collect()
+  
+  samps <- left_join(samps, dive, by = "dive_table_id")
+  rm(dive)
+  return(samps)
+}
