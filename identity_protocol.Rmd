@@ -45,6 +45,7 @@ Upload the output to github
 
 ```{r}
 library(tidyverse)
+library(lubridate)
 source("scripts/gen_helpers.R")
 
 idcsv <- read_csv("data/seq03-33_identity/33-03_seq_identity_ID.csv", col_types = cols(
@@ -59,57 +60,233 @@ idcsv <- read_csv("data/seq03-33_identity/33-03_seq_identity_ID.csv", col_types 
   Status = col_character()
 ))
 
+names(idcsv) <- c("first_id",  "first_loci_typed",  "second_id",  "second_loci_typed",  "matching_loci",  "mismatching_loci",  "pID",  "pIDsib",  "status")
+
 # add mismatch rate
 idcsv <- idcsv %>%
-  mutate(mismatch_prop = `Mismatching loci`/`Matching loci`) %>% 
+  mutate(mismatch_prop = mismatching_loci/(mismatching_loci + matching_loci)) %>% 
 # order by number of matching loci
-    arrange(`Matching loci`) %>% 
+    arrange(matching_loci) %>% 
   # for the current run, there are extra .F on some names, remove them
-  mutate(`First ID` = ifelse(grepl(".F", `First ID`), substr(`First ID`, 1, 10), `First ID`), 
-         `Second ID` = ifelse(grepl(".F", `Second ID`), substr(`Second ID`, 1, 10), `Second ID`)) %>% 
+  mutate(first_id = ifelse(grepl(".F", first_id), substr(first_id, 1, 10), first_id), 
+         second_id = ifelse(grepl(".F", second_id), substr(second_id, 1, 10), second_id)) %>% 
   # remove APCL_ from IDs
-  separate(`First ID`, c("spp", "first_id"), sep = "_") %>% 
-  separate(`Second ID`, c("spp2", "second_id"), sep = "_") %>% 
+  separate(first_id, c("spp", "first_id"), sep = "_") %>% 
+  separate(second_id, c("spp2", "second_id"), sep = "_") %>% 
   select(-spp, -spp2)
 
 
-ggplot(idcsv, aes(x = `Matching loci`, y = mismatch_prop)) +
+ggplot(idcsv, aes(x = matching_loci, y = mismatch_prop)) +
   geom_point() +
   theme_bw()
 
 ```
 
- ### Add metadata
+ ### Add sample_ids
 ```{r}
 lab <- read_db("Laboratory")
 
-samples <- lab %>%
-  tbl("ligation") %>% 
-  
+# for first_sample_id
+temp <- idcsv %>% 
+  rename(ligation_id = first_id)
+lab1 <- samp_from_lig(temp)
+names(lab1) <- paste("first_", names(lab1), sep = "")
 
 
-# add Sample IDs
-suppressWarnings(c1 <- labor %>% tbl("extraction") %>% select(extraction_id, sample_id))
-suppressWarnings(c2 <- labor %>% tbl("digest") %>% select(digest_id, extraction_id))
-c3 <- left_join(c2, c1, by = "extraction_id")
-suppressWarnings(c4 <- labor %>% tbl("ligation") %>% select(ligation_id, digest_id))
-c5 <- left_join(c4, c3, by = "digest_id") %>% collect()
+# for second_sample_id
+temp <- idcsv %>% 
+  rename(ligation_id = second_id)
+lab2 <- samp_from_lig(temp)
+names(lab2) <- paste("second_", names(lab2), sep = "")
 
-### WAIT ###
+# set aside all of the regenotyped samples
+regenos <- idcsv %>%
+  filter(grepl("\\.", first_id) | grepl("\\.", second_id))
+idcsv <- anti_join(idcsv, regenos, by = c("first_id", "first_loci_typed", "second_id", "second_loci_typed", "matching_loci", "mismatching_loci", "pID", "pIDsib", "status", "mismatch_prop"))
 
-# for First.ids 
-lab1 <- c5
-names(lab1) <- paste("First.", names(lab1), sep = "")
+idcsv <- left_join(idcsv, lab1, by = c("first_id" = "first_ligation_id"))
+idcsv <- left_join(idcsv, lab2, by = c("second_id" = "second_ligation_id"))
 
-idcsv <- left_join(idcsv, lab1, by = c("First.ID" = "First.ligation_id"))
 
-### WAIT ###
+# for regenos, there are potentially 6 rounds of ligations but because they are regenotypes, only have to find sample names twice
+regenos <- regenos %>% 
+  # keep the original names so that these can be matched back into the main data set
+  mutate(keep1 = first_id, 
+         keep2 = second_id) %>% 
+  # make sure to double escape the . 
+  separate(first_id, c("ligation_id", "half2"), sep = "\\.") %>% 
+  separate(second_id, c("half3", "half4"), sep = "\\.")
 
-# For Second.IDs
-lab2 <- c5
-names(lab2) <- paste("Second.", names(lab2), sep = "")
+samp1 <- samp_from_lig(regenos)
+regenos <- left_join(regenos, samp1, by = "ligation_id") %>% 
+  # change column names to find sample ids for next round
+  rename(half1 = ligation_id, 
+         ligation_id = half3) 
+regenos <- regenos %>% 
+  rename(first_sample_id = sample_id)
+samp2 <- samp_from_lig(regenos)
+regenos <- left_join(regenos, samp2, by = "ligation_id") %>% 
+  # remove extra columns and change names
+  select(-contains("half")) %>% 
+  rename(first_id = keep1, 
+         second_id = keep2) 
 
-idcsv <- left_join(idcsv, lab2, by = c("Second.ID" = "Second.ligation_id"))
+regenos <- regenos %>% 
+  select(-ligation_id) %>% 
+  rename(second_sample_id = sample_id)
 
+# rejoin regenos to the idcsv
+
+idcsv <- rbind(idcsv, regenos)
+rm(regenos, samp1, samp2, lab1, lab2, temp)
 ```
  
+### Add field data
+```{r}
+leyte <- read_db("Leyte")
+
+first <- full_meta(idcsv$first_sample_id, leyte)
+names(first) <- paste0("first_", names(first))
+sec <- full_meta(idcsv$second_sample_id, leyte)
+names(sec) <- paste0("second_", names(sec))
+
+
+idcsv <- left_join(idcsv, first, by = "first_sample_id")
+idcsv <- left_join(idcsv, sec, by = "second_sample_id")
+
+# rearrange columns
+idcsv <- idcsv %>% 
+  select(contains("first"), contains("second"), everything())
+
+rm(first, sec)
+
+```
+
+## Get lat lons
+```{r}
+
+# find the lat lon of the first anem
+first <- idcsv %>% 
+  mutate(first_anem_obs_time = force_tz(ymd_hms(str_c(first_date, first_anem_obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
+  mutate(first_anem_obs_time = with_tz(first_anem_obs_time, tzone = "UTC")) %>% 
+  mutate(first_hour = hour(first_anem_obs_time), 
+         first_minute = minute(first_anem_obs_time))
+
+lat <- leyte %>%
+    tbl("GPX")  %>% 
+    mutate(gpx_date = date(time)) %>%
+    filter(gpx_date %in% idcsv$first_date) %>% 
+    mutate(gpx_hour = hour(time)) %>%
+    mutate(minute = minute(time)) %>%
+    mutate(second = second(time)) %>%
+    select(-time, -second)%>%
+    collect() 
+
+# attach the lat lons
+first <- left_join(first, lat, by = c("first_date" = "gpx_date", "first_hour" = "gpx_hour", "first_minute" = "minute", "first_gps" = "unit"))
+
+# summarize the lat lons
+first <- first %>% 
+  group_by(first_id) %>% 
+  summarise(first_lat = mean(as.numeric(lat)), 
+            first_lon = mean(as.numeric(lon)))
+
+idcsv <- left_join(idcsv, first, by = "first_id")
+rm(first, lat)
+
+# find the lat lon of the second anem
+second <- idcsv %>% 
+  mutate(second_anem_obs_time = force_tz(ymd_hms(str_c(second_date, second_anem_obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
+  mutate(second_anem_obs_time = with_tz(second_anem_obs_time, tzone = "UTC")) %>% 
+  mutate(second_hour = hour(second_anem_obs_time), 
+         second_minute = minute(second_anem_obs_time))
+
+lat <- leyte %>%
+    tbl("GPX")  %>% 
+    mutate(gpx_date = date(time)) %>%
+    filter(gpx_date %in% idcsv$second_date) %>% 
+    mutate(gpx_hour = hour(time)) %>%
+    mutate(minute = minute(time)) %>%
+    mutate(second = second(time)) %>%
+    select(-time, -second)%>%
+    collect() 
+
+# attach the lat lons
+second <- left_join(second, lat, by = c("second_date" = "gpx_date", "second_hour" = "gpx_hour", "second_minute" = "minute", "second_gps" = "unit"))
+
+# summarize the lat lons
+second <- second %>% 
+  group_by(second_id) %>% 
+  summarise(second_lat = mean(as.numeric(lat)), 
+            second_lon = mean(as.numeric(lon)))
+
+idcsv <- left_join(idcsv, second, by = "second_id")
+rm(lat, second)  
+
+```
+### Pull out new regenotypes
+```{r}
+new_regenos <- idcsv %>% 
+  filter(first_sample_id == second_sample_id)
+
+idcsv <- anti_join(idcsv, new_regenos, by = c("first_id", "first_loci_typed", "first_sample_id", "first_fish_table_id", "first_anem_table_id", "first_size", "first_color", "first_gen_id", "first_recap", "first_tag_id", "first_fish_obs_time", "first_fish_collector", "first_fish_notes", "first_dive_table_id", "first_anem_obs_time", "first_anem_id", "first_anem_obs", "first_anem_collector", "first_anem_notes", "first_dive_num", "first_date", "first_site", "first_gps", "first_divers", "second_id", "second_loci_typed", "second_sample_id", "second_fish_table_id", "second_anem_table_id", "second_size", "second_color", "second_gen_id", "second_recap", "second_tag_id", "second_fish_obs_time", "second_fish_collector", "second_fish_notes", "second_dive_table_id", "second_anem_obs_time", "second_anem_id", "second_anem_obs", "second_anem_collector", "second_anem_notes", "second_dive_num", "second_date", "second_site", "second_gps", "second_divers", "matching_loci", "mismatching_loci", "pID", "pIDsib", "status", "mismatch_prop", "first_lat", "first_lon", "second_lat", "second_lon", "date_eval"))
+```
+
+
+### Flag fish that were caught on the same day - the only one is a fish that has already been flagged as a recapture
+```{r}
+idcsv <- idcsv %>% 
+  mutate(date_eval = ifelse(first_date == second_date, "FAIL", NA))
+
+date_fails <- idcsv %>% 
+  filter(date_eval == "FAIL") %>% 
+  select(first_sample_id, second_sample_id, first_gen_id, second_gen_id, everything())
+
+```
+
+### Flag matches that were caught more than 250m apart.  Given the data that Katrina has found as well as my data, it looks like it is possible that these fish have moved sites and should not be discounted simply because they weren't captured at the same site.  These need to be looked into.
+
+```{r}
+# calculate the distances
+alldists <- fields::rdist.earth(as.matrix(idcsv[,c("first_lon", "first_lat")]), as.matrix(idcsv[,c("second_lon", "second_lat")]), miles=FALSE, R=6371) 
+
+idcsv <- idcsv %>% 
+  mutate(distkm = diag(alldists), 
+  dist_eval = ifelse(distkm > 0.25, "FAIL", NA)
+         )
+
+dist_fails <- idcsv %>% 
+  filter(dist_eval == "FAIL") %>% 
+  select(first_site, second_site, first_gen_id, second_gen_id, first_tag_id, second_tag_id, first_sample_id, second_sample_id, everything())
+
+# how many are at the same site? 2
+same_site <- dist_fails %>% 
+  filter(first_site == second_site)
+
+# test <- dist_fails %>% 
+#   filter(first_sample_id == "APCL15_098")
+
+```
+### Flag any fish that shrink by more than 1.5cm  
+- one pair is clearly not truely the same fish (L4964, L5012) - caught at Wangag and Tamakin days from each other with different pit tags
+
+```{r}
+idcsv <- idcsv %>% 
+  mutate(size_eval = ifelse(first_date < second_date & as.numeric(first_size) > as.numeric(second_size) + 1.5, "FAIL", NA), 
+         size_eval = ifelse(first_date > second_date & as.numeric(first_size) + 1.5 < as.numeric(second_size), "FAIL", NA))
+
+size_fails <- test %>% 
+  filter(size_eval == "FAIL") %>% 
+  select(first_id, second_id, first_date, second_date, first_size, second_size, first_gen_id, second_gen_id, first_tag_id, second_tag_id, mismatch_prop, everything())
+```
+
+### Flag fish that were caught at different sites
+```{r}
+idcsv <- idcsv %>% 
+  mutate(site_eval = ifelse(first_site != second_site, "FAIL", NA))
+
+site_fails <- idcsv %>% 
+  filter(site_eval == "FAIL") %>% 
+  select(first_site, second_site, first_gen_id, second_gen_id, first_tag_id, second_tag_id, first_id, second_id, everything())
+```
+
