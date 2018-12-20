@@ -199,7 +199,12 @@ lig_from_samp <- function(sample_ids){
   return(lig)
 }
 
-anemid_latlong <- function(anem.table.id, latlondata) { #anem.table.id is one anem_table_id value, latlondata is table of GPX data from database (rather than making the function call it each time); will need to think a bit more clearly about how to handle different locations read for different visits to the same anem_id (or different with same anem_obs); for now, just letting every row in anem.Info get a lat-long
+anemid_latlong <- function(anem.table.id, latlondata) { 
+  #anem.table.id is one anem_table_id value, latlondata is table of GPX data
+  #from database (rather than making the function call it each time); will need
+  #to think a bit more clearly about how to handle different locations read for
+  #different visits to the same anem_id (or different with same anem_obs); for
+  #now, just letting every row in anem.Info get a lat-long
   
   #find the dive info and time for this anem observation
   dive <- leyte %>%
@@ -259,11 +264,11 @@ anemid_latlong <- function(anem.table.id, latlondata) { #anem.table.id is one an
 #' @examples 
 #' new <- samp_to_field_meta(lost$sample_id)
 
-full_meta <- function(sample_ids){
+full_meta <- function(sample_ids, db){
   samps <- db %>% 
     tbl("clownfish") %>% 
     filter(sample_id %in% sample_ids) %>% 
-    select(fish_table_id, anem_table_id, size, sample_id, color, cap_id, recap, tag_id, fish_obs_time, collector, notes) %>% 
+    select(fish_table_id, anem_table_id, size, sample_id, color, gen_id, recap, tag_id, fish_obs_time, collector, notes) %>% 
     collect() %>% 
     rename(fish_notes = notes, 
       fish_collector = collector)
