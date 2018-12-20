@@ -1,0 +1,43 @@
+---
+title: "Identity Protocol for APCL project"
+output: html_notebook
+---
+
+This notebook continues where filtering left off, moving the genepop into cervus and processing identity results.
+
+## Import the genepop to cervus
+The genepop should be stored either on google drive or github and downloaded onto the windows machine.
+
+**Because I did not run the process genepop script first, I had to open the file and add a "pop" line between the contig header and the first sample info**
+
+###Open Cervus and convert the genepop to ceruvs:
+- Tools > Convert genotype file > Genepop to Cervus
+- A window will open, navigate to the genepop file that has been downloaded to the windows machine
+- Choose 2 digit format, do not use the first id as a population name
+**(2893 individuals, 1447 loci)**
+
+### Run an allele frequency analysis:
+- Analysis > Allele frequency analysis
+- make sure the converted file is in the genotype file field
+* Yes Header Row
+* Yes Read Locus Names
+* ID in column 2
+* First allele in column 3
+* Type in number of loci from conversion (1447)
+* Save as “….._AF"
+* Leave all the output option boxes checked
+ 
+### Run an identity analysis
+* Genotype file should be autofilled with the convert file created above
+* Yes Header Row
+* Id in column 2
+* First allele in column 3
+* Do not test sexes separately
+* Allele freq data should be autofilled with the AF file created above
+* Save as “…._ID"
+* Fill in minimum number of matching loci (80% of total = 1158)
+* allow fuzzy matching with 10% mismatch (10% of total = 144)
+* don’t show all comparisons - this generates a HUGE csv of every single pairwise comparison.
+
+
+ 
