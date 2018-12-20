@@ -1,6 +1,9 @@
 ---
 title: "Identity Protocol for APCL project"
 output: html_notebook
+params:
+  data_dir:  seq03-33_identity
+  data_name:  33-03_seq_identity
 ---
 
 This notebook continues where filtering left off, moving the genepop into cervus and processing identity results.
@@ -289,4 +292,120 @@ site_fails <- idcsv %>%
   filter(site_eval == "FAIL") %>% 
   select(first_site, second_site, first_gen_id, second_gen_id, first_tag_id, second_tag_id, first_id, second_id, everything())
 ```
+
+# Write big table into a file ------------------------------------------------------------
+```{r}
+write_csv(idcsv, paste0("data/", params$data_dir, "/", params$data_name, "_big_table.csv"))
+write_csv(new_regenos, paste0("data/", params$data_dir, "/new_regenos.csv"))
+
+# cleanup
+rm(alldists)
+```
+
+
+
+### EVERYTHING AFTER THIS POINT IS FOR REMOVING THE MATCHES FROM THE GENEPOP
+# SO IT CAN CONTINUE FOR PARENTAGE ANALYSIS.  FOR CONTINUED ID ANALYSIS, OPEN id_process.R ###
+
+# Open genepop ------------------------------------------------------------
+```{r}
+# this should be the genepop you used as input for Cervus ID
+genfile <- paste0("data/", params$data_dir, "/seq33_03_baits_only_SNPs.gen")
+genedf <- read_genepop(genfile)
+
+
+# TEST - make sure the first 2 columns are names and a contig and get number of rows
+names(genedf[,1:2]) # [1] "names" "dDocent_Contig_11_59"
+nrow(genedf) # 2893
+
+```
+
+# Calculate the number of loci for analysis -------------------------------
+```{r}
+# convert 0000 to NA in the genepop data
+genedf[genedf == "0000"] <- NA
+# TEST - make sure there are no "0000" left
+which(genedf == "0000") # should return integer(0)
+
+# count the number of loci per individual - takes 7 minutes
+Sys.time()
+test <- genedf %>% 
+  rowwise() %>% 
+  group_by(names) %>% 
+  summarise(numloci = sum(!is.na(.)))
+Sys.time()
+
+
+Sys.time()
+for(i in seq(genedf$names)){
+  genedf$numloci[i] <- sum(!is.na(genedf[i,]))
+}
+Sys.time()
+
+s### WAIT ###
+
+# TEST - make sure all of the numloci were populated
+which(is.na(genedf$numloci)) # should return integer(0)
+
+
+
+# Run through id analysis and compare to determine which to remove --------
+genedf <- genedf %>% 
+  separate(names, c("spp", "id"), sep = "_") %>% 
+  select(-spp) %>% 
+  separate(id, c("id", "F"), sep = "\\.") %>% 
+  select(-F)
+
+lose <- left_join(select(idcsv, first_id, second_id), id_matches, by = c("first_id"= "id"))
+
+lose <- lose %>% 
+  rename(first_num_loci = numloci)
+
+lose <- left_join(lose, id_matches, by = c("second_id"= "id")) %>% 
+  rename(sec_num_loc = numloci)
+
+lose <- lose %>% 
+  mutate(drop = ifelse(first_num_loci >= sec_num_loc, second_id, first_id))
+
+
+genedf <- genedf %>% 
+  filter()
+
+
+# Make a dataframe of the samples to keep for parentage analysis
+keep <- genedf[is.na(genedf$drop),]
+
+keep$numloci <- NULL
+keep$drop <- NULL
+
+# TODO -  Look for regenotypes again:
+
+# convert all the NA genotypes to 0000
+keep[is.na(keep)] = "0000"
+# TEST - make sure there are no NA's left
+which(is.na(keep)) # should return integer(0)
+
+# Write out genepop  ------------------------------------------------------
+
+# Build the genepop components
+msg <- c("This genepop file was generated using a script called identity_analysis.R written by Michelle Stuart with help from Malin Pinsky and Ryan Batt")
+
+loci <- paste(names(keep[,2:ncol(keep)]), collapse =",")
+
+gene <- vector()
+sample <- vector()
+for (i in 1:nrow(keep)){
+  gene[i] <- paste(keep[i,2:ncol(keep)], collapse = " ")
+  sample[i] <- paste(keep[i,1], gene[i], sep = ", ")
+}
+
+  ### WAIT ###
+
+out <- c(msg, loci, 'pop', sample)
+
+write.table(out, file = paste("data/",Sys.Date(), "_norecap.gen", sep = ""), row.names=FALSE, quote=FALSE, col.names=FALSE)
+```
+
+
+
 
