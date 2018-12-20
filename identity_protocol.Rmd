@@ -39,5 +39,36 @@ The genepop should be stored either on google drive or github and downloaded ont
 * allow fuzzy matching with 10% mismatch (10% of total = 144)
 * don’t show all comparisons - this generates a HUGE csv of every single pairwise comparison.
 
+Upload the output to github
+
+### Import the data into R
+
+```{r}
+library(tidyverse)
+
+idcsv <- read_csv("data/seq03-33_identity/33-03_seq_identity_ID.csv", col_types = cols(
+  `First ID` = col_character(),
+  `Loci typed` = col_integer(),
+  `Second ID` = col_character(),
+  `Loci typed_1` = col_integer(),
+  `Matching loci` = col_integer(),
+  `Mismatching loci` = col_integer(),
+  pID = col_double(),
+  pIDsib = col_double(),
+  Status = col_character()
+))
+
+# add mismatch rate
+idcsv <- idcsv %>%
+  mutate(mismatch_prop = `Mismatching loci`/`Matching loci`) %>% 
+# order by number of matching loci
+    arrange(`Matching loci`)
+
+
+ggplot(idcsv, aes(x = `Matching loci`, y = mismatch_prop)) +
+  geom_point() +
+  theme_bw()
+
+```
 
  
