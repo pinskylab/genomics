@@ -45,6 +45,7 @@ Upload the output to github
 
 ```{r}
 library(tidyverse)
+source("scripts/gen_helpers.R")
 
 idcsv <- read_csv("data/seq03-33_identity/33-03_seq_identity_ID.csv", col_types = cols(
   `First ID` = col_character(),
@@ -62,7 +63,14 @@ idcsv <- read_csv("data/seq03-33_identity/33-03_seq_identity_ID.csv", col_types 
 idcsv <- idcsv %>%
   mutate(mismatch_prop = `Mismatching loci`/`Matching loci`) %>% 
 # order by number of matching loci
-    arrange(`Matching loci`)
+    arrange(`Matching loci`) %>% 
+  # for the current run, there are extra .F on some names, remove them
+  mutate(`First ID` = ifelse(grepl(".F", `First ID`), substr(`First ID`, 1, 10), `First ID`), 
+         `Second ID` = ifelse(grepl(".F", `Second ID`), substr(`Second ID`, 1, 10), `Second ID`)) %>% 
+  # remove APCL_ from IDs
+  separate(`First ID`, c("spp", "first_id"), sep = "_") %>% 
+  separate(`Second ID`, c("spp2", "second_id"), sep = "_") %>% 
+  select(-spp, -spp2)
 
 
 ggplot(idcsv, aes(x = `Matching loci`, y = mismatch_prop)) +
@@ -71,4 +79,37 @@ ggplot(idcsv, aes(x = `Matching loci`, y = mismatch_prop)) +
 
 ```
 
+ ### Add metadata
+```{r}
+lab <- read_db("Laboratory")
+
+samples <- lab %>%
+  tbl("ligation") %>% 
+  
+
+
+# add Sample IDs
+suppressWarnings(c1 <- labor %>% tbl("extraction") %>% select(extraction_id, sample_id))
+suppressWarnings(c2 <- labor %>% tbl("digest") %>% select(digest_id, extraction_id))
+c3 <- left_join(c2, c1, by = "extraction_id")
+suppressWarnings(c4 <- labor %>% tbl("ligation") %>% select(ligation_id, digest_id))
+c5 <- left_join(c4, c3, by = "digest_id") %>% collect()
+
+### WAIT ###
+
+# for First.ids 
+lab1 <- c5
+names(lab1) <- paste("First.", names(lab1), sep = "")
+
+idcsv <- left_join(idcsv, lab1, by = c("First.ID" = "First.ligation_id"))
+
+### WAIT ###
+
+# For Second.IDs
+lab2 <- c5
+names(lab2) <- paste("Second.", names(lab2), sep = "")
+
+idcsv <- left_join(idcsv, lab2, by = c("Second.ID" = "Second.ligation_id"))
+
+```
  
