@@ -6612,111 +6612,495 @@ wrong <- leyte %>%
 ```
 Remove 1678 from the database and then examine idcsv and remove any pairs that already have a gen_id, then re-examine these matches.
 
+```{r}
+# fish <- leyte %>% 
+#   tbl("clownfish") %>% 
+#   collect()
+# 
+# change <- fish %>% 
+#   filter(gen_id == 1678) %>% 
+#   mutate(gen_id = NA)
+# 
+# fish <- anti_join(fish, change, by = "fish_table_id")
+# 
+# fish <- rbind(fish, change)
+# 
+# ley <- write_db("Leyte")
+# dbWriteTable(ley, "clownfish", fish, overwrite = T, row.names = F)
+# dbDisconnect(ley) 
+rm(ley)
 
-#BREAK
+# which fish are already accepted genetic recaptures?
+idcsv <- read_csv("data/seq03-33_identity/33-03_seq_identity_big_table.csv")
+idcsv <- idcsv %>% 
+  select(-first_gen_id, -second_gen_id)
+first <- full_meta(idcsv$first_sample_id, leyte) %>% 
+  select(sample_id, gen_id) %>% 
+  rename(first_gen_id = gen_id)
+  
+second <- full_meta(idcsv$second_sample_id, leyte) %>% 
+  select(sample_id, gen_id) %>% 
+  rename(second_gen_id = gen_id)
 
-<!-- ### EVERYTHING AFTER THIS POINT IS FOR REMOVING THE MATCHES FROM THE GENEPOP -->
-<!-- # SO IT CAN CONTINUE FOR PARENTAGE ANALYSIS.  FOR CONTINUED ID ANALYSIS, OPEN id_process.R ### -->
+idcsv <- left_join(idcsv, first, by = c("first_sample_id" = "sample_id"))
+idcsv <- left_join(idcsv, second, by = c("second_sample_id" = "sample_id"))
 
-<!-- # Open genepop ------------------------------------------------------------ -->
-<!-- ```{r} -->
-<!-- # this should be the genepop you used as input for Cervus ID -->
-<!-- genfile <- paste0("data/", params$data_dir, "/seq33_03_baits_only_SNPs.gen") -->
-<!-- genedf <- read_genepop(genfile) -->
+old_pairs <- idcsv %>% 
+  filter(first_gen_id == second_gen_id)
+
+new_pairs <- anti_join(idcsv, old_pairs)
+
+# remove samples with known issues
+ki <- lab %>% 
+  tbl("known_issues") %>% 
+  collect()
+
+# remove any first_id's that are on the known issues list
+new_pairs <- anti_join(new_pairs, ki, by = c("first_id" = "ligation_id"))
+new_pairs <- anti_join(new_pairs, ki, by = c("second_id" = "ligation_id"))
+
+```
+# auto assign any that will go
+```{r}
+investigate <- tibble()
+fish <- leyte %>% 
+  tbl("clownfish") %>% 
+  collect()
+
+for(i in seq(new_pairs$first_id)){
+  print(i)
+  x <- new_pairs %>% 
+    filter(first_id == new_pairs$first_id[i])
+  first <- x %>% 
+    select(contains("first"))
+  second <- x %>% 
+    select(contains("second"))
+  names(first) <- substr(names(first), 7, 20)
+  names(second) <- substr(names(second), 8, 25)
+  y <- rbind(first, second) %>% 
+    distinct() %>% 
+    mutate(year = substr(sample_id, 5,6), 
+           size = as.numeric(size)) %>% 
+    arrange(year)
+  
+  temp <- y %>% 
+    filter(is.na(fish_table_id))
+  if (nrow(temp) == 0){
+    if (length(unique(y$year)) == nrow(y)){
+      if (!is.unsorted(y$size)){
+        if (nrow(distinct(y,site)) == 1){
+          temp <- y %>% 
+            filter(!is.na(gen_id)) %>% 
+            distinct(gen_id)
+          if (nrow(temp) == 1){
+            fish <- fish %>%
+               mutate(gen_id = ifelse(sample_id %in% y$sample_id, temp$gen_id, gen_id))
+          
+           }else{
+              temp <- y %>% 
+              distinct(gen_id)
+            if (nrow(temp) == 1 & is.na(temp$gen_id)){
+              y <- create_genid(y)
+              fish <- fish %>%
+               mutate(gen_id = ifelse(sample_id %in% y$sample_id, y$gen_id[1], gen_id))
+            }else{
+                z <- new_pairs %>%
+              filter(first_id == new_pairs$first_id[i]) %>% 
+              mutate(id_note = "More than one gen_id!")
+            investigate <- rbind(investigate, z) %>%
+              distinct()
+              }
+            
+            }
+        }else{
+          z <- new_pairs %>%
+            filter(first_id == new_pairs$first_id[i]) %>% 
+            mutate(id_note = "Fish moved sites")
+          investigate <- rbind(investigate, z) %>%
+            distinct()
+        }
+      }else{
+        z <- new_pairs %>%
+          filter(first_id == new_pairs$first_id[i]) %>% 
+          mutate(id_note = "Fish shrinks!")
+        investigate <- rbind(investigate, z) %>%
+          distinct()
+      }
+    }else{
+      z <- new_pairs %>%
+        filter(first_id == new_pairs$first_id[i]) %>% 
+        mutate(id_note = "Fish caught in same year!")
+      investigate <- rbind(investigate, z) %>%
+        distinct()
+    }
+  }else{
+    z <- new_pairs %>%
+      filter(first_id == new_pairs$first_id[i]) %>% 
+      mutate(id_note = "Fish had previous identity issues!")
+    investigate <- rbind(investigate, z) %>%
+      distinct()
+  }
+}
+
+investigate <- investigate %>% 
+  mutate(first_tag_id = as.character(first_tag_id), 
+         second_tag_id = as.character(second_tag_id))
+  
+
+```
+Seven samples need investigation, the first is a set of samples that are from different sites but have no lab overlap, 2 is the same, 3 is the same
+## 1 - 3 are done
+## 4
+```{r}
+i <- 4
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+
+# have I already matched these?
+test <- leyte %>% 
+  tbl("clownfish") %>% 
+  filter(sample_id %in% y$sample_id) %>% 
+  select(sample_id, gen_id, notes) %>% 
+  collect()
+print("gen_id")
+test$gen_id
+test$notes
+
+a <- lig_from_samp(y$sample_id)
+test <- lab %>% 
+  tbl("known_issues") %>% 
+  filter(ligation_id %in% a$ligation_id) %>% 
+  collect()
+print("issues")
+test$ligation_id
+```
+```{r}
+y <- create_genid(y)
+change_db_gen_id(y)
+```
 
 
-<!-- # TEST - make sure the first 2 columns are names and a contig and get number of rows -->
-<!-- names(genedf[,1:2]) # [1] "names" "dDocent_Contig_11_59" -->
-<!-- nrow(genedf) # 2893 -->
+## 5 same group
+## 6
+```{r}
+i <- 6
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
 
-<!-- ``` -->
+# have I already matched these?
+test <- leyte %>% 
+  tbl("clownfish") %>% 
+  filter(sample_id %in% y$sample_id) %>% 
+  select(sample_id, gen_id, notes) %>% 
+  collect()
+print("gen_id")
+test$gen_id
+test$notes
 
-<!-- # Calculate the number of loci for analysis ------------------------------- -->
-<!-- ```{r} -->
-<!-- # convert 0000 to NA in the genepop data -->
-<!-- genedf[genedf == "0000"] <- NA -->
-<!-- # TEST - make sure there are no "0000" left -->
-<!-- which(genedf == "0000") # should return integer(0) -->
+a <- lig_from_samp(y$sample_id)
+test <- lab %>% 
+  tbl("known_issues") %>% 
+  filter(ligation_id %in% a$ligation_id) %>% 
+  collect()
+print("issues")
+test$ligation_id
+```
+```{r}
+y <- create_genid(y)
+change_db_gen_id(y)
+```
+## 7 same group
 
-<!-- # count the number of loci per individual - takes 7 minutes -->
-<!-- Sys.time() -->
-<!-- test <- genedf %>%  -->
-<!--   rowwise() %>%  -->
-<!--   group_by(names) %>%  -->
-<!--   summarise(numloci = sum(!is.na(.))) -->
-<!-- Sys.time() -->
+# Remove gen_id from samples with known issues
+```{r}
+# Pull in the known issues table if needed
 
+ki <- lab %>% 
+  tbl("known_issues") %>% 
+  collect()
 
-<!-- Sys.time() -->
-<!-- for(i in seq(genedf$names)){ -->
-<!--   genedf$numloci[i] <- sum(!is.na(genedf[i,])) -->
-<!-- } -->
-<!-- Sys.time() -->
+iss <- samp_from_lig(ki)
 
-<!-- s### WAIT ### -->
+# get the work history for the sample ids to see if there are other ligations that might have been successful.
+iss <- work_history(iss, "sample_id") %>% 
+  filter(grepl("P", pool))
 
-<!-- # TEST - make sure all of the numloci were populated -->
-<!-- which(is.na(genedf$numloci)) # should return integer(0) -->
+# which of these samples has only one pool?
+count <- iss %>% 
+  group_by(sample_id) %>% 
+  summarise(count = n()) %>% 
+  filter(count == 1) %>% 
+  mutate(gen_id = NA) %>% 
+  distinct()
 
+# remove the gen_id for these samples
+ change_db_gen_id(count)
 
-
-<!-- # Run through id analysis and compare to determine which to remove -------- -->
-<!-- genedf <- genedf %>%  -->
-<!--   separate(names, c("spp", "id"), sep = "_") %>%  -->
-<!--   select(-spp) %>%  -->
-<!--   separate(id, c("id", "F"), sep = "\\.") %>%  -->
-<!--   select(-F) -->
-
-<!-- lose <- left_join(select(idcsv, first_id, second_id), id_matches, by = c("first_id"= "id")) -->
-
-<!-- lose <- lose %>%  -->
-<!--   rename(first_num_loci = numloci) -->
-
-<!-- lose <- left_join(lose, id_matches, by = c("second_id"= "id")) %>%  -->
-<!--   rename(sec_num_loc = numloci) -->
-
-<!-- lose <- lose %>%  -->
-<!--   mutate(drop = ifelse(first_num_loci >= sec_num_loc, second_id, first_id)) -->
-
-
-<!-- genedf <- genedf %>%  -->
-<!--   filter() -->
-
-
-<!-- # Make a dataframe of the samples to keep for parentage analysis -->
-<!-- keep <- genedf[is.na(genedf$drop),] -->
-
-<!-- keep$numloci <- NULL -->
-<!-- keep$drop <- NULL -->
-
-<!-- # TODO -  Look for regenotypes again: -->
-
-<!-- # convert all the NA genotypes to 0000 -->
-<!-- keep[is.na(keep)] = "0000" -->
-<!-- # TEST - make sure there are no NA's left -->
-<!-- which(is.na(keep)) # should return integer(0) -->
-
-<!-- # Write out genepop  ------------------------------------------------------ -->
-
-<!-- # Build the genepop components -->
-<!-- msg <- c("This genepop file was generated using a script called identity_analysis.R written by Michelle Stuart with help from Malin Pinsky and Ryan Batt") -->
-
-<!-- loci <- paste(names(keep[,2:ncol(keep)]), collapse =",") -->
-
-<!-- gene <- vector() -->
-<!-- sample <- vector() -->
-<!-- for (i in 1:nrow(keep)){ -->
-<!--   gene[i] <- paste(keep[i,2:ncol(keep)], collapse = " ") -->
-<!--   sample[i] <- paste(keep[i,1], gene[i], sep = ", ") -->
-<!-- } -->
-
-<!--   ### WAIT ### -->
-
-<!-- out <- c(msg, loci, 'pop', sample) -->
-
-<!-- write.table(out, file = paste("data/",Sys.Date(), "_norecap.gen", sep = ""), row.names=FALSE, quote=FALSE, col.names=FALSE) -->
-<!-- ``` -->
+ # test to make sure it worked - looks good
+ test <- leyte %>% 
+   tbl("clownfish") %>% 
+   filter(sample_id %in% count$sample_id) %>% 
+   select(sample_id, gen_id) %>% 
+   collect()
+```
 
 
+# EVERYTHING AFTER THIS POINT IS FOR REMOVING THE MATCHES FROM THE GENEPOP SO IT CAN CONTINUE FOR PARENTAGE ANALYSIS.  FOR CONTINUED ID ANALYSIS, OPEN id_process.R
+
+## Open genepop ------------------------------------------------------------ -->
+```{r}
+# this should be the genepop you used as input for Cervus ID
+genfile <- "data/seq03-33_identity/seq33_03_baits_only_SNPs.gen"
+genedf <- read_genepop(genfile)
+
+# TEST - make sure the first 2 columns are names and a contig and get number of rows
+names(genedf[,1:2]) # [1] "names" "dDocent_Contig_11_59"
+nrow(genedf) # 2893
+```
+
+# Calculate the number of loci for analysis -------------------------------
+```{r}
+# convert 0000 to NA in the genepop data
+genedf[genedf == "0000"] <- NA
+# TEST - make sure there are no "0000" left
+which(genedf == "0000") # should return integer(0)
+
+# count the number of loci per individual - takes 2-7 minutes
+Sys.time()
+for(i in seq(genedf$names)){
+  genedf$numloci[i] <- sum(!is.na(genedf[i,]))
+}
+Sys.time()
+
+### WAIT ###
+
+# TEST - make sure all of the numloci were populated
+which(is.na(genedf$numloci)) # should return integer(0)
+
+```
+# determine which to remove based on num loci of each id match --------
+```{r}
+
+# fix names of samples
+genedf <- genedf %>%
+  mutate(names = substr(names, 6, 25)) %>% 
+  rename(id = names)
+
+# fix samples that have a .F at the end
+genedf <- genedf %>% 
+  mutate(id = ifelse(grepl(".F", id), str_replace(id, ".F", ""), id))
+
+# figure out which rows of idcsv to keep
+accepted_matches <- leyte %>% 
+  tbl("clownfish") %>%
+  group_by(gen_id) %>% 
+  summarize(caps = n()) %>% 
+  filter(caps > 1, 
+         !is.na(gen_id)) %>% 
+  collect() 
+
+accepted_matches <- leyte %>% 
+  tbl("clownfish") %>% 
+  select(sample_id, gen_id) %>% 
+  filter(gen_id %in% accepted_matches$gen_id) %>% 
+  collect() %>% 
+  mutate(accepted = T)
+
+# get the work history for the matches
+pairs <- work_history(accepted_matches, "sample_id")
+
+# remove any work that is not in the current genepop
+pairs <- pairs %>% 
+  filter(ligation_id %in% genedf$id)
+  
+# bring in the big table from the identity analysis
+idcsv <- read_csv("data/seq03-33_identity/33-03_seq_identity_big_table.csv")
+result <- tibble()
+for(i in seq(pairs$sample_id)){
+x <- idcsv %>% 
+  filter(first_id %in% pairs$ligation_id[i])
+if (nrow(x) == 0){
+  x <- idcsv %>% 
+  filter(second_id == pairs$ligation_id[i])
+}
+ # a & b are  the line numbers from genepop file that matches an the first and second ID in the match table
+  a <- which(genedf$id %in% x$first_id)
+  b <- which(genedf$id %in% x$second_id)
+  # if the first num loci is greater than or equal to the second num loci, drop the second id, or else drop the first.
+x <- x %>% 
+  mutate(drop = ifelse(genedf$numloci[a] > genedf$numloci[b], second_id, first_id))
+result <- rbind(result, x)
+
+ }
+result <- result %>% 
+  select(drop) %>% 
+  distinct()
+
+genedf <- genedf %>%
+  filter(!id %in% result$drop)
+```
+# Look for regenotypes again:
+```{r}
+# select only the id column from the genedf
+ids <- genedf %>% 
+  select(id) %>% 
+  rename(ligation_id = id)
+
+# get sample ids 
+ids <- samp_from_lig(ids)
+
+# find any sample ids that occur more than once
+regenos <- ids %>% 
+  group_by(sample_id) %>% 
+  summarise(count = n()) %>% 
+  filter(count > 1)
+
+# find the ligation ids that go with them
+regenos <- left_join(regenos, ids, by = "sample_id")
+
+# keep only the regeno with the highest number of loci for further analysis (in the future these files will be merged)
+result <- tibble()
+for(i in seq(regenos$sample_id)){
+x <- regenos %>% 
+  filter(sample_id == regenos$sample_id[i])
+ # a & b are  the line numbers from genepop file that matches an the first and second ID in the match table
+ x <- left_join(x, select(genedf, id, numloci), by = c("ligation_id" = "id")) %>% 
+   arrange(numloci)
+  # if the first num loci is greater than or equal to the second num loci, drop the second id, or else drop the first.
+x <- x %>% 
+  mutate(drop = ligation_id[1])
+result <- rbind(result, x)
+
+ }
+result <- result %>% 
+  select(drop) %>% 
+  distinct()
+
+genedf <- genedf %>%
+  filter(!id %in% result$drop)
+
+```
+# convert all the NA genotypes to 0000
+```{r}
+genedf[is.na(genedf)] = "0000"
+# TEST - make sure there are no NA's left
+which(is.na(genedf)) # should return integer(0)
+```
+
+
+# Write out genepop  ------------------------------------------------------
+```{r}
+# Build the genepop components
+msg <- c("This genepop file was generated using a script called identity_analysis.R written by Michelle Stuart with help from Malin Pinsky and Ryan Batt")
+
+loci <- paste(id(genedf[,2:ncol(genedf)]), collapse =",")
+
+gene <- vector()
+sample <- vector()
+
+Sys.time()
+for (i in seq(genedf$id)){
+  gene[i] <- paste(genedf[i,2:ncol(genedf)], collapse = " ")
+  sample[i] <- paste(genedf[i,1], gene[i], sep = ", ")
+}
+Sys.time()
+  ### WAIT ###
+
+out <- c(msg, loci, 'pop', sample)
+
+write.table(out, file = paste("data/",Sys.Date(), "_norecap.gen", sep = ""), row.names=FALSE, quote=FALSE, col.names=FALSE)
+```
+
+
+```{r}
+# cleanup
+rm(accepted_matches, change, count, first, fish, gen_recaps, idcsv, ids, investigate, iss, ki, lose, missing, new_pairs, old_pairs, pairs, result, second, temp, test, x, y, z, a, b, i, loci, msg, out, sample)
+```
+
+# Assign gen_ids to all of the samples in the genepop that do not currently have any
+```{r}
+# This will include regenotypes since it is by sample_id instead of ligation id
+
+# Check to see if gen_ids already exist
+# full fish database
+fish <- leyte %>% 
+  tbl("clownfish") %>% 
+  collect()
+
+# just sample ids and gen ids
+genids <- fish %>% 
+  select(sample_id, gen_id)
+
+# get sample Ids for genedf 
+ids <- genedf %>% 
+  select(id) %>% 
+  rename(ligation_id = id)
+
+ids <- samp_from_lig(ids) %>% 
+  distinct(sample_id)
+
+# Iterate through all of the samples, this takes a while and was a horrible idea.  Next time make a table and write it once.
+
+  # change_db_gen_id(y)
+
+# was taking so long I stopped it
+
+# restore backup
+
+# imported from csv into sequel pro and it imported NAs as 0 for gen_id
+clown <- fish
+fish <- leyte %>% 
+  tbl("clownfish") %>% 
+  collect()
+
+# change 0 gen_id to NA
+fish <- fish %>% 
+  mutate(gen_id = ifelse(gen_id == 0, NA, gen_id))
+
+# assign gen_ids to the samples in the genedf
+ids <- ids %>% 
+  mutate(gen_id = 1690:(1689+nrow(ids)))
+
+change <- tibble()
+# add the gen_ids to the fish table
+for (i in seq(ids$sample_id)){
+  x <- fish %>%
+    filter(sample_id == ids$sample_id[i]) %>% 
+    mutate(gen_id = ifelse(is.na(gen_id), ids$gen_id[i], gen_id))
+  change <- rbind(change, x)
+}
+
+# remove the changed rows from the fish table (these rows in the fish table are unchanged)
+fish <- anti_join(fish, change, by = "fish_table_id")
+
+# add the changed rows to the fish table
+fish <- rbind(fish, change)
+
+# write the fish table to the database
+# ley <- write_db("Leyte")
+# dbWriteTable(ley, "clownfish", fish, overwrite = T, row.names = F)
+# dbDisconnect(ley)
+# rm(ley)
+```
 
 

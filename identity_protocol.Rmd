@@ -1,10 +1,10 @@
----
+ ---
 title: "Identity Protocol for APCL project"
 output: html_notebook
 params:
-  data_loc:  seq03-33_identity/33-03_seq_identity_ID.csv
----
-
+ data_dir:  seq03-33_identity
+ data_name:  33-03_seq_identity
+ ---
 # Workspace setup
 ```{r}
  library(tidyverse)
@@ -54,10 +54,10 @@ The genepop should be stored either on google drive or github and downloaded ont
  
 ### Upload the output to github
  
-<!-- ### Import the data into R -->
+### Import the data into R
  
 ```{r}
-idcsv <- read_csv(paste0("data/", params$data_loc), col_types = cols(
+idcsv <- read_csv("data/seq03-33_identity/33-03_seq_identity_ID.csv", col_types = cols(
   `First ID` = col_character(),
   `Loci typed` = col_integer(),
   `Second ID` = col_character(),
@@ -91,7 +91,7 @@ ggplot(idcsv, aes(x = matching_loci, y = mismatch_prop)) +
  
 ```
 
-<!-- ### Add sample_ids -->
+  ### Add sample_ids
 ```{r}
  lab <- read_db("Laboratory")
  
@@ -173,7 +173,7 @@ rm(first, sec)
 
 ```
 
-<!-- ## Get lat lons -->
+## Get lat lons
 ```{r}
 
 #find the lat lon of the first anem
@@ -235,7 +235,7 @@ idcsv <- left_join(idcsv, second, by = "second_id")
 rm(lat, second)  
 
 ```
-<!-- ### Pull out new regenotypes -->
+### Pull out new regenotypes
 ```{r}
 new_regenos <- idcsv %>% 
   filter(first_sample_id == second_sample_id)
@@ -244,7 +244,7 @@ idcsv <- anti_join(idcsv, new_regenos, by = c("first_id", "first_loci_typed", "f
 ```
 
 
-<!-- ### Flag fish that were caught on the same day - the only one is a fish that has already been flagged as a recapture -->
+### Flag fish that were caught on the same day - the only one is a fish that has already been flagged as a recapture
 ```{r}
 idcsv <- idcsv %>% 
   mutate(date_eval = ifelse(first_date == second_date, "FAIL", NA))
@@ -255,7 +255,7 @@ date_fails <- idcsv %>%
 
 ```
 
-<!-- ### Flag matches that were caught more than 250m apart.  Given the data that Katrina has found as well as my data, it looks like it is possible that these fish have moved sites and should not be discounted simply because they weren't captured at the same site.  These need to be looked into. -->
+### Flag matches that were caught more than 250m apart.  Given the data that Katrina has found as well as my data, it looks like it is possible that these fish have moved sites and should not be discounted simply because they weren't captured at the same site.  These need to be looked into.
 
 ```{r}
 # calculate the distances
@@ -278,7 +278,7 @@ same_site <- dist_fails %>%
   # filter(first_sample_id == "APCL15_098")
 
 ```
-<!-- ### Flag any fish that shrink by more than 1.5cm   -->
+### Flag any fish that shrink by more than 1.5cm  
 - one pair is clearly not truely the same fish (L4964, L5012) - caught at Wangag and Tamakin days from each other with different pit tags
 
 ```{r}
@@ -291,7 +291,7 @@ size_fails <- idcsv %>%
   select(first_id, second_id, first_date, second_date, first_size, second_size, first_gen_id, second_gen_id, first_tag_id, second_tag_id, mismatch_prop, everything())
 ```
 
-<!-- ### Flag fish that were caught at different sites -->
+### Flag fish that were caught at different sites
 ```{r}
 idcsv <- idcsv %>% 
   mutate(site_eval = ifelse(first_site != second_site, "FAIL", NA))
@@ -302,7 +302,7 @@ site_fails <- idcsv %>%
 ```
 
 
-# Write big table into a file ------------------------------------------------------------
+# Write big table into a file -----------------------
 ```{r}
 # write_csv(idcsv, paste0("data/", params$data_dir, "/", params$data_name, "_big_table.csv"))
 # write_csv(new_regenos, paste0("data/", params$data_dir, "/new_regenos.csv"))
@@ -310,7 +310,7 @@ site_fails <- idcsv %>%
 # idcsv <- read_csv("data/seq03-33_identity/33-03_seq_identity_big_table.csv")
 
 # cleanup
-# rm(alldists)
+rm(alldists)
 ```
 # Does the first gen_id match the second gen id?
 ```{r}
@@ -321,54 +321,647 @@ old_pairs <- idcsv %>%
 ```
 
 
-## Create a table of only new potential genetic recaptures
+# Examine each new match
 ```{r}
-new_pairs <- anti_join(idcsv, old_pairs, , by = c("first_id", "first_loci_typed", "first_sample_id", "first_fish_table_id", "first_anem_table_id", "first_size", "first_color", "first_gen_id", "first_recap", "first_tag_id", "first_fish_obs_time", "first_fish_collector", "first_fish_notes", "first_dive_table_id", "first_anem_obs_time", "first_anem_id", "first_anem_obs", "first_anem_collector", "first_anem_notes", "first_dive_num", "first_date", "first_site", "first_gps", "first_divers", "second_id", "second_loci_typed", "second_sample_id", "second_fish_table_id", "second_anem_table_id", "second_size", "second_color", "second_gen_id", "second_recap", "second_tag_id", "second_fish_obs_time", "second_fish_collector", "second_fish_notes", "second_dive_table_id", "second_anem_obs_time", "second_anem_id", "second_anem_obs", "second_anem_collector", "second_anem_notes", "second_dive_num", "second_date", "second_site", "second_gps", "second_divers", "matching_loci", "mismatching_loci", "pID", "pIDsib", "status", "mismatch_prop", "first_lat", "first_lon", "second_lat", "second_lon", "date_eval", "distkm", "dist_eval", "size_eval", "site_eval"))
+new_pairs <- anti_join(idcsv, old_pairs)
+
+i <- 1
+  x <- new_pairs %>% 
+    filter(first_id == new_pairs$first_id[i])
+  first <- x %>% 
+    select(contains("first"))
+  second <- x %>% 
+    select(contains("second"))
+  names(first) <- substr(names(first), 7, 20)
+  names(second) <- substr(names(second), 8, 25)
+  y <- rbind(first, second)
+  
 
 ```
-# Automatic investigation of matches
-```{r}
-# create a blank table to hold samples that aren't obvious genetic recaptures
-investigate <- tibble()
+Really have to go through all of these by hand and make sure they look good.
 
-# pull in the entire clownfish table from the database
+I'm pulling the matches into a table and looking at the data side by side, especially size, color, tag_id, and lat lon.  It is interesting how many of these matches are from fish that were caught a few years apart at almost exactly the same lat lon.
+
+First pair, APCL15_375493 & APCL16_040, look great.  Adding the gen_id of the 2015 fish to the 2016 fish. Tag loss
+```{r}
+# leyte <- read_db("Leyte")
+
 fish <- leyte %>% 
   tbl("clownfish") %>% 
   collect()
 
-# iterate through all of the pairs in the new results and check to see
+fish <- fish %>%
+  mutate(gen_id = ifelse(sample_id == "APCL16_040", 1483, gen_id))
+```
+Next set, look good, not the same anemone but the same site and similar coordinates, looks like the fish grew from an Orange to a YP. APCL15_405714 & APCL17_048. Tag loss.
+```{r}
+fish <- fish %>%
+mutate(gen_id = ifelse(sample_id == "APCL17_048", 1603, gen_id))
+```
+Next set look good, fish grew, tag loss, same site, APCL15_369033 & APCL16_630
+```{r}
+fish <- fish %>%
+  mutate(gen_id = ifelse(sample_id == "APCL16_630", 1369, gen_id))
+```
+This next set needs to be investigated. 2 fish are from the same year, same site, 1cm difference in size, the third in the set is from 2014 and a different site but could have moved.
+```{r}
+i <- 4
+
+  x <- new_pairs %>% 
+    filter(first_id == new_pairs$first_id[i])
+  first <- x %>% 
+    select(contains("first"))
+  second <- x %>% 
+    select(contains("second"))
+  names(first) <- substr(names(first), 7, 20)
+  names(second) <- substr(names(second), 8, 25)
+  y <- rbind(first, second) %>% 
+    distinct()
+  
+  investigate <- tibble()
+  
+  z <- new_pairs %>% 
+    filter(first_id == new_pairs$first_id[i])
+  investigate <- rbind(investigate, z)
+```
+
+i <- 5, Same as the one above because the first_id is repeated for 2 different matches
+
+
+next bunch
+```{r}
+i <- 6
+
+  x <- new_pairs %>% 
+    filter(first_id == new_pairs$first_id[i])
+  first <- x %>% 
+    select(contains("first"))
+  second <- x %>% 
+    select(contains("second"))
+  names(first) <- substr(names(first), 7, 20)
+  names(second) <- substr(names(second), 8, 25)
+  y <- rbind(first, second) %>% 
+    distinct() %>% 
+    mutate(year = substr(sample_id, 5,6)) %>% 
+    arrange(year)
+  fish <- fish %>%
+  mutate(gen_id = ifelse(sample_id == y$sample_id[2], y$gen_id[1], gen_id))
+```
+
+next bunch
+```{r}
+i <- 7
+
+  x <- new_pairs %>% 
+    filter(first_id == new_pairs$first_id[i])
+  first <- x %>% 
+    select(contains("first"))
+  second <- x %>% 
+    select(contains("second"))
+  names(first) <- substr(names(first), 7, 20)
+  names(second) <- substr(names(second), 8, 25)
+  y <- rbind(first, second) %>% 
+    distinct() %>% 
+    mutate(year = substr(sample_id, 5,6)) %>% 
+    arrange(year)
+  fish <- fish %>%
+    mutate(gen_id = ifelse(sample_id == y$sample_id[2], y$gen_id[1], gen_id))
+```
+
+
+next bunch - tagged recapture and took a finclip anyway and it matches, very nice
+```{r}
+i <- 8
+
+  x <- new_pairs %>% 
+    filter(first_id == new_pairs$first_id[i])
+  first <- x %>% 
+    select(contains("first"))
+  second <- x %>% 
+    select(contains("second"))
+  names(first) <- substr(names(first), 7, 20)
+  names(second) <- substr(names(second), 8, 25)
+  y <- rbind(first, second) %>% 
+    distinct() %>% 
+    mutate(year = substr(sample_id, 5,6)) %>% 
+    arrange(year)
+  fish <- fish %>%
+    mutate(gen_id = ifelse(sample_id == y$sample_id[2], y$gen_id[1], gen_id))
+```
+
+
+next bunch 
+```{r}
+i <- 9
+
+  x <- new_pairs %>% 
+    filter(first_id == new_pairs$first_id[i])
+  first <- x %>% 
+    select(contains("first"))
+  second <- x %>% 
+    select(contains("second"))
+  names(first) <- substr(names(first), 7, 20)
+  names(second) <- substr(names(second), 8, 25)
+  y <- rbind(first, second) %>% 
+    distinct() %>% 
+    mutate(year = substr(sample_id, 5,6)) %>% 
+    arrange(year)
+  fish <- fish %>%
+    mutate(gen_id = ifelse(sample_id %in% y$sample_id, 1465, gen_id))
+```
+10 - same as the ones above
+next bunch  
+```{r}
+i <- 11
+
+  x <- new_pairs %>% 
+    filter(first_id == new_pairs$first_id[i])
+  first <- x %>% 
+    select(contains("first"))
+  second <- x %>% 
+    select(contains("second"))
+  names(first) <- substr(names(first), 7, 20)
+  names(second) <- substr(names(second), 8, 25)
+  y <- rbind(first, second) %>% 
+    distinct() %>% 
+    mutate(year = substr(sample_id, 5,6)) %>% 
+    arrange(year)
+  fish <- fish %>%
+    mutate(gen_id = ifelse(sample_id %in% y$sample_id, 1378, gen_id))
+```
+
+next bunch  
+```{r}
+i <- 12
+
+  x <- new_pairs %>% 
+    filter(first_id == new_pairs$first_id[i])
+  first <- x %>% 
+    select(contains("first"))
+  second <- x %>% 
+    select(contains("second"))
+  names(first) <- substr(names(first), 7, 20)
+  names(second) <- substr(names(second), 8, 25)
+  y <- rbind(first, second) %>% 
+    distinct() %>% 
+    mutate(year = substr(sample_id, 5,6)) %>% 
+    arrange(year)
+  fish <- fish %>%
+  mutate(gen_id = ifelse(sample_id %in% y$sample_id, 1433, gen_id))
+```
+
+
+next bunch  
+```{r}
+i <- 13
+
+  x <- new_pairs %>% 
+    filter(first_id == new_pairs$first_id[i])
+  first <- x %>% 
+    select(contains("first"))
+  second <- x %>% 
+    select(contains("second"))
+  names(first) <- substr(names(first), 7, 20)
+  names(second) <- substr(names(second), 8, 25)
+  y <- rbind(first, second) %>% 
+    distinct() %>% 
+    mutate(year = substr(sample_id, 5,6)) %>% 
+    arrange(year)
+  fish <- fish %>%
+  mutate(gen_id = ifelse(sample_id %in% y$sample_id, 999, gen_id))
+```
+
+next bunch  
+```{r}
+i <- 14
+
+  x <- new_pairs %>% 
+    filter(first_id == new_pairs$first_id[i])
+  first <- x %>% 
+    select(contains("first"))
+  second <- x %>% 
+    select(contains("second"))
+  names(first) <- substr(names(first), 7, 20)
+  names(second) <- substr(names(second), 8, 25)
+  y <- rbind(first, second) %>% 
+    distinct() %>% 
+    mutate(year = substr(sample_id, 5,6)) %>% 
+    arrange(year)
+  fish <- fish %>%
+  mutate(gen_id = ifelse(sample_id %in% y$sample_id, 1040, gen_id))
+```
+
+
+next bunch  - these fish need to be investigated - different sites, about 1km away, same size but color change from YP to O.
+```{r}
+i <- 15
+
+  x <- new_pairs %>% 
+    filter(first_id == new_pairs$first_id[i])
+  first <- x %>% 
+    select(contains("first"))
+  second <- x %>% 
+    select(contains("second"))
+  names(first) <- substr(names(first), 7, 20)
+  names(second) <- substr(names(second), 8, 25)
+  y <- rbind(first, second) %>% 
+    distinct() %>% 
+    mutate(year = substr(sample_id, 5,6)) %>% 
+    arrange(year)
+  
+   investigate <- new_pairs %>% 
+    filter(first_id == new_pairs$first_id[i])
+  
+  fish <- fish %>%
+  mutate(gen_id = ifelse(sample_id %in% y$sample_id, 1040, gen_id))
+```
+
+size, color, location all look great
+```{r}
+i <- 16
+
+  x <- new_pairs %>% 
+    filter(first_id == new_pairs$first_id[i])
+  first <- x %>% 
+    select(contains("first"))
+  second <- x %>% 
+    select(contains("second"))
+  names(first) <- substr(names(first), 7, 20)
+  names(second) <- substr(names(second), 8, 25)
+  y <- rbind(first, second) %>% 
+    distinct() %>% 
+    mutate(year = substr(sample_id, 5,6)) %>% 
+    arrange(year)
+  fish <- fish %>%
+  mutate(gen_id = ifelse(sample_id %in% y$sample_id, 1372, gen_id))
+```
+
+```{r}
+i <- 17
+
+  x <- new_pairs %>% 
+    filter(first_id == new_pairs$first_id[i])
+  first <- x %>% 
+    select(contains("first"))
+  second <- x %>% 
+    select(contains("second"))
+  names(first) <- substr(names(first), 7, 20)
+  names(second) <- substr(names(second), 8, 25)
+  y <- rbind(first, second) %>% 
+    distinct() %>% 
+    mutate(year = substr(sample_id, 5,6)) %>% 
+    arrange(year)
+  
+  This matches to an old id error
+  z <- c("APCL14_305", "APCL14_306")
+  test <- full_meta(z, leyte)
+  # even though there is a match, can't tell which fish it was because they were caught on the same anemone in the same year
+  
+  fish <- fish %>%
+  mutate(gen_id = ifelse(sample_id %in% y$sample_id, 1372, gen_id))
+```
+
+need investigation because 2 fish are from the same year, different sites
+```{r}
+i <- 18
+
+  x <- new_pairs %>% 
+    filter(first_id == new_pairs$first_id[i])
+  first <- x %>% 
+    select(contains("first"))
+  second <- x %>% 
+    select(contains("second"))
+  names(first) <- substr(names(first), 7, 20)
+  names(second) <- substr(names(second), 8, 25)
+  y <- rbind(first, second) %>% 
+    distinct() %>% 
+    mutate(year = substr(sample_id, 5,6)) %>% 
+    arrange(year)
+  fish <- fish %>%
+  mutate(gen_id = ifelse(sample_id %in% y$sample_id, 1372, gen_id))
+   
+  z <- new_pairs %>% 
+    filter(first_id == new_pairs$first_id[i])
+  investigate <- rbind(investigate, z)
+  
+```
+
+# need investigation because 2 fish are from the same year, different sites, i=20 is same set
+# ```{r}
+# i <- 19
+# 
+#   x <- new_pairs %>% 
+#     filter(first_id == new_pairs$first_id[i])
+#   first <- x %>% 
+#     select(contains("first"))
+#   second <- x %>% 
+#     select(contains("second"))
+#   names(first) <- substr(names(first), 7, 20)
+#   names(second) <- substr(names(second), 8, 25)
+#   y <- rbind(first, second) %>% 
+#     distinct() %>% 
+#     mutate(year = substr(sample_id, 5,6)) %>% 
+#     arrange(year)
+#   fish <- fish %>%
+#   mutate(gen_id = ifelse(sample_id %in% y$sample_id, 1372, gen_id))
+#   
+#   z <- new_pairs %>% 
+#     filter(first_id == new_pairs$first_id[i])
+#   investigate <- rbind(investigate, z)
+# ```
+# 
+# need investigation because 2 fish are from the same year, different sites
+# ```{r}
+# i <- 21
+# 
+#   x <- new_pairs %>% 
+#     filter(first_id == new_pairs$first_id[i])
+#   first <- x %>% 
+#     select(contains("first"))
+#   second <- x %>% 
+#     select(contains("second"))
+#   names(first) <- substr(names(first), 7, 20)
+#   names(second) <- substr(names(second), 8, 25)
+#   y <- rbind(first, second) %>% 
+#     distinct() %>% 
+#     mutate(year = substr(sample_id, 5,6)) %>% 
+#     arrange(year)
+#   fish <- fish %>%
+#   mutate(gen_id = ifelse(sample_id %in% y$sample_id, 1372, gen_id))
+#   
+#   z <- new_pairs %>% 
+#     filter(first_id == new_pairs$first_id[i])
+#   investigate <- rbind(investigate, z)
+# ```
+# 
+# Even though this fish goes from a YP to an O, it wasn't the largest fish on the anemone and so was not the YP breeder on the anemone when it was marked as YP.
+# ```{r}
+# i <- 22
+# 
+#   x <- new_pairs %>% 
+#     filter(first_id == new_pairs$first_id[i])
+#   first <- x %>% 
+#     select(contains("first"))
+#   second <- x %>% 
+#     select(contains("second"))
+#   names(first) <- substr(names(first), 7, 20)
+#   names(second) <- substr(names(second), 8, 25)
+#   y <- rbind(first, second) %>% 
+#     distinct() %>% 
+#     mutate(year = substr(sample_id, 5,6)) %>% 
+#     arrange(year)
+#   
+#   fish <- fish %>%
+#   mutate(gen_id = ifelse(sample_id %in% y$sample_id, 1557, gen_id))
+# ```
+# 
+# 
+# needs investigation, didn't grow enough, different sites
+# ```{r}
+# i <- 23
+# 
+#   x <- new_pairs %>% 
+#     filter(first_id == new_pairs$first_id[i])
+#   first <- x %>% 
+#     select(contains("first"))
+#   second <- x %>% 
+#     select(contains("second"))
+#   names(first) <- substr(names(first), 7, 20)
+#   names(second) <- substr(names(second), 8, 25)
+#   y <- rbind(first, second) %>% 
+#     distinct() %>% 
+#     mutate(year = substr(sample_id, 5,6)) %>% 
+#     arrange(year)
+#   fish <- fish %>%
+#   mutate(gen_id = ifelse(sample_id %in% y$sample_id, 1557, gen_id))
+# 
+#   z <- new_pairs %>% 
+#     filter(first_id == new_pairs$first_id[i])
+#   investigate <- rbind(investigate, z) %>% 
+#     distinct()
+# ```
+# 
+# 
+# ```{r}
+# i <- 24
+# 
+#   x <- new_pairs %>% 
+#     filter(first_id == new_pairs$first_id[i])
+#   first <- x %>% 
+#     select(contains("first"))
+#   second <- x %>% 
+#     select(contains("second"))
+#   names(first) <- substr(names(first), 7, 20)
+#   names(second) <- substr(names(second), 8, 25)
+#   y <- rbind(first, second) %>% 
+#     distinct() %>% 
+#     mutate(year = substr(sample_id, 5,6), 
+#            size = as.numeric(size)) %>% 
+#     arrange(year)
+#   
+#   
+#   if (!is.unsorted(y$size)){
+#     if (nrow(distinct(y,site)) == 1){
+#       new_pairs$distkm[i]
+#       temp <- y %>% 
+#         filter(!is.na(gen_id)) %>% 
+#         distinct(gen_id)
+#       if (nrow(temp) == 1){
+#   (fish <- fish %>%
+#   mutate(gen_id = ifelse(sample_id %in% y$sample_id, temp$gen_id, gen_id)))
+#       }else{
+#         print("More than one gen_id!")
+#           (z <- new_pairs %>%
+#     filter(first_id == new_pairs$first_id[i]))
+#   (investigate <- rbind(investigate, z) %>%
+#     distinct())
+#       }
+#     }else{
+#       print("Fish moved sites")
+#          (z <- new_pairs %>%
+#     filter(first_id == new_pairs$first_id[i]))
+# (  investigate <- rbind(investigate, z) %>%
+#     distinct())
+#     }
+#   }else{
+#     print("Fish shrinks!")
+#        (z <- new_pairs %>%
+#     filter(first_id == new_pairs$first_id[i]))
+#   (investigate <- rbind(investigate, z) %>%
+#     distinct())
+#   }
+#     
+#     
+#   
+#  
+#   
+# 
+# ```
+# ```{r}
+# i <- 25
+# 
+#   x <- new_pairs %>% 
+#     filter(first_id == new_pairs$first_id[i])
+#   first <- x %>% 
+#     select(contains("first"))
+#   second <- x %>% 
+#     select(contains("second"))
+#   names(first) <- substr(names(first), 7, 20)
+#   names(second) <- substr(names(second), 8, 25)
+#   y <- rbind(first, second) %>% 
+#     distinct() %>% 
+#     mutate(year = substr(sample_id, 5,6), 
+#            size = as.numeric(size)) %>% 
+#     arrange(year)
+#   
+#   if (length(unique(y$year)) == nrow(y)){
+#   if (!is.unsorted(y$size)){
+#     if (nrow(distinct(y,site)) == 1){
+#       new_pairs$distkm[i]
+#       temp <- y %>% 
+#         filter(!is.na(gen_id)) %>% 
+#         distinct(gen_id)
+#       if (nrow(temp) == 1){
+#   (fish <- fish %>%
+#   mutate(gen_id = ifelse(sample_id %in% y$sample_id, temp$gen_id, gen_id)))
+#       }else{
+#         print("More than one gen_id!")
+#           (z <- new_pairs %>%
+#     filter(first_id == new_pairs$first_id[i]))
+#   (investigate <- rbind(investigate, z) %>%
+#     distinct())
+#       }
+#     }else{
+#       print("Fish moved sites")
+#          (z <- new_pairs %>%
+#     filter(first_id == new_pairs$first_id[i]))
+# (  investigate <- rbind(investigate, z) %>%
+#     distinct())
+#     }
+#   }else{
+#     print("Fish shrinks!")
+#        (z <- new_pairs %>%
+#     filter(first_id == new_pairs$first_id[i]))
+#   (investigate <- rbind(investigate, z) %>%
+#     distinct())
+#   }
+#   }else{
+#     print("Fish caught in same year!")
+#        (z <- new_pairs %>%
+#     filter(first_id == new_pairs$first_id[i]))
+#   (investigate <- rbind(investigate, z) %>%
+#     distinct())
+#   }
+# ```
+# 
+# ```{r}
+# i <- 26
+# 
+#   x <- new_pairs %>% 
+#     filter(first_id == new_pairs$first_id[i])
+#   first <- x %>% 
+#     select(contains("first"))
+#   second <- x %>% 
+#     select(contains("second"))
+#   names(first) <- substr(names(first), 7, 20)
+#   names(second) <- substr(names(second), 8, 25)
+#   y <- rbind(first, second) %>% 
+#     distinct() %>% 
+#     mutate(year = substr(sample_id, 5,6), 
+#            size = as.numeric(size)) %>% 
+#     arrange(year)
+#   
+#   if (length(unique(y$year)) == nrow(y)){
+#   if (!is.unsorted(y$size)){
+#     if (nrow(distinct(y,site)) == 1){
+#       new_pairs$distkm[i]
+#       temp <- y %>% 
+#         filter(!is.na(gen_id)) %>% 
+#         distinct(gen_id)
+#       if (nrow(temp) == 1){
+#   (fish <- fish %>%
+#   mutate(gen_id = ifelse(sample_id %in% y$sample_id, temp$gen_id, gen_id)))
+#       }else{
+#         print("More than one gen_id!")
+#           (z <- new_pairs %>%
+#     filter(first_id == new_pairs$first_id[i]))
+#   (investigate <- rbind(investigate, z) %>%
+#     distinct())
+#       }
+#     }else{
+#       print("Fish moved sites")
+#          (z <- new_pairs %>%
+#     filter(first_id == new_pairs$first_id[i]))
+# (  investigate <- rbind(investigate, z) %>%
+#     distinct())
+#     }
+#   }else{
+#     print("Fish shrinks!")
+#        (z <- new_pairs %>%
+#     filter(first_id == new_pairs$first_id[i]))
+#   (investigate <- rbind(investigate, z) %>%
+#     distinct())
+#   }
+#   }else{
+#     print("Fish caught in same year!")
+#        (z <- new_pairs %>%
+#     filter(first_id == new_pairs$first_id[i]))
+#   (investigate <- rbind(investigate, z) %>%
+#     distinct())
+#   }
+# ```
+# Assign new pairs automatically #######################################
+```{r}
+investigate <- tibble()
+fish <- leyte %>% 
+  tbl("clownfish") %>% 
+  collect()
+
 for(i in seq(new_pairs$first_id)){
   print(i)
-  y <- check_id_match(i, new_pairs)
+  x <- new_pairs %>% 
+    filter(first_id == new_pairs$first_id[i])
+  first <- x %>% 
+    select(contains("first"))
+  second <- x %>% 
+    select(contains("second"))
+  names(first) <- substr(names(first), 7, 20)
+  names(second) <- substr(names(second), 8, 25)
+  y <- rbind(first, second) %>% 
+    distinct() %>% 
+    mutate(year = substr(sample_id, 5,6), 
+           size = as.numeric(size)) %>% 
+    arrange(year)
   
-  # do any rows lack a fish_table_id?
   temp <- y %>% 
     filter(is.na(fish_table_id))
-  
-  # if all rows have a fish-table_id
   if (nrow(temp) == 0){
-    # are all of the fish from different years?
     if (length(unique(y$year)) == nrow(y)){
-      # do the fish grow over time?
       if (!is.unsorted(y$size)){
-        # are the fish found at the same site?
         if (nrow(distinct(y,site)) == 1){
-          new_pairs$distkm[i]
           temp <- y %>% 
             filter(!is.na(gen_id)) %>% 
             distinct(gen_id)
-          # is there at least one and only one gen_id assigned?
           if (nrow(temp) == 1){
-            # assign that one gen_id to all fish that are a match if everything above is true
             fish <- fish %>%
                mutate(gen_id = ifelse(sample_id %in% y$sample_id, temp$gen_id, gen_id))
-          }else{
-            z <- new_pairs %>%
+          
+           }else{
+              temp <- y %>% 
+              distinct(gen_id)
+            if (nrow(temp) == 1 & is.na(temp$gen_id)){
+              y <- create_genid(y)
+              fish <- fish %>%
+               mutate(gen_id = ifelse(sample_id %in% y$sample_id, y$gen_id[1], gen_id))
+            }else{
+                z <- new_pairs %>%
               filter(first_id == new_pairs$first_id[i]) %>% 
               mutate(id_note = "More than one gen_id!")
             investigate <- rbind(investigate, z) %>%
               distinct()
-          }
+              }
+            
+            }
         }else{
           z <- new_pairs %>%
             filter(first_id == new_pairs$first_id[i]) %>% 
@@ -394,28 +987,29 @@ for(i in seq(new_pairs$first_id)){
     z <- new_pairs %>%
       filter(first_id == new_pairs$first_id[i]) %>% 
       mutate(id_note = "Fish had previous identity issues!")
-    # if all of the above weren't true, add to the investigate table
     investigate <- rbind(investigate, z) %>%
       distinct()
   }
 }
-```
-# Check the fish that have been assigned as genetic recaptures automatically
-```{r}
-# which fish share gen_ids?
-test <- fish %>% 
-  filter(!is.na(gen_id)) %>% 
-  group_by(gen_id) %>% 
-  summarise(count = n()) %>% 
-  filter(count > 1)
 
-# look at the meta data for some random fish, do they look like the gen_id has been assigned correctly?
-test1 <- fish %>% 
-  filter(gen_id %in% test$gen_id, 
-         !is.na(gen_id)) %>% 
-  arrange(gen_id)
+investigate <- investigate %>% 
+  mutate(first_tag_id = as.character(first_tag_id), 
+         second_tag_id = as.character(second_tag_id))
 ```
-
+# 
+# # Check the fish that have been assigned as genetic recaptures automatically
+# ```{r}
+# test <- fish %>% 
+#   group_by(gen_id) %>% 
+#   summarise(count = n()) %>% 
+#   filter(count > 1)
+# 
+# test1 <- fish %>% 
+#   filter(gen_id %in% test$gen_id, 
+#          !is.na(gen_id)) %>% 
+#   arrange(gen_id)
+# ```
+# 
 # Send the fish that appear to be good recaptures based on size and distance to the database
 ```{r}
 # backup the database
@@ -423,7 +1017,7 @@ clown <- leyte %>%
   tbl("clownfish") %>% 
   collect()
 
-# write_csv(clown, path = paste0("../db_backups/", Sys.Date(), "_clownfish_db.csv"))
+write_csv(clown, path = paste0("../db_backups/", Sys.Date(), "_clownfish_db.csv"))
 
 # can send the fish table to the database because I've been updating it all along
 # ley <- write_db("Leyte")
@@ -435,16 +1029,26 @@ rm(fish, clown)
 ## Go through the investigate table
 # i1
 ```{r}
-i <- 1
-investigate$id_note[i]
-investigate$mismatch_prop[i]
-y <- check_id_match(i, investigate)
-y$sample_id
-y$size
-y$color
-y$site
-```
+i <-1
 
+  x <- investigate %>% 
+    filter(first_id == investigate$first_id[i])
+  first <- x %>% 
+    select(contains("first"))
+  second <- x %>% 
+    select(contains("second"))
+  names(first) <- substr(names(first), 7, 20)
+  names(second) <- substr(names(second), 8, 25)
+  y <- rbind(first, second) %>% 
+    distinct() %>% 
+    mutate(year = substr(sample_id, 5,6), 
+           size = as.numeric(size)) %>% 
+    arrange(year)
+  
+  investigate$mismatch_prop[i]
+
+```
+For a fish that changed sites, I can look at the lat lon of all of the fish in the match and create a csv, then pop that into q-gis and make note of any other fish that were captured that year in that space (if I caught a fish in 2014 at Magbangon and caugth the same genetic fish at Palanas in 2016, which fish from the palanas coords did I catch in 2014 and which fish from the Magbangon coords did I catch in 2016 and then look at if it is possible for any of those candidates to be a match (were they smaller/bigger) and look at the labwork and see if there was any possiblity for mix up).  Instead of QGIS I could just look at distance between captures but QGIS might be quicker.
 
 ```{r compare fish from sites}
 # For a fish caputred in 2014 at Magbangon that matches 2 fish captured in Palanas in 2016
@@ -3996,7 +4600,21 @@ dbWriteTable(lb, "known_issues", iss, row.names=F, append = T)
 ## i 73 - no gen ids
 3 fish, 2 are regenotypes, 1 is an identity match to the other 2 ligations
 ```{r}
-temp <- check_id_match(73, investigate)
+i <- 73
+
+  x <- investigate %>% 
+    filter(first_id == investigate$first_id[i])
+  first <- x %>% 
+    select(contains("first"))
+  second <- x %>% 
+    select(contains("second"))
+  names(first) <- substr(names(first), 7, 20)
+  names(second) <- substr(names(second), 8, 25)
+  y <- rbind(first, second) %>% 
+    distinct() %>% 
+    mutate(year = substr(sample_id, 5,6), 
+           size = as.numeric(size)) %>% 
+    arrange(year) 
   
   investigate$mismatch_prop[i]
   rm(x, first, second)
@@ -4011,113 +4629,2478 @@ fish <- fish %>%
   mutate(gen_id = ifelse(sample_id %in% y$sample_id, max_gen$max + 1, gen_id))
 ```
 
+# Starting over on 2019-01-02 to make sure all decisions have been recorded properly and to use new functions
+
+## 1
+```{r}
+i <- 1
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+```
+This is 3 fish, 2 caught in the same year that are clearly genetic recaptures based on size and location and a third that is from a different site and should be evaluated for labwork.
+
+# Send the fish that appear to be good recaptures based on size and distance to the database
+```{r}
+z <- y %>% 
+  filter(site == "Palanas")
+
+temp <- z %>% 
+  filter(!is.na(gen_id)) %>% 
+  distinct(gen_id)
+# there is no gen_id
+
+z <- create_genid(z)
+
+change_db_gen_id(z)
+
+rm(temp, z)
+```
+Now compare the labwork sample that is from another site
+
+# site A - which fish were caught in the second site in the first year
+```{r}
+nona <- meta_site_a(sitea = y$site[2], yeara = year(y$date[1]), sizea = y$size[2])
+nrow(nona)
+```
+
+# site A labwork - were any of those fish on the same plates as our match?
+Check to see if same_barcode, same_dig, same_ext, same_lig, same_pool are all zero
+```{r}
+test <- lab_site_a(nona)
+nrow(same_barcode)
+nrow(same_dig)
+nrow(same_ext)
+nrow(same_lig)
+nrow(same_pool)
+```
+APCL14_109 has the same barcode (42) as one these 3 but not our 2014 sample (37) - no potential labwork overlap in 2014 samples, move the 2014 sample to known_issues
+```{r}
+temp <- filter(y_work, grepl("APCL14", sample_id))
+temp$ligation_id
+
+# already in the known issues table
+
+```
+## 2 same group of fish
+## 3
+```{r}
+i <- 3
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+```
+Fish shrinks 0.4 cm, within acceptable limit, assign gen_id in db
+```{r}
+# make all fish in y have same gen_id
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
+y$gen_id
+
+change_db_gen_id(y)
+```
+## 4
+```{r}
+i <- 4
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+```
+Suspicious that the fish are exactly the same size, 2 years apart
+Get site A info
+```{r}
+nona <- meta_site_a(y$site[2], y$year[1], y$size[2])
+temp <- lab_site_a(nona)
+rm(temp)
+```
+No labwork overlap
+
+Get site B info
+```{r}
+nonb <- meta_site_b(y$site[1], y$year[2], y$size[2])
+temp <- lab_site_b(nonb)
+
+# 3 barcodes
+temp <- rbind(same_barcode, y_work)
+
+rm(temp)
+
+```
+APCL16_254 has the same barcode as some other fish that were caught in the area of the 2014 fish and there is a possible lab mixup. Add L5019 to the known issues table
+```{r}
+temp <- tibble(ligation_id = "L5019", issue = "This ligation matches to L0621, but that sample is at another site and is the same size 2 years earlier.  L5019 has the same barcode as 2 other samples that were captured near the location that L0621 was caught, L5211 and L4683 so lab error cannot be ruled out.")
+
+# lb <- write_db("Laboratory")
+
+# dbWriteTable(lb, "known_issues", temp, append = T, row.names = F)
+# dbDisconnect(lb)
+# rm(lb)
+
+rm(temp, same_barcode, same_dig, same_ext, same_lig, same_pool, nona, nonb)
+```
+## 5
+```{r}
+i <- 5
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+```
+Already dealt with this one
+## 6
+```{r}
+i <- 6
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+```
+APCL15_403391 and APCL16_261 appear to be a good match.  APCL16_207 and APCL16_261 are a questionable match.
+
+Assign the gen_id for the good match first
+```{r}
+# save the original match table
+z <- y
+
+# remove the questionable match from y
+y <- filter(y, site == "Wangag")
+# make all fish in y have same gen_id
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
+y$gen_id
+
+change_db_gen_id(y)
+
+# revert y to original match table
+y <- z
+rm(z)
+```
+Examine the questionable match between 2 fish in the same year at different sites 
+```{r}
+# remove the "good match" from the table to examine the questionable match in more detail
+y <- filter(y, year == "16")
+
+nona <- meta_site_a(y$site[2], y$year[1], y$size[2])
+temp <- lab_site_a(nona)
+```
+There is a lot of potential for labwork overlap (~36 possible samples).  Move the San Agustin fish to the known issues table - already there as L4978
+
+## 7 same group
+## 8
+```{r}
+i <- 8
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+```
+Same group but one more fish from 2014
+Check the updated gen_id on the 2016 fish
+```{r}
+temp <- leyte %>% 
+  tbl("clownfish") %>% 
+  filter(sample_id == "APCL16_261") %>% 
+  select(sample_id, gen_id) %>% 
+  collect()
+```
+1086, matches the 2014 fish.
+## 9 same group
+## 10 same group
+## 11 
+```{r}
+i <- 11
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+```
+Different sites, check labwork
+```{r}
+nona <- meta_site_a(y$site[2], y$year[1], y$size[2])
+temp <- lab_site_a(nona)
+rm(temp)
+```
+no overlapping labwork from the 2013 fish
+```{r}
+nonb <- meta_site_b(y$site[1], y$year[2], y$size[2])
+temp <- lab_site_b(nonb)
+
+temp <- rbind(same_pool, y_work)
+rm(temp)
 
 
+```
+There are 4 possible samples that could've been mixed up with the 2016 fish that were captured near the 2013 fish, adding the 2016 fish to the known issues - already there
+## 12
+```{r}
+i <- 12
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+```
+Fish was caught in the same year in virtually the same spot.  Appears to be a good match
+```{r}
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
+change_db_gen_id(y)
+```
+## 13
+```{r}
+i <- 13
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+```
+Fish caught in the same year at different sites with shrinkage.  Check lab work
+```{r}
+nona <- meta_site_a(y$site[2], y$year[1], y$size[2])
+temp <- lab_site_a(nona)
+rm(temp)
+```
+Up to 23 possible candidates for labwork overlap, also these 2 samples were on the same plate and used the same barcode even though they were in pools 92 and 93.  Already updated known issues
 
-#BREAK
+## 14
+```{r}
+i <- 14
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+```
+Fish shrinks, but only by 0.8cm.  Adding gen_id as match
+```{r}
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
 
-<!-- ### EVERYTHING AFTER THIS POINT IS FOR REMOVING THE MATCHES FROM THE GENEPOP -->
-<!-- # SO IT CAN CONTINUE FOR PARENTAGE ANALYSIS.  FOR CONTINUED ID ANALYSIS, OPEN id_process.R ### -->
+change_db_gen_id(y)
+```
+## 15
+```{r}
+i <- 15
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+This fish did not appear as a match in the past but was captured in the same spot and the growth is acceptable. Note the high mismatch proportion.
+```{r}
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
+change_db_gen_id(y)
+```
+## 16
+```{r}
+i <- 16
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+This fish did not appear as a match in the past but was captured in the same spot and the growth is acceptable. Note the low mismatch proportion.
+```{r}
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
+change_db_gen_id(y)
+  
+```
+## 17
+```{r}
+i <- 17
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+This fish was caught in the same year at different sites with very different sizes.  Check lab work
+```{r}
+nona <- select(y, sample_id, size, color, lat, lon, gen_id)
+temp <- lab_site_a(nona)
+rm(temp)
+```
+Same extraction plate, same ligation plate, same pool. Already noted in known issues.
 
-<!-- # Open genepop ------------------------------------------------------------ -->
-<!-- ```{r} -->
-<!-- # this should be the genepop you used as input for Cervus ID -->
-<!-- genfile <- paste0("data/", params$data_dir, "/seq33_03_baits_only_SNPs.gen") -->
-<!-- genedf <- read_genepop(genfile) -->
+## 18
+```{r}
+i <- 18
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+Fish shrinks by 0.4cm, caught in same place.
+```{r}
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
+change_db_gen_id(y)
+```
+## 19
+```{r}
+i <- 19
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+Fish caught at same spot, growth is normal.
+```{r}
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
+change_db_gen_id(y)
+```
+## 20 same group
+## 21
+```{r}
+i <- 21
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+Fish caught at same spot, growth is normal.
+```{r}
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
+change_db_gen_id(y)
+```
+## 22 same group
+## 23
+```{r}
+i <- 23
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+Fish moved sites, check labwork
+```{r}
+nona <- meta_site_a(y$site[2], y$year[1], y$size[2])
+temp <- lab_site_a(nona)
+```
+No labwork overlap on 2014 fish
+```{r}
+nonb <- meta_site_b(y$site[1], y$year[2], y$size[2])
+temp <- lab_site_b(nonb)
+```
+No labwork overlap on 2015 fish.  It appears this fish moved sites but we are not prepared to accept that so have to make a note for the fish.
+```{r}
+# backup database
+fish <- leyte %>% 
+  tbl("clownfish") %>% 
+  collect()
+write_csv(fish, paste0("../db_backups/", Sys.time(), "_clownfish.csv"))
+
+fish <- fish %>% 
+  mutate(notes = ifelse(sample_id %in% y$sample_id, ifelse(is.na(notes), "APCL15_376136 and APCL14_408 return as genetic recaptures but were captured at Wangag and Palanas.  There is no overlapping labwork and the proportion of mismatch is 0.06", paste("APCL15_376136 and APCL14_408 return as genetic recaptures but were captured at Wangag and Palanas.  There is no overlapping labwork and the proportion of mismatch is 0.06", notes, sep = ", ")), notes))
+
+# ley <- write_db("Leyte")
+# dbWriteTable(ley, "clownfish", fish, overwrite = T, row.names = F)
+# dbDisconnect(ley)
+rm(ley, fish, nona, nonb, same_barcode, same_dig, same_ext, same_lig, same_pool, temp, y, y_work)
+```
+## 24
+```{r}
+i <- 24
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+Three fish, 2 are clearly a match based on lat lon and size, the third needs to be checked against lab work. 
+Write the good match to the db now
+```{r}
+z <- y
+y <- filter(y, site == "Palanas")
+y <- create_genid(y)
+change_db_gen_id(y)
+
+y <- z
+rm(z)
+```
+Check the labwork for the questionable match
+```{r}
+
+nona <- meta_site_a(y$site[2], y$year[1], y$size[2])
+temp <- lab_site_a(nona)
+```
+There is potential for lab overlap on the digest plate.  Moving the 2014 fish to the known issues table - already there.
+## 25 same group
+## 26
+```{r}
+i <- 26
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+3 Fish all caught in the same place, growth looks good.
+```{r}
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
+change_db_gen_id(y)
+```
+## 27 same fish
+## 28 same fish
+## 29
+```{r}
+i <- 29
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+Fish caught in the same spot, growth is acceptable
+```{r}
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
+change_db_gen_id(y)
+```
+## 30 same group
+## 31
+```{r}
+i <- 31
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+Fish was captured in the same place and shrinks by 0.5cm, within measurement error.
+```{r}
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
+change_db_gen_id(y)
+```
+## 32
+```{r}
+i <- 32
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+These fish were caught in the same spot some time apart.
+```{r}
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
+change_db_gen_id(y)
+```
+## 33
+```{r}
+i <- 33
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+The 2 fish from Wangag were caught in the same spot and appear to be a good match based on size and lat lon.  Update db
+```{r}
+z <- y
+y <- filter(y, site == "Wangag")
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
+change_db_gen_id(y)
+```
+Check labwork for other fish
+```{r}
+nona <- meta_site_a(y$site[2], y$year[1], y$size[2])
+temp <- lab_site_a(nona)
+```
+No labwork overlap.  Making a note on the samples.
+```{r}
+# backup database
+fish <- leyte %>% 
+  tbl("clownfish") %>% 
+  collect()
+write_csv(fish, paste0("../db_backups/", Sys.time(), "_clownfish.csv"))
+
+fish <- fish %>% 
+  mutate(notes = ifelse(sample_id %in% y$sample_id, ifelse(is.na(notes), "APCL14_547, APCL15_404287, and APCL16_800 return as genetic recaptures but were captured at Wangag and Palanas.  There is no overlapping labwork and the proportion of mismatch is 0.04", paste("APCL14_547, APCL15_404287, and APCL16_800 return as genetic recaptures but were captured at Wangag and Palanas.  There is no overlapping labwork and the proportion of mismatch is 0.04", notes, sep = ", ")), notes))
+
+# ley <- write_db("Leyte")
+# dbWriteTable(ley, "clownfish", fish, overwrite = T, row.names = F)
+# dbDisconnect(ley)
+rm(ley, fish, nona, same_barcode, same_dig, same_ext, same_lig, same_pool, temp, y, y_work)
+```
+## 34 same group
+## 35
+```{r}
+i <- 35
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+Fish caught in the same spot, good growth
+```{r}
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
+change_db_gen_id(y)
+```
+## 36 same group
+## 37
+```{r}
+i <- 37
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+Fish shrinks but was captured in the same spot and the difference in size is only 0.5cm.
+```{r}
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
+change_db_gen_id(y)
+```
+## 38
+```{r}
+i <- 38
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+Fish moved sites, check labwork
+```{r}
+nona <- meta_site_a(y$site[2], y$year[1], y$size[2])
+temp <- lab_site_a(nona)
+```
+No labwork overlap
+```{r}
+nonb <- meta_site_b(y$site[1], y$year[2], y$size[2])
+temp <- lab_site_b(nonb)
+```
+Some potential for the 2016 fish to have labwork overlap.  Moving this fish to known issues
+```{r}
+temp <- tibble(ligation_id = "L5050", issue = "This ligation matches to L0687, but this sample was captured at Elementary School and that sample was captured at Poroc San Flower.  There are seven possible alternate samples in the extraction, digest, and ligation plates as well as 4 in the same pool.")
+
+# lb <- write_db("Laboratory")
+# 
+# dbWriteTable(lb, "known_issues", temp, append = T, row.names = F)
+# dbDisconnect(lb)
+# rm(lb)
+
+rm(temp, same_barcode, same_dig, same_ext, same_lig, same_pool, nona, nonb)
+```
+## 39
+```{r}
+i <- 39
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+Three fish, 2 appear to be a good match based on size and lat lon and have already been looked at up above, the third from 2014 and is in the known issues table.
+## 40 same group
+## 41
+```{r}
+i <- 41
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+Fish caught in same spot, shrinkage is within allowable limits.
+```{r}
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
+change_db_gen_id(y)
+```
+## 42
+```{r}
+i <- 42
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+Fish needs gen_id
+```{r}
+y <- create_genid(y)
+
+change_db_gen_id(y)
+```
+## 43
+```{r}
+i <- 43
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+Fish captured at 2 very distant sites
+```{r}
+nona <- meta_site_a(y$site[2], y$year[1], y$size[2])
+temp <- lab_site_a(nona)
+```
+no overlap on the 2016 samples
+```{r}
+nonb <- meta_site_b(y$site[1], y$year[2], y$size[2])
+temp <- lab_site_b(nonb)
+```
+The same barcode was used for the 2017 samples but no other overlap occurs.  These 2 samples were found in pools 92 and 93 with the same barcode.  A note has been made in known issues.
+## 44
+```{r}
+i <- 44
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+Four fish, captured at 2 sites, the fish from 2014 was captured at Wangag, the rest are at Palanas and based on lat lon and size appear to be good matches.
+```{r}
+z <- y
+y <- filter(y, site == "Palanas")
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
+change_db_gen_id(y)
+```
+Check the labwork for the 2014 sample
+```{r}
+y <- z
+nona <- meta_site_a(y$site[2], y$year[1], y$size[2])
+temp <- lab_site_a(nona)
+```
+There are opportunities for labwork overlap on the digest, ligation plates, with barcodes and pools for at least 1 sample but possibly 3 candidates in digest plate. Already noted in the known issues.  Interestingly, APCL14_450 was regenotyped and does not match to this ligation.
+## 45-47 same group
+## 48
+```{r}
+i <- 48
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+Appears to be a genetic recapture based on size and lat lon. 0.4cm of shrinkage is within allowable limits.
+```{r}
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
+change_db_gen_id(y)
+```
+## 49
+```{r}
+i <- 49
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+Appears to be a genetic recapture based on size and lat lon. 
+```{r}
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
+change_db_gen_id(y)
+```
+ 
+## 50 same group
+## 51
+```{r}
+i <- 51
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+Appears to be a genetic recapture based on size and lat lon. 
+```{r}
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
+change_db_gen_id(y)
+```
+## 52
+```{r}
+i <- 52
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+Appears to be a genetic recapture based on size and lat lon. 
+```{r}
+y <- create_genid(y)
+change_db_gen_id(y)
+```
+## 53
+```{r}
+i <- 53
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+Check labwork
+```{r}
+nona <- meta_site_a(y$site[2], y$year[1], y$size[2])
+temp <- lab_site_a(nona)
+```
+There are 7 potential samples that could've been mixed up with the 2014 sample on an extraction plate.
+```{r}
+nonb <- meta_site_b(y$site[1], y$year[2], y$size[2])
+temp <- lab_site_b(nonb)
+```
+There is 1 sample on a digest plate and 2 samples on a ligation plate that could've been mixed up with the 2016 sample.  Making a note for both samples
+```{r}
+temp <- tibble(ligation_id = c("L0974", "L5107"), issue = c("This ligation matches to L5107, but this sample was captured at Palanasand that sample was captured at N. Magbangon.  There are seven possible alternate samples in the extraction plate.", "This ligation matches to L0974, but that sample was captured at Palanas and this sample was captured at N. Magbangon.  There are one or two possible alternate samples in the digest and ligation plates."))
+
+# lb <- write_db("Laboratory")
+# 
+# dbWriteTable(lb, "known_issues", temp, append = T, row.names = F)
+# dbDisconnect(lb)
+# rm(lb)
+
+rm(temp, same_barcode, same_dig, same_ext, same_lig, same_pool, nona, nonb)
+```
+## 54
+```{r}
+i <- 54
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+Based on size and location these look like genetic recaptures
+```{r}
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
+change_db_gen_id(y)
+```
+## 55-56 same group
+## 57
+```{r}
+i <- 57
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+Based on size and location these look like genetic recaptures. 0.1cm shrinkage is within allowable parameters.
+```{r}
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
+change_db_gen_id(y)
+```
+## 58
+```{r}
+i <- 58
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+Appears to be a genetic recapture based on size and lat lon. 
+```{r}
+y <- create_genid(y)
+change_db_gen_id(y)
+```
+## 59
+```{r}
+i <- 59
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+Based on size and location these look like genetic recaptures. 0.5cm shrinkage is within allowable parameters.
+```{r}
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
+change_db_gen_id(y)
+```
+## 60
+```{r}
+i <- 60
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+Fish changes site and shrinks over 3 years. Check labwork.
+```{r}
+nona <- meta_site_a(y$site[2], y$year[1], y$size[2])
+temp <- lab_site_a(nona)
+```
+No labwork overlap of 2013 samples.  We didn't capture any fish at Sitio Tugas in 2016 so there are no candidates for lab error in that year. Making a note in the clownfish table because these were different sites.
+
+No labwork overlap.  Making a note on the samples.
+```{r}
+# backup database
+fish <- leyte %>% 
+  tbl("clownfish") %>% 
+  collect()
+write_csv(fish, paste0("../db_backups/", Sys.time(), "_clownfish.csv"))
+
+fish <- fish %>% 
+  mutate(notes = ifelse(sample_id %in% y$sample_id, ifelse(is.na(notes), "APCL13_103 and APCL16_152 return as genetic recaptures but were captured at Sitio Tugas and Cabatoan.  There is no overlapping labwork and the proportion of mismatch is 0.03", paste("APCL13_103 and APCL16_152 return as genetic recaptures but were captured at Sitio Tugas and Cabatoan.  There is no overlapping labwork and the proportion of mismatch is 0.03", notes, sep = ", ")), notes))
+
+# ley <- write_db("Leyte")
+# dbWriteTable(ley, "clownfish", fish, overwrite = T, row.names = F)
+# dbDisconnect(ley)
+rm(ley, fish, nona, same_barcode, same_dig, same_ext, same_lig, same_pool, temp, y, y_work)
+```
+## 61
+```{r}
+i <- 61
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+```
+Appears to be a genetic recapture based on size and lat lon. 
+```{r}
+y <- create_genid(y)
+change_db_gen_id(y)
+```
+## 62
+```{r}
+i <- 62
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+```
+Appears to be a genetic recapture based on size and lat lon. 
+```{r}
+y <- create_genid(y)
+change_db_gen_id(y)
+```
+## 63
+```{r}
+i <- 63
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+```
+Appears to be a genetic recapture based on size and lat lon. 
+```{r}
+y <- create_genid(y)
+change_db_gen_id(y)
+```
+## 64
+```{r}
+i <- 64
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+```
+Appears to be a genetic recapture based on size and lat lon. 
+```{r}
+y <- create_genid(y)
+change_db_gen_id(y)
+```
+## 65
+```{r}
+i <- 65
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+```
+Appears to be a genetic recapture based on size and lat lon. 
+```{r}
+y <- create_genid(y)
+change_db_gen_id(y)
+```
+## 66 same group
+## 67
+```{r}
+i <- 67
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+```
+Appears to be a genetic recapture based on size and lat lon. 
+```{r}
+y <- create_genid(y)
+change_db_gen_id(y)
+```
+## 68
+```{r}
+i <- 68
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+```
+Appears to be a genetic recapture based on size and lat lon. 
+```{r}
+y <- create_genid(y)
+change_db_gen_id(y)
+```
+## 69
+```{r}
+i <- 69
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+```
+Appears to be a genetic recapture based on size and lat lon. 
+```{r}
+y <- create_genid(y)
+change_db_gen_id(y)
+```
+## 70
+```{r}
+i <- 70
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+```
+Appears to be a genetic recapture based on size and lat lon. 
+```{r}
+y <- create_genid(y)
+change_db_gen_id(y)
+```
+## 71 same group
+## 72
+```{r}
+i <- 72
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+```
+Fish caught in the same year at different sites, check lab work
+```{r}
+nona <- meta_site_a(y$site[2], y$year[1], y$size[2])
+temp <- lab_site_a(nona)
+```
+These samples were on the same extract plate in A6 and B1.  There are also 3 candidates for mixup on a digest plate.  Cannot rule out lab error.  Adding these samples to known issues - already there.
+## 73
+```{r}
+i <- 73
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+```
+Appears to be a genetic recapture based on size and lat lon. 
+```{r}
+y <- y %>% 
+  mutate(gen_id = 1260)
+change_db_gen_id(y)
+```
+## 74 same group
+## 75
+```{r}
+i <- 75
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+```
+Appears to be a genetic recapture based on size and lat lon. 
+```{r}
+y <- create_genid(y)
+change_db_gen_id(y)
+```
+# restarting at 1 because I auto-assigned all of the new matches that needed a gen_id
+## 1 - 13 already done
+## 14
+```{r}
+i <- 14
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+
+# have I already matched these?
+test <- leyte %>% 
+  tbl("clownfish") %>% 
+  filter(sample_id %in% y$sample_id) %>% 
+  select(sample_id, gen_id) %>% 
+  collect()
+test$gen_id
+
+a <- lig_from_samp(y$sample_id)
+test <- lab %>% 
+  tbl("known_issues") %>% 
+  filter(ligation_id %in% a$ligation_id) %>% 
+  collect()
+test$ligation_id
+```
+Appears to be a genetic recapture based on size and lat lon. 
+```{r}
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
+change_db_gen_id(y)
+```
+## 15-23 already done
+## 24
+```{r}
+i <- 24
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+
+# have I already matched these?
+test <- leyte %>% 
+  tbl("clownfish") %>% 
+  filter(sample_id %in% y$sample_id) %>% 
+  select(sample_id, gen_id, notes) %>% 
+  collect()
+test$gen_id
+test$notes
+
+a <- lig_from_samp(y$sample_id)
+test <- lab %>% 
+  tbl("known_issues") %>% 
+  filter(ligation_id %in% a$ligation_id) %>% 
+  collect()
+test$ligation_id
+```
+2 fish are a genetic recapture based on size and lat lon, 1 fish is questionable and is on the known issues list
+```{r}
+z <- y
+y <- filter(y, site == "Palanas")
+y <- create_genid(y)
+change_db_gen_id(y)
+```
+## 25 same group
+## 26
+```{r}
+i <- 26
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+
+# have I already matched these?
+test <- leyte %>% 
+  tbl("clownfish") %>% 
+  filter(sample_id %in% y$sample_id) %>% 
+  select(sample_id, gen_id, notes) %>% 
+  collect()
+print("gen_id")
+test$gen_id
+test$notes
+
+a <- lig_from_samp(y$sample_id)
+test <- lab %>% 
+  tbl("known_issues") %>% 
+  filter(ligation_id %in% a$ligation_id) %>% 
+  collect()
+print("issues")
+test$ligation_id
+```
+Appears to be a genetic recapture based on size and lat lon. 
+```{r}
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
+change_db_gen_id(y)
+```
+## 27-28 same group
+## 29-58 already done
+## 59
+```{r}
+i <- 59
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+
+# have I already matched these?
+test <- leyte %>% 
+  tbl("clownfish") %>% 
+  filter(sample_id %in% y$sample_id) %>% 
+  select(sample_id, gen_id, notes) %>% 
+  collect()
+print("gen_id")
+test$gen_id
+test$notes
+
+a <- lig_from_samp(y$sample_id)
+test <- lab %>% 
+  tbl("known_issues") %>% 
+  filter(ligation_id %in% a$ligation_id) %>% 
+  collect()
+print("issues")
+test$ligation_id
+```
+Appears to be a genetic recapture based on size and lat lon. 
+```{r}
+y <- y %>% 
+  mutate(gen_id = 1672)
+change_db_gen_id(y)
+```
+## 60 already done
+## 61
+```{r}
+i <- 61
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+
+# have I already matched these?
+test <- leyte %>% 
+  tbl("clownfish") %>% 
+  filter(sample_id %in% y$sample_id) %>% 
+  select(sample_id, gen_id, notes) %>% 
+  collect()
+print("gen_id")
+test$gen_id
+test$notes
+
+a <- lig_from_samp(y$sample_id)
+test <- lab %>% 
+  tbl("known_issues") %>% 
+  filter(ligation_id %in% a$ligation_id) %>% 
+  collect()
+print("issues")
+test$ligation_id
+```
+```{r}
+y <- y %>% 
+  mutate(gen_id = 1676)
+change_db_gen_id(y)
+```
+## 62-66 already done
+## 67
+```{r}
+i <- 67
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+
+# have I already matched these?
+test <- leyte %>% 
+  tbl("clownfish") %>% 
+  filter(sample_id %in% y$sample_id) %>% 
+  select(sample_id, gen_id, notes) %>% 
+  collect()
+print("gen_id")
+test$gen_id
+test$notes
+
+a <- lig_from_samp(y$sample_id)
+test <- lab %>% 
+  tbl("known_issues") %>% 
+  filter(ligation_id %in% a$ligation_id) %>% 
+  collect()
+print("issues")
+test$ligation_id
+```
+```{r}
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
+change_db_gen_id(y)
+```
+## 68
+```{r}
+i <- 68
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+
+# have I already matched these?
+test <- leyte %>% 
+  tbl("clownfish") %>% 
+  filter(sample_id %in% y$sample_id) %>% 
+  select(sample_id, gen_id, notes) %>% 
+  collect()
+print("gen_id")
+test$gen_id
+test$notes
+
+a <- lig_from_samp(y$sample_id)
+test <- lab %>% 
+  tbl("known_issues") %>% 
+  filter(ligation_id %in% a$ligation_id) %>% 
+  collect()
+print("issues")
+test$ligation_id
+```
+```{r}
+y <- create_genid(y)
+change_db_gen_id(y)
+```
+## 69 already done
+## 70
+```{r}
+i <- 70
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+
+# have I already matched these?
+test <- leyte %>% 
+  tbl("clownfish") %>% 
+  filter(sample_id %in% y$sample_id) %>% 
+  select(sample_id, gen_id, notes) %>% 
+  collect()
+print("gen_id")
+test$gen_id
+test$notes
+
+a <- lig_from_samp(y$sample_id)
+test <- lab %>% 
+  tbl("known_issues") %>% 
+  filter(ligation_id %in% a$ligation_id) %>% 
+  collect()
+print("issues")
+test$ligation_id
+```
+```{r}
+y <- create_genid(y)
+change_db_gen_id(y)
+```
+## 71
+```{r}
+i <- 71
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+
+# have I already matched these?
+test <- leyte %>% 
+  tbl("clownfish") %>% 
+  filter(sample_id %in% y$sample_id) %>% 
+  select(sample_id, gen_id, notes) %>% 
+  collect()
+print("gen_id")
+test$gen_id
+test$notes
+
+a <- lig_from_samp(y$sample_id)
+test <- lab %>% 
+  tbl("known_issues") %>% 
+  filter(ligation_id %in% a$ligation_id) %>% 
+  collect()
+print("issues")
+test$ligation_id
+```
+```{r}
+y <- y %>% 
+  mutate(gen_id = 1678)
+change_db_gen_id(y)
+```
+## 72 same group
+## 73
+```{r}
+i <- 73
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+
+# have I already matched these?
+test <- leyte %>% 
+  tbl("clownfish") %>% 
+  filter(sample_id %in% y$sample_id) %>% 
+  select(sample_id, gen_id, notes) %>% 
+  collect()
+print("gen_id")
+test$gen_id
+test$notes
+
+a <- lig_from_samp(y$sample_id)
+test <- lab %>% 
+  tbl("known_issues") %>% 
+  filter(ligation_id %in% a$ligation_id) %>% 
+  collect()
+print("issues")
+test$ligation_id
+```
+```{r}
+y <- y %>% 
+  mutate(gen_id = 1678)
+change_db_gen_id(y)
+```
+## 74 same group
+## 75-76 already done
+```{r}
+i <- 77
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+
+# have I already matched these?
+test <- leyte %>% 
+  tbl("clownfish") %>% 
+  filter(sample_id %in% y$sample_id) %>% 
+  select(sample_id, gen_id, notes) %>% 
+  collect()
+print("gen_id")
+test$gen_id
+test$notes
+
+a <- lig_from_samp(y$sample_id)
+test <- lab %>% 
+  tbl("known_issues") %>% 
+  filter(ligation_id %in% a$ligation_id) %>% 
+  collect()
+print("issues")
+test$ligation_id
+```
 
 
-<!-- # TEST - make sure the first 2 columns are names and a contig and get number of rows -->
-<!-- names(genedf[,1:2]) # [1] "names" "dDocent_Contig_11_59" -->
-<!-- nrow(genedf) # 2893 -->
+```{r}
+y <- create_genid(y)
+change_db_gen_id(y)
+```
+## 78 already done
+## 79
+```{r}
+i <- 79
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
 
-<!-- ``` -->
+# have I already matched these?
+test <- leyte %>% 
+  tbl("clownfish") %>% 
+  filter(sample_id %in% y$sample_id) %>% 
+  select(sample_id, gen_id, notes) %>% 
+  collect()
+print("gen_id")
+test$gen_id
+test$notes
 
-<!-- # Calculate the number of loci for analysis ------------------------------- -->
-<!-- ```{r} -->
-<!-- # convert 0000 to NA in the genepop data -->
-<!-- genedf[genedf == "0000"] <- NA -->
-<!-- # TEST - make sure there are no "0000" left -->
-<!-- which(genedf == "0000") # should return integer(0) -->
+a <- lig_from_samp(y$sample_id)
+test <- lab %>% 
+  tbl("known_issues") %>% 
+  filter(ligation_id %in% a$ligation_id) %>% 
+  collect()
+print("issues")
+test$ligation_id
+```
+```{r}
+y <- create_genid(y)
+change_db_gen_id(y)
+```
+## 80
+```{r}
+i <- 80
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
 
-<!-- # count the number of loci per individual - takes 7 minutes -->
-<!-- Sys.time() -->
-<!-- test <- genedf %>%  -->
-<!--   rowwise() %>%  -->
-<!--   group_by(names) %>%  -->
-<!--   summarise(numloci = sum(!is.na(.))) -->
-<!-- Sys.time() -->
+# have I already matched these?
+test <- leyte %>% 
+  tbl("clownfish") %>% 
+  filter(sample_id %in% y$sample_id) %>% 
+  select(sample_id, gen_id, notes) %>% 
+  collect()
+print("gen_id")
+test$gen_id
+test$notes
+
+a <- lig_from_samp(y$sample_id)
+test <- lab %>% 
+  tbl("known_issues") %>% 
+  filter(ligation_id %in% a$ligation_id) %>% 
+  collect()
+print("issues")
+test$ligation_id
+```
+```{r}
+y <- create_genid(y)
+change_db_gen_id(y)
+```
+## 81
+```{r}
+i <- 81
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+
+# have I already matched these?
+test <- leyte %>% 
+  tbl("clownfish") %>% 
+  filter(sample_id %in% y$sample_id) %>% 
+  select(sample_id, gen_id, notes) %>% 
+  collect()
+print("gen_id")
+test$gen_id
+test$notes
+
+a <- lig_from_samp(y$sample_id)
+test <- lab %>% 
+  tbl("known_issues") %>% 
+  filter(ligation_id %in% a$ligation_id) %>% 
+  collect()
+print("issues")
+test$ligation_id
+```
+```{r}
+y <- create_genid(y)
+change_db_gen_id(y)
+```
+## 82
+```{r}
+i <- 82
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+
+# have I already matched these?
+test <- leyte %>% 
+  tbl("clownfish") %>% 
+  filter(sample_id %in% y$sample_id) %>% 
+  select(sample_id, gen_id, notes) %>% 
+  collect()
+print("gen_id")
+test$gen_id
+test$notes
+
+a <- lig_from_samp(y$sample_id)
+test <- lab %>% 
+  tbl("known_issues") %>% 
+  filter(ligation_id %in% a$ligation_id) %>% 
+  collect()
+print("issues")
+test$ligation_id
+```
+```{r}
+y <- y %>% 
+  mutate(gen_id = gen_id[1])
+change_db_gen_id(y)
+```
+## 83 same group
+## 84 already done
+## 85
+```{r}
+i <- 85
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+
+# have I already matched these?
+test <- leyte %>% 
+  tbl("clownfish") %>% 
+  filter(sample_id %in% y$sample_id) %>% 
+  select(sample_id, gen_id, notes) %>% 
+  collect()
+print("gen_id")
+test$gen_id
+test$notes
+
+a <- lig_from_samp(y$sample_id)
+test <- lab %>% 
+  tbl("known_issues") %>% 
+  filter(ligation_id %in% a$ligation_id) %>% 
+  collect()
+print("issues")
+test$ligation_id
+```
+```{r}
+y <- create_genid(y)
+change_db_gen_id(y)
+```
+## 86
+```{r}
+i <- 86
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+
+# have I already matched these?
+test <- leyte %>% 
+  tbl("clownfish") %>% 
+  filter(sample_id %in% y$sample_id) %>% 
+  select(sample_id, gen_id, notes) %>% 
+  collect()
+print("gen_id")
+test$gen_id
+test$notes
+
+a <- lig_from_samp(y$sample_id)
+test <- lab %>% 
+  tbl("known_issues") %>% 
+  filter(ligation_id %in% a$ligation_id) %>% 
+  collect()
+print("issues")
+test$ligation_id
+```
+```{r}
+y <- create_genid(y)
+change_db_gen_id(y)
+```
+## 87-89 already done
+
+# Double check the matched fish to make sure they look right
+```{r}
+gen_recaps <- leyte %>% 
+  tbl("clownfish") %>%
+  group_by(gen_id) %>% 
+  summarize(caps = n()) %>% 
+  filter(caps > 1, 
+         !is.na(gen_id)) %>% 
+  collect()
+```
+Gen_id 1678 has 160 recaps, something is wrong here
+```{r}
+wrong <- leyte %>% 
+  tbl("clownfish") %>%
+  filter(gen_id == 1678) %>% 
+  collect()
+```
+Remove 1678 from the database and then examine idcsv and remove any pairs that already have a gen_id, then re-examine these matches.
+
+```{r}
+# fish <- leyte %>% 
+#   tbl("clownfish") %>% 
+#   collect()
+# 
+# change <- fish %>% 
+#   filter(gen_id == 1678) %>% 
+#   mutate(gen_id = NA)
+# 
+# fish <- anti_join(fish, change, by = "fish_table_id")
+# 
+# fish <- rbind(fish, change)
+# 
+# ley <- write_db("Leyte")
+# dbWriteTable(ley, "clownfish", fish, overwrite = T, row.names = F)
+# dbDisconnect(ley) 
+rm(ley)
+
+# which fish are already accepted genetic recaptures?
+idcsv <- read_csv("data/seq03-33_identity/33-03_seq_identity_big_table.csv")
+idcsv <- idcsv %>% 
+  select(-first_gen_id, -second_gen_id)
+first <- full_meta(idcsv$first_sample_id, leyte) %>% 
+  select(sample_id, gen_id) %>% 
+  rename(first_gen_id = gen_id)
+  
+second <- full_meta(idcsv$second_sample_id, leyte) %>% 
+  select(sample_id, gen_id) %>% 
+  rename(second_gen_id = gen_id)
+
+idcsv <- left_join(idcsv, first, by = c("first_sample_id" = "sample_id"))
+idcsv <- left_join(idcsv, second, by = c("second_sample_id" = "sample_id"))
+
+old_pairs <- idcsv %>% 
+  filter(first_gen_id == second_gen_id)
+
+new_pairs <- anti_join(idcsv, old_pairs)
+
+# remove samples with known issues
+ki <- lab %>% 
+  tbl("known_issues") %>% 
+  collect()
+
+# remove any first_id's that are on the known issues list
+new_pairs <- anti_join(new_pairs, ki, by = c("first_id" = "ligation_id"))
+new_pairs <- anti_join(new_pairs, ki, by = c("second_id" = "ligation_id"))
+
+```
+# auto assign any that will go
+```{r}
+investigate <- tibble()
+fish <- leyte %>% 
+  tbl("clownfish") %>% 
+  collect()
+
+for(i in seq(new_pairs$first_id)){
+  print(i)
+  x <- new_pairs %>% 
+    filter(first_id == new_pairs$first_id[i])
+  first <- x %>% 
+    select(contains("first"))
+  second <- x %>% 
+    select(contains("second"))
+  names(first) <- substr(names(first), 7, 20)
+  names(second) <- substr(names(second), 8, 25)
+  y <- rbind(first, second) %>% 
+    distinct() %>% 
+    mutate(year = substr(sample_id, 5,6), 
+           size = as.numeric(size)) %>% 
+    arrange(year)
+  
+  temp <- y %>% 
+    filter(is.na(fish_table_id))
+  if (nrow(temp) == 0){
+    if (length(unique(y$year)) == nrow(y)){
+      if (!is.unsorted(y$size)){
+        if (nrow(distinct(y,site)) == 1){
+          temp <- y %>% 
+            filter(!is.na(gen_id)) %>% 
+            distinct(gen_id)
+          if (nrow(temp) == 1){
+            fish <- fish %>%
+               mutate(gen_id = ifelse(sample_id %in% y$sample_id, temp$gen_id, gen_id))
+          
+           }else{
+              temp <- y %>% 
+              distinct(gen_id)
+            if (nrow(temp) == 1 & is.na(temp$gen_id)){
+              y <- create_genid(y)
+              fish <- fish %>%
+               mutate(gen_id = ifelse(sample_id %in% y$sample_id, y$gen_id[1], gen_id))
+            }else{
+                z <- new_pairs %>%
+              filter(first_id == new_pairs$first_id[i]) %>% 
+              mutate(id_note = "More than one gen_id!")
+            investigate <- rbind(investigate, z) %>%
+              distinct()
+              }
+            
+            }
+        }else{
+          z <- new_pairs %>%
+            filter(first_id == new_pairs$first_id[i]) %>% 
+            mutate(id_note = "Fish moved sites")
+          investigate <- rbind(investigate, z) %>%
+            distinct()
+        }
+      }else{
+        z <- new_pairs %>%
+          filter(first_id == new_pairs$first_id[i]) %>% 
+          mutate(id_note = "Fish shrinks!")
+        investigate <- rbind(investigate, z) %>%
+          distinct()
+      }
+    }else{
+      z <- new_pairs %>%
+        filter(first_id == new_pairs$first_id[i]) %>% 
+        mutate(id_note = "Fish caught in same year!")
+      investigate <- rbind(investigate, z) %>%
+        distinct()
+    }
+  }else{
+    z <- new_pairs %>%
+      filter(first_id == new_pairs$first_id[i]) %>% 
+      mutate(id_note = "Fish had previous identity issues!")
+    investigate <- rbind(investigate, z) %>%
+      distinct()
+  }
+}
+
+investigate <- investigate %>% 
+  mutate(first_tag_id = as.character(first_tag_id), 
+         second_tag_id = as.character(second_tag_id))
+  
+
+```
+Seven samples need investigation, the first is a set of samples that are from different sites but have no lab overlap, 2 is the same, 3 is the same
+## 1 - 3 are done
+## 4
+```{r}
+i <- 4
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
+
+# have I already matched these?
+test <- leyte %>% 
+  tbl("clownfish") %>% 
+  filter(sample_id %in% y$sample_id) %>% 
+  select(sample_id, gen_id, notes) %>% 
+  collect()
+print("gen_id")
+test$gen_id
+test$notes
+
+a <- lig_from_samp(y$sample_id)
+test <- lab %>% 
+  tbl("known_issues") %>% 
+  filter(ligation_id %in% a$ligation_id) %>% 
+  collect()
+print("issues")
+test$ligation_id
+```
+```{r}
+y <- create_genid(y)
+change_db_gen_id(y)
+```
 
 
-<!-- Sys.time() -->
-<!-- for(i in seq(genedf$names)){ -->
-<!--   genedf$numloci[i] <- sum(!is.na(genedf[i,])) -->
-<!-- } -->
-<!-- Sys.time() -->
+## 5 same group
+## 6
+```{r}
+i <- 6
+investigate$id_note[i]
+investigate$mismatch_prop[i]
+y <- check_id_match(i, investigate)
+y$sample_id
+y$size
+y$color
+y$site
+y$gen_id
+y$lat
+y$lon
+y$recap
+y$tag_id
 
-<!-- s### WAIT ### -->
+# have I already matched these?
+test <- leyte %>% 
+  tbl("clownfish") %>% 
+  filter(sample_id %in% y$sample_id) %>% 
+  select(sample_id, gen_id, notes) %>% 
+  collect()
+print("gen_id")
+test$gen_id
+test$notes
 
-<!-- # TEST - make sure all of the numloci were populated -->
-<!-- which(is.na(genedf$numloci)) # should return integer(0) -->
+a <- lig_from_samp(y$sample_id)
+test <- lab %>% 
+  tbl("known_issues") %>% 
+  filter(ligation_id %in% a$ligation_id) %>% 
+  collect()
+print("issues")
+test$ligation_id
+```
+```{r}
+y <- create_genid(y)
+change_db_gen_id(y)
+```
+## 7 same group
 
+# Remove gen_id from samples with known issues
+```{r}
+# Pull in the known issues table if needed
 
+ki <- lab %>% 
+  tbl("known_issues") %>% 
+  collect()
 
-<!-- # Run through id analysis and compare to determine which to remove -------- -->
-<!-- genedf <- genedf %>%  -->
-<!--   separate(names, c("spp", "id"), sep = "_") %>%  -->
-<!--   select(-spp) %>%  -->
-<!--   separate(id, c("id", "F"), sep = "\\.") %>%  -->
-<!--   select(-F) -->
+iss <- samp_from_lig(ki)
 
-<!-- lose <- left_join(select(idcsv, first_id, second_id), id_matches, by = c("first_id"= "id")) -->
+# get the work history for the sample ids to see if there are other ligations that might have been successful.
+iss <- work_history(iss, "sample_id") %>% 
+  filter(grepl("P", pool))
 
-<!-- lose <- lose %>%  -->
-<!--   rename(first_num_loci = numloci) -->
+# which of these samples has only one pool?
+count <- iss %>% 
+  group_by(sample_id) %>% 
+  summarise(count = n()) %>% 
+  filter(count == 1) %>% 
+  mutate(gen_id = NA) %>% 
+  distinct()
 
-<!-- lose <- left_join(lose, id_matches, by = c("second_id"= "id")) %>%  -->
-<!--   rename(sec_num_loc = numloci) -->
+# remove the gen_id for these samples
+ change_db_gen_id(count)
 
-<!-- lose <- lose %>%  -->
-<!--   mutate(drop = ifelse(first_num_loci >= sec_num_loc, second_id, first_id)) -->
-
-
-<!-- genedf <- genedf %>%  -->
-<!--   filter() -->
-
-
-<!-- # Make a dataframe of the samples to keep for parentage analysis -->
-<!-- keep <- genedf[is.na(genedf$drop),] -->
-
-<!-- keep$numloci <- NULL -->
-<!-- keep$drop <- NULL -->
-
-<!-- # TODO -  Look for regenotypes again: -->
-
-<!-- # convert all the NA genotypes to 0000 -->
-<!-- keep[is.na(keep)] = "0000" -->
-<!-- # TEST - make sure there are no NA's left -->
-<!-- which(is.na(keep)) # should return integer(0) -->
-
-<!-- # Write out genepop  ------------------------------------------------------ -->
-
-<!-- # Build the genepop components -->
-<!-- msg <- c("This genepop file was generated using a script called identity_analysis.R written by Michelle Stuart with help from Malin Pinsky and Ryan Batt") -->
-
-<!-- loci <- paste(names(keep[,2:ncol(keep)]), collapse =",") -->
-
-<!-- gene <- vector() -->
-<!-- sample <- vector() -->
-<!-- for (i in 1:nrow(keep)){ -->
-<!--   gene[i] <- paste(keep[i,2:ncol(keep)], collapse = " ") -->
-<!--   sample[i] <- paste(keep[i,1], gene[i], sep = ", ") -->
-<!-- } -->
-
-<!--   ### WAIT ### -->
-
-<!-- out <- c(msg, loci, 'pop', sample) -->
-
-<!-- write.table(out, file = paste("data/",Sys.Date(), "_norecap.gen", sep = ""), row.names=FALSE, quote=FALSE, col.names=FALSE) -->
-<!-- ``` -->
+ # test to make sure it worked - looks good
+ test <- leyte %>% 
+   tbl("clownfish") %>% 
+   filter(sample_id %in% count$sample_id) %>% 
+   select(sample_id, gen_id) %>% 
+   collect()
+```
 
 
+# EVERYTHING AFTER THIS POINT IS FOR REMOVING THE MATCHES FROM THE GENEPOP SO IT CAN CONTINUE FOR PARENTAGE ANALYSIS.  FOR CONTINUED ID ANALYSIS, OPEN id_process.R
+
+## Open genepop ------------------------------------------------------------ -->
+```{r}
+# this should be the genepop you used as input for Cervus ID
+genfile <- "data/seq03-33_identity/seq33_03_baits_only_SNPs.gen"
+genedf <- read_genepop(genfile)
+
+# TEST - make sure the first 2 columns are names and a contig and get number of rows
+names(genedf[,1:2]) # [1] "names" "dDocent_Contig_11_59"
+nrow(genedf) # 2893
+```
+
+# Calculate the number of loci for analysis -------------------------------
+```{r}
+# convert 0000 to NA in the genepop data
+genedf[genedf == "0000"] <- NA
+# TEST - make sure there are no "0000" left
+which(genedf == "0000") # should return integer(0)
+
+# count the number of loci per individual - takes 2-7 minutes
+Sys.time()
+for(i in seq(genedf$names)){
+  genedf$numloci[i] <- sum(!is.na(genedf[i,]))
+}
+Sys.time()
+
+### WAIT ###
+
+# TEST - make sure all of the numloci were populated
+which(is.na(genedf$numloci)) # should return integer(0)
+
+```
+# determine which to remove based on num loci of each id match --------
+```{r}
+
+# fix names of samples
+genedf <- genedf %>%
+  mutate(names = substr(names, 6, 25)) %>% 
+  rename(id = names)
+
+# fix samples that have a .F at the end
+genedf <- genedf %>% 
+  mutate(id = ifelse(grepl(".F", id), str_replace(id, ".F", ""), id))
+
+# figure out which rows of idcsv to keep
+accepted_matches <- leyte %>% 
+  tbl("clownfish") %>%
+  group_by(gen_id) %>% 
+  summarize(caps = n()) %>% 
+  filter(caps > 1, 
+         !is.na(gen_id)) %>% 
+  collect() 
+
+accepted_matches <- leyte %>% 
+  tbl("clownfish") %>% 
+  select(sample_id, gen_id) %>% 
+  filter(gen_id %in% accepted_matches$gen_id) %>% 
+  collect() %>% 
+  mutate(accepted = T)
+
+# get the work history for the matches
+pairs <- work_history(accepted_matches, "sample_id")
+
+# remove any work that is not in the current genepop
+pairs <- pairs %>% 
+  filter(ligation_id %in% genedf$id)
+  
+# bring in the big table from the identity analysis
+idcsv <- read_csv("data/seq03-33_identity/33-03_seq_identity_big_table.csv")
+result <- tibble()
+for(i in seq(pairs$sample_id)){
+x <- idcsv %>% 
+  filter(first_id %in% pairs$ligation_id[i])
+if (nrow(x) == 0){
+  x <- idcsv %>% 
+  filter(second_id == pairs$ligation_id[i])
+}
+ # a & b are  the line numbers from genepop file that matches an the first and second ID in the match table
+  a <- which(genedf$id %in% x$first_id)
+  b <- which(genedf$id %in% x$second_id)
+  # if the first num loci is greater than or equal to the second num loci, drop the second id, or else drop the first.
+x <- x %>% 
+  mutate(drop = ifelse(genedf$numloci[a] > genedf$numloci[b], second_id, first_id))
+result <- rbind(result, x)
+
+ }
+result <- result %>% 
+  select(drop) %>% 
+  distinct()
+
+genedf <- genedf %>%
+  filter(!id %in% result$drop)
+```
+# Look for regenotypes again:
+```{r}
+# select only the id column from the genedf
+ids <- genedf %>% 
+  select(id) %>% 
+  rename(ligation_id = id)
+
+# get sample ids 
+ids <- samp_from_lig(ids)
+
+# find any sample ids that occur more than once
+regenos <- ids %>% 
+  group_by(sample_id) %>% 
+  summarise(count = n()) %>% 
+  filter(count > 1)
+
+# find the ligation ids that go with them
+regenos <- left_join(regenos, ids, by = "sample_id")
+
+# keep only the regeno with the highest number of loci for further analysis (in the future these files will be merged)
+result <- tibble()
+for(i in seq(regenos$sample_id)){
+x <- regenos %>% 
+  filter(sample_id == regenos$sample_id[i])
+ # a & b are  the line numbers from genepop file that matches an the first and second ID in the match table
+ x <- left_join(x, select(genedf, id, numloci), by = c("ligation_id" = "id")) %>% 
+   arrange(numloci)
+  # if the first num loci is greater than or equal to the second num loci, drop the second id, or else drop the first.
+x <- x %>% 
+  mutate(drop = ligation_id[1])
+result <- rbind(result, x)
+
+ }
+result <- result %>% 
+  select(drop) %>% 
+  distinct()
+
+genedf <- genedf %>%
+  filter(!id %in% result$drop)
+
+```
+# convert all the NA genotypes to 0000
+```{r}
+genedf[is.na(genedf)] = "0000"
+# TEST - make sure there are no NA's left
+which(is.na(genedf)) # should return integer(0)
+```
+
+
+# Write out genepop  ------------------------------------------------------
+```{r}
+# Build the genepop components
+msg <- c("This genepop file was generated using a script called identity_analysis.R written by Michelle Stuart with help from Malin Pinsky and Ryan Batt")
+
+loci <- paste(id(genedf[,2:ncol(genedf)]), collapse =",")
+
+gene <- vector()
+sample <- vector()
+
+Sys.time()
+for (i in seq(genedf$id)){
+  gene[i] <- paste(genedf[i,2:ncol(genedf)], collapse = " ")
+  sample[i] <- paste(genedf[i,1], gene[i], sep = ", ")
+}
+Sys.time()
+  ### WAIT ###
+
+out <- c(msg, loci, 'pop', sample)
+
+write.table(out, file = paste("data/",Sys.Date(), "_norecap.gen", sep = ""), row.names=FALSE, quote=FALSE, col.names=FALSE)
+```
+
+
+```{r}
+# cleanup
+rm(accepted_matches, change, count, first, fish, gen_recaps, idcsv, ids, investigate, iss, ki, lose, missing, new_pairs, old_pairs, pairs, result, second, temp, test, x, y, z, a, b, i, loci, msg, out, sample)
+```
+
+# Assign gen_ids to all of the samples in the genepop that do not currently have any
+```{r}
+# This will include regenotypes since it is by sample_id instead of ligation id
+
+# Check to see if gen_ids already exist
+# full fish database
+fish <- leyte %>% 
+  tbl("clownfish") %>% 
+  collect()
+
+# just sample ids and gen ids
+genids <- fish %>% 
+  select(sample_id, gen_id)
+
+# get sample Ids for genedf 
+ids <- genedf %>% 
+  select(id) %>% 
+  rename(ligation_id = id)
+
+ids <- samp_from_lig(ids) %>% 
+  distinct(sample_id)
+
+# Iterate through all of the samples, this takes a while and was a horrible idea.  Next time make a table and write it once.
+
+  # change_db_gen_id(y)
+
+# was taking so long I stopped it
+
+# restore backup
+
+# imported from csv into sequel pro and it imported NAs as 0 for gen_id
+clown <- fish
+fish <- leyte %>% 
+  tbl("clownfish") %>% 
+  collect()
+
+# change 0 gen_id to NA
+fish <- fish %>% 
+  mutate(gen_id = ifelse(gen_id == 0, NA, gen_id))
+
+# assign gen_ids to the samples in the genedf
+ids <- ids %>% 
+  mutate(gen_id = 1690:(1689+nrow(ids)))
+
+change <- tibble()
+# add the gen_ids to the fish table
+for (i in seq(ids$sample_id)){
+  x <- fish %>%
+    filter(sample_id == ids$sample_id[i]) %>% 
+    mutate(gen_id = ifelse(is.na(gen_id), ids$gen_id[i], gen_id))
+  change <- rbind(change, x)
+}
+
+# remove the changed rows from the fish table (these rows in the fish table are unchanged)
+fish <- anti_join(fish, change, by = "fish_table_id")
+
+# add the changed rows to the fish table
+fish <- rbind(fish, change)
+
+# write the fish table to the database
+# ley <- write_db("Leyte")
+# dbWriteTable(ley, "clownfish", fish, overwrite = T, row.names = F)
+# dbDisconnect(ley)
+# rm(ley)
+```
 
 
