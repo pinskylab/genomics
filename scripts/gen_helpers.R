@@ -75,6 +75,21 @@ samp_from_lig <- function(table_name){
   return(samp)
 }
 
+# write_db ####
+#' access db with intent to change it
+#' @export
+#' @name write_db
+#' @author Michelle Stuart
+#' @param x = which db?
+#' @examples 
+#' db <- write_db("Leyte")
+
+write_db <- function(db_name){
+  library(RMySQL)
+  db <- dbConnect(MySQL(), dbname = db_name, default.file = path.expand("~/myconfig.cnf"), port = 3306, create = F, host = NULL, user = NULL, password = NULL)
+  return(db)
+}
+
 # read_db ####
 #' views all of the fish recaptured at a given site
 #' @export
@@ -199,12 +214,22 @@ lig_from_samp <- function(sample_ids){
   return(lig)
 }
 
+# anemid_latlong ####
+#' #anem.table.id is one anem_table_id value, latlondata is table of GPX data
+#from database (rather than making the function call it each time); will need
+#to think a bit more clearly about how to handle different locations read for
+#different visits to the same anem_id (or different with same anem_obs); for
+#now, just letting every row in anem.Info get a lat-long
+#' @export
+#' @name anemid_latlong
+#' @author Michelle Stuart
+#' @param x = anem.table.id
+#' @param y = latlondata
+#' @examples 
+#' temp <- anemid_latlong(anem.table.id, latlondata)
+
 anemid_latlong <- function(anem.table.id, latlondata) { 
-  #anem.table.id is one anem_table_id value, latlondata is table of GPX data
-  #from database (rather than making the function call it each time); will need
-  #to think a bit more clearly about how to handle different locations read for
-  #different visits to the same anem_id (or different with same anem_obs); for
-  #now, just letting every row in anem.Info get a lat-long
+ 
   
   #find the dive info and time for this anem observation
   dive <- leyte %>%
@@ -294,3 +319,334 @@ full_meta <- function(sample_ids, db){
   rm(dive)
   return(samps)
 }
+
+# check_id_match ####
+#' compare individuals that appear to be genetic mark recaptures
+#' @export
+#' @name check_id_match
+#' @author Michelle Stuart
+#' @param x = table_name
+#' @examples 
+#' temp <- check_id_match(row_number, table_of_matches)
+
+check_id_match <- function(row_number, table_of_matches){
+  x <- table_of_matches %>% 
+    filter(first_id == table_of_matches$first_id[row_number])
+  first <- x %>% 
+    select(contains("first"))
+  second <- x %>% 
+    select(contains("second"))
+  names(first) <- substr(names(first), 7, 20)
+  names(second) <- substr(names(second), 8, 25)
+  y <- rbind(first, second) %>% 
+    distinct() %>% 
+    mutate(year = substr(sample_id, 5,6), 
+           size = as.numeric(size)) %>% 
+    arrange(year)
+  return(y)
+}
+
+# create_genid ####
+#' add a gen_id to a sample
+#' @export
+#' @name create_genid
+#' @author Michelle Stuart
+#' @param x = table_name
+#' @examples 
+#' updated_table <- create_genid(table_of_candidates)
+
+create_genid <- function(table_of_candidates){
+  leyte <- write_db("Leyte")
+  fish <- leyte %>% 
+    tbl("clownfish") %>% 
+    collect()
+  dbDisconnect(leyte)
+  
+  max_gen <- fish %>% 
+  summarise(max = max(gen_id, na.rm = T)) %>% 
+  collect()
+
+table_of_candidates <- table_of_candidates %>% 
+  mutate(gen_id = ifelse(sample_id %in% table_of_candidates$sample_id, max_gen$max + 1, gen_id))
+
+return(table_of_candidates)
+  }
+
+
+
+# change_db_gen_id ####
+#' change the gen_id field in the database for all samples in a table
+#' @export
+#' @name change_db_gen_id
+#' @author Michelle Stuart
+#' @param x = table_of_candidates
+#' @examples 
+#' change_db_gen_id(table_of_candidates)
+
+change_db_gen_id <- function(table_of_candidates){
+  # backup db
+  ley <- write_db("Leyte")
+  fish <- ley %>% 
+    tbl("clownfish") %>% 
+    collect()
+  write_csv(fish, path = paste0("../db_backups/", Sys.time(), "_clownfish_db.csv"))
+  
+  # make change
+  fish <- fish %>%
+    mutate(gen_id = ifelse(sample_id %in% table_of_candidates$sample_id, table_of_candidates$gen_id, gen_id))
+  
+  # write change
+  dbWriteTable(ley, "clownfish", fish, row.names = F, overwrite = T)
+  dbDisconnect(ley)
+}
+
+# meta_site_a ####
+#' gets all of the field data for one site when fish identity is in question
+#' @export
+#' @name meta_site_a
+#' @author Michelle Stuart
+#' @param x = sitea
+#' @param y = yeara
+#' @param z = sizea
+#' @examples 
+#' nona <- meta_site_a(sitea, yeara, sizea)
+
+
+meta_site_a <- function(sitea, yeara, sizea){
+  # get dives
+  sitea <- leyte %>% 
+    tbl("diveinfo") %>% 
+    filter(site == sitea, 
+           year(date) == paste0("20", yeara)) %>% 
+    collect() %>% 
+    select(dive_table_id, site, date, gps)
+  
+  # get anems
+  temp <- leyte %>% 
+    tbl("anemones") %>% 
+    filter(dive_table_id %in% sitea$dive_table_id) %>% 
+    collect() %>% 
+    select(dive_table_id, anem_table_id, anem_id, obs_time, anem_obs)
+  
+  sitea <- left_join(temp, sitea, by = "dive_table_id")
+  
+  # get fish
+  temp <- leyte %>% 
+    tbl("clownfish") %>% 
+    filter(anem_table_id %in% sitea$anem_table_id, 
+           !is.na(sample_id)) %>% 
+    collect()
+  
+  sitea <- left_join(temp, sitea, by = "anem_table_id")
+  rm(temp)
+  
+  # get lat lon
+  
+  temp <- sitea %>% 
+    mutate(obs_time = force_tz(ymd_hms(str_c(date, obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
+    mutate(obs_time = with_tz(obs_time, tzone = "UTC")) %>% 
+    mutate(hour = hour(obs_time), 
+           minute = minute(obs_time))
+  
+  lat <- leyte %>%
+    tbl("GPX")  %>% 
+    mutate(gpx_date = date(time)) %>%
+    filter(gpx_date %in% sitea$date) %>% 
+    mutate(gpx_hour = hour(time)) %>%
+    mutate(minute = minute(time)) %>%
+    mutate(second = second(time)) %>%
+    select(-time, -second)%>%
+    collect() 
+  
+  # attach the lat lons
+  temp <- left_join(temp, lat, by = c("date" = "gpx_date", "hour" = "gpx_hour", "minute" = "minute", "gps" = "unit"))
+  
+  # summarize the lat lons
+  temp <- temp %>% 
+    group_by(sample_id) %>% 
+    summarise(lat = mean(as.numeric(lat)), 
+              lon = mean(as.numeric(lon)))
+  
+  sitea <- left_join(sitea, temp, by = "sample_id")
+  rm(temp, lat)
+  
+  # calculate the distances
+  alldists <- fields::rdist.earth(as.matrix(sitea[,c("lon", "lat")]), as.matrix(investigate[i,c("second_lon", "second_lat")]), miles=FALSE, R=6371) 
+  
+  sitea <- sitea %>% 
+    mutate(distkm = alldists) 
+  
+  sitea_small <- sitea %>% 
+    filter(as.numeric(size) < sizea)
+  
+  # how many of sitea that are small enough to match our fish are ungenotyped? 
+  nona <- sitea_small %>%
+    filter(is.na(gen_id)) %>% 
+    select(sample_id, size, color, lat, lon, gen_id, distkm)
+  
+return(nona)
+}
+
+
+# lab_site_a ####
+#' this function gets all of the lab data for potential mixup fish when fish identity is in question
+#' @export
+#' @name lab_site_a
+#' @author Michelle Stuart
+#' @param x = nona
+#' @examples 
+#' temp <- lab_site_a(nona)
+
+lab_site_a <- function(nona){
+  sitea_work <- work_history(nona, "sample_id")
+  
+  y_work <<- work_history(y, "sample_id")
+  
+  same_ext <<- sitea_work %>% 
+    filter(plate.x %in% y_work$plate.x)
+  
+  same_dig <<- sitea_work %>% 
+    filter(plate.y %in% y_work$plate.y)
+  # same_dig <- rbind(same_dig, y_work) %>% arrange(plate.y)
+  
+  
+  same_lig <<- sitea_work %>% 
+    filter(plate %in% y_work$plate, 
+           !is.na(plate))
+  
+  same_barcode <<- sitea_work %>% 
+    filter(barcode_num %in% y_work$barcode_num, 
+           !is.na(barcode_num))
+  
+  same_pool <<- sitea_work %>% 
+    filter(pool %in% y_work$pool, 
+           !is.na(pool)) 
+  
+}
+
+# meta_site_b ####
+#' gets all of the field data for one site when fish identity is in question
+#' @export
+#' @name meta_site_b
+#' @author Michelle Stuart
+#' @param x = siteb
+#' @param y = yearb
+#' @param z = sizeb
+#' @examples 
+#' nonb <- meta_site_b(siteb, yearb, sizeb)
+
+meta_site_b <- function(siteb, yearb, sizeb){
+  # get dives
+  siteb <- leyte %>% 
+    tbl("diveinfo") %>% 
+    filter(site == siteb, 
+           year(date) == paste0("20",yearb)) %>% 
+    collect() %>% 
+    select(dive_table_id, site, date, gps)
+  
+  # get anems
+  temp <- leyte %>% 
+    tbl("anemones") %>% 
+    filter(dive_table_id %in% siteb$dive_table_id) %>% 
+    collect() %>% 
+    select(dive_table_id, anem_table_id, anem_id, obs_time, anem_obs)
+  
+  siteb <- left_join(temp, siteb, by = "dive_table_id")
+  
+  # get fish
+  temp <- leyte %>% 
+    tbl("clownfish") %>% 
+    filter(anem_table_id %in% siteb$anem_table_id, 
+           !is.na(sample_id)) %>% 
+    collect()
+  
+  siteb <- left_join(temp, siteb, by = "anem_table_id")
+  rm(temp)
+  
+  # get lat lon
+  
+  temp <- siteb %>% 
+    mutate(obs_time = force_tz(ymd_hms(str_c(date, obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
+    mutate(obs_time = with_tz(obs_time, tzone = "UTC")) %>% 
+    mutate(hour = hour(obs_time), 
+           minute = minute(obs_time))
+  
+  lat <- leyte %>%
+    tbl("GPX")  %>% 
+    mutate(gpx_date = date(time)) %>%
+    filter(gpx_date %in% siteb$date) %>% 
+    mutate(gpx_hour = hour(time)) %>%
+    mutate(minute = minute(time)) %>%
+    mutate(second = second(time)) %>%
+    select(-time, -second)%>%
+    collect() 
+  
+  # attach the lat lons
+  temp <- left_join(temp, lat, by = c("date" = "gpx_date", "hour" = "gpx_hour", "minute" = "minute", "gps" = "unit"))
+  
+  # summarize the lat lons
+  temp <- temp %>% 
+    group_by(sample_id) %>% 
+    summarise(lat = mean(as.numeric(lat)), 
+              lon = mean(as.numeric(lon)))
+  
+  siteb <- left_join(siteb, temp, by = "sample_id")
+  rm(temp, lat)
+  
+  # calculate the distances
+  alldists <- fields::rdist.earth(as.matrix(siteb[,c("lon", "lat")]), as.matrix(investigate[i,c("second_lon", "second_lat")]), miles=FALSE, R=6371) 
+  
+  siteb <- siteb %>% 
+    mutate(distkm = alldists) 
+  
+  siteb_small <- siteb %>% 
+    filter(as.numeric(size) < sizeb)
+  
+  # how many of siteb that are small enough to match our fish are ungenotyped? 
+  nonb <- siteb_small %>%
+    filter(is.na(gen_id)) %>% 
+    select(sample_id, size, color, lat, lon, gen_id, distkm)
+  
+  return(nonb)
+  
+}
+
+
+# lab_site_b ####
+#' this function gets all of the lab data for potential mixup fish when fish identity is in question
+#' @export
+#' @name lab_site_b
+#' @author Michelle Stuart
+#' @param x = nonb
+#' @examples 
+#' temp <- lab_site_a(nonb)
+
+lab_site_b <- function(nonb){
+  siteb_work <- work_history(nonb, "sample_id")
+  
+  y_work <<- work_history(y, "sample_id")
+  
+  same_ext <<- siteb_work %>% 
+    filter(plate.x %in% y_work$plate.x)
+  
+  same_dig <<- siteb_work %>% 
+    filter(plate.y %in% y_work$plate.y)
+  # same_dig <- rbind(same_dig, y_work) %>% 
+  # arrange(plate.y)
+  # this catches all of the future "sames"
+  
+  same_lig <<- siteb_work %>% 
+    filter(plate %in% y_work$plate, 
+           !is.na(plate))
+  
+  same_barcode <<- siteb_work %>% 
+    filter(barcode_num %in% y_work$barcode_num, 
+           !is.na(barcode_num))
+  
+  same_pool <<- siteb_work %>% 
+    filter(pool %in% y_work$pool, 
+           !is.na(pool))
+}
+
+
+
