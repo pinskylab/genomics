@@ -648,5 +648,95 @@ lab_site_b <- function(nonb){
            !is.na(pool))
 }
 
+# work_history ####
+#' get the work history for samples
+#' @export
+#' @name work_history
+#' @author Michelle Stuart
+#' @param x = table_where_ids_are
+#' @param y = column_of_ids - must be sample_id, extraction_id, digest_id, or ligation_id
+#' @examples 
+#' history <- work_history(table,column)
+
+# check the work history of those sample_ids
+work_history <- function(table, column){
+  library(dplyr)
+  lab <- read_db("Laboratory")
+  if(column == "sample_id"){
+    hist <- lab %>% 
+      tbl("extraction") %>% 
+      filter(sample_id %in% table$sample_id) %>% 
+      select(sample_id, extraction_id) %>% 
+      collect()
+    
+    dig <- lab %>% 
+      tbl("digest") %>% 
+      filter(extraction_id %in% hist$extraction_id) %>% 
+      select(extraction_id, digest_id) %>% 
+      collect()
+    hist <- left_join(hist, dig, by = "extraction_id")
+    rm(dig)
+    
+    lig <- lab %>% 
+      tbl("ligation") %>% 
+      filter(digest_id %in% hist$digest_id) %>% 
+      select(ligation_id, digest_id, pool) %>% 
+      collect()
+    hist <- left_join(hist, lig, by = "digest_id")
+    rm(lig)
+    return(hist)
+  }
+  if(column == "extraction_id"){
+    hist <- lab %>% 
+      tbl("extraction") %>% 
+      filter(extraction_id %in% table$extraction_id) %>% 
+      select(sample_id, extraction_id) %>% 
+      collect()
+    
+    dig <- lab %>% 
+      tbl("digest") %>% 
+      filter(extraction_id %in% hist$extraction_id) %>% 
+      select(extraction_id, digest_id) %>% 
+      collect()
+    hist <- left_join(hist, dig, by = "extraction_id")
+    rm(dig)
+    
+    lig <- lab %>% 
+      tbl("ligation") %>% 
+      filter(digest_id %in% hist$digest_id) %>% 
+      select(ligation_id, digest_id, pool) %>% 
+      collect()
+    hist <- left_join(hist, lig, by = "digest_id")
+    rm(lig)
+    return(hist)
+  }
+  
+  
+  if(column == "ligation_id"){
+    hist <- lig <- lab %>% 
+      tbl("ligation") %>% 
+      filter(ligation_id %in% table$ligation_id) %>% 
+      select(ligation_id, digest_id, pool) %>% 
+      collect()
+    
+    dig <- lab %>% 
+      tbl("digest") %>% 
+      filter(digest_id %in% hist$digest_id) %>% 
+      select(extraction_id, digest_id) %>% 
+      collect()
+    hist <- left_join(hist, dig, by = "digest_id")
+    rm(dig)
+    
+    extr <- lab %>% 
+      tbl("extraction") %>% 
+      filter(extraction_id %in% hist$extraction_id) %>% 
+      select(extraction_id, sample_id) %>% 
+      collect()
+    hist <- left_join(hist, extr, by = "extraction_id")
+    rm(extr)
+    return(hist)
+  }  
+}
+
 
 
