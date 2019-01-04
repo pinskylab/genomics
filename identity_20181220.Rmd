@@ -7103,4 +7103,435 @@ fish <- rbind(fish, change)
 # rm(ley)
 ```
 
+# Generate plots of distribution of distance between captures for obvious recaptures and flagged recaptures
+```{r plots}
+idcsv <- read_csv("data/seq03-33_identity/33-03_seq_identity_big_table.csv")
+
+# mark rows where the match was considered an obvious recapture based on genetics, size, lat lon.
+
+# get the most current gen_ids for the first samples 
+first <- full_meta(idcsv$first_sample_id, leyte)
+ names(first) <- paste0("first_", names(first)) 
+ 
+ # remove the sample_id from this group of names to use later
+ f_except <- select(first, -first_sample_id)
+ x <- names(f_except)
+
+# get the most current gen_ids for the second samples
+sec <- full_meta(idcsv$second_sample_id, leyte)
+names(sec) <- paste0("second_", names(sec))
+
+# remove the sample_id from this group of names to use later
+s_except <- select(sec, -second_sample_id)
+y <- names(s_except)
+
+# remove the above columns from idcsv so that the most updated version can be reattached
+idcsv <- idcsv %>% 
+  select(-x, -y)
+
+idcsv <- left_join(idcsv, first, by = "first_sample_id")
+idcsv <- left_join(idcsv, sec, by = "second_sample_id")
+
+# mark all of the rows where the genetic recapture is cofirmed by  size, location
+idcsv <- idcsv %>% 
+  mutate(mark = ifelse(first_gen_id == second_gen_id, "apparent", "questionable"), 
+         mark = ifelse(is.na(mark), "questionable", mark))
+
+dist <- idcsv %>% 
+  select(first_id, second_id, distkm, mark) %>% 
+  group_by(distkm, mark) %>% 
+  summarise(count = n())
+
+# convert to meters
+dist <- dist %>%
+  mutate(distm = distkm * 1000)
+
+
+ggplot(dist, aes(distm, fill = mark)) +
+  geom_histogram(binwidth = 1000, position = "dodge") +
+  scale_y_continuous(limits = c(0, 5))+
+  theme_bw()+
+  theme(
+    plot.background = element_blank()
+    ,panel.grid.major = element_blank()
+    ,panel.grid.minor = element_blank()
+    ,panel.border = element_blank()
+  ) 
+  
+```
+
+Another way to look at it
+```{r}
+
+ggplot(dist, aes(x = mark, y = distm)) + 
+  geom_boxplot() +
+  coord_flip() +
+  geom_jitter()
+```
+
+Ignore the questionable far distance fish
+```{r}
+dist_sm <- dist %>% 
+  filter(distm < 1000)
+
+ggplot(dist_sm, aes(x = mark, y = distm)) + 
+  geom_boxplot() +
+  coord_flip() +
+  geom_jitter()
+```
+
+It seems like a fair chance that these questionable matches that were caught less than 100m from each other are true matches.  Examine them
+```{r}
+quest <- idcsv %>% 
+  filter(first_gen_id != second_gen_id, 
+         distkm < 0.1) %>% 
+  select(first_sample_id, second_sample_id, first_size, second_size, first_site, second_site, first_gen_id, second_gen_id, first_lat, second_lat, first_lon, second_lon, distkm)
+```
+There appears to be a gen_id issue with these samples that prevented them from appearing as matches in the database.
+```{r}
+# make the second_gen_id match the first_gen_id
+fix <- quest %>% 
+  mutate(second_gen_id = first_gen_id)
+
+# take all of the columns belonging to the first fish and pull them into a table
+firsts <- fix %>% 
+  # select only the id column for matching and the gen id column that needs to be updated in the db
+  select(first_sample_id, first_gen_id) %>% 
+  # rename them for one table 
+  rename(sample_id = first_sample_id, gen_id = first_gen_id)
+
+# take all of the columns belonging to the first fish and pull them into a table
+seconds <- fix %>% 
+  # select only the id column for matching and the gen id column that needs to be updated in the db
+  select(second_sample_id, second_gen_id) %>% 
+  # rename them for one table 
+  rename(sample_id = second_sample_id, gen_id = second_gen_id)
+
+# combine into one table
+fix_list <- rbind(firsts, seconds) %>% 
+  distinct()
+
+# some samples are in the fix_list more than once
+dups <- fix_list %>% 
+  group_by(sample_id) %>% 
+  summarise(count = n()) %>% 
+  filter(count > 1)
+
+# make sure every instance of a sample has the same gen_id
+for (i in seq(dups$sample_id)){
+  x <- fix_list %>% 
+    filter(sample_id == dups$sample_id[i])
+  y <- fix_list %>% 
+    filter(gen_id %in% x$gen_id) %>% 
+    distinct()
+  fix_list <- fix_list %>% 
+    mutate(gen_id = ifelse(sample_id %in% y$sample_id, x$gen_id[1], gen_id)) %>% 
+    distinct()
+}
+
+
+
+# pull in the clownfish table from the database
+fish <- leyte %>% 
+  tbl("clownfish") %>% 
+  collect()
+
+# The following line didn't work, some sample_ids were not changed!!!
+# fish <- fish %>%
+# mutate(gen_id = ifelse(sample_id %in% fix_list$sample_id, fix_list$gen_id, gen_id))
+
+for (i in seq(fix_list$gen_id)){
+  fish <- fish %>% 
+    mutate(gen_id = ifelse(sample_id == fix_list$sample_id[i], fix_list$gen_id[i], gen_id))
+}
+
+# from an earlier db debacle, all of the NULL's in the db table have been covnerted to NA's, attempting to convert them back here. - Doesn't work.
+
+# convert NA to NULL in the genepop data
+# fish[fish == NA] <- NULL
+
+ # backup db
+  ley <- write_db("Leyte")
+  clown <- ley %>% 
+    tbl("clownfish") %>% 
+    collect()
+  write_csv(clown, path = paste0("../db_backups/", Sys.time(), "_clownfish_db.csv"))
+  
+    # write change
+# dbWriteTable(ley, "clownfish", fish, row.names = F, overwrite = T)
+# dbDisconnect(ley)
+```
+Try graphs again
+# Generate plots of distribution of distance between captures for obvious recaptures and flagged recaptures
+```{r plots 2}
+idcsv <- read_csv("data/seq03-33_identity/33-03_seq_identity_big_table.csv")
+
+# mark rows where the match was considered an obvious recapture based on genetics, size, lat lon.
+
+# get the most current gen_ids for the first samples 
+first <- full_meta(idcsv$first_sample_id, leyte)
+ names(first) <- paste0("first_", names(first)) 
+ 
+ # remove the sample_id from this group of names to use later
+ f_except <- select(first, -first_sample_id)
+ x <- names(f_except)
+
+# get the most current gen_ids for the second samples
+sec <- full_meta(idcsv$second_sample_id, leyte)
+names(sec) <- paste0("second_", names(sec))
+
+# remove the sample_id from this group of names to use later
+s_except <- select(sec, -second_sample_id)
+y <- names(s_except)
+
+# remove the above columns from idcsv so that the most updated version can be reattached
+idcsv <- idcsv %>% 
+  select(-x, -y)
+
+idcsv <- left_join(idcsv, first, by = "first_sample_id")
+idcsv <- left_join(idcsv, sec, by = "second_sample_id")
+
+# mark all of the rows where the genetic recapture is cofirmed by  size, location
+idcsv <- idcsv %>% 
+  mutate(mark = ifelse(first_gen_id == second_gen_id, "apparent", "questionable"), 
+         mark = ifelse(is.na(mark), "questionable", mark))
+
+dist <- idcsv %>% 
+  select(first_id, second_id, distkm, mark) %>% 
+  group_by(distkm, mark) %>% 
+  summarise(count = n())
+
+# convert to meters
+dist <- dist %>%
+  mutate(distm = distkm * 1000)
+
+```
+
+Ignore the questionable far distance fish
+```{r}
+dist_sm <- dist %>% 
+  filter(distm < 1000)
+
+ggplot(dist_sm, aes(x = mark, y = distm)) + 
+  geom_boxplot() +
+  coord_flip() +
+  geom_jitter()
+```
+What fish are left at less than 100m?
+```{r}
+quest <- idcsv %>% 
+  filter(first_gen_id != second_gen_id, 
+         distkm < 0.1) %>% 
+  select(first_sample_id, second_sample_id, first_size, second_size, first_site, second_site, first_gen_id, second_gen_id, first_lat, second_lat, first_lon, second_lon, distkm)
+```
+Not sure why this one fish didn't change.
+```{r}
+# do these fish have any other matches?
+temp <- fish %>% 
+  filter(gen_id %in% quest$first_gen_id | gen_id %in% quest$second_gen_id)
+
+temp <- temp %>% 
+  mutate(gen_id = 1689)
+
+# pull in the clownfish table from the database
+fish <- leyte %>% 
+  tbl("clownfish") %>% 
+  collect()
+
+# The following line didn't work, some sample_ids were not changed!!!
+# fish <- fish %>%
+# mutate(gen_id = ifelse(sample_id %in% fix_list$sample_id, fix_list$gen_id, gen_id))
+
+fish <- fish %>% 
+  mutate(gen_id = ifelse(sample_id == "APCL15_375493", 1689, gen_id))
+
+
+ # backup db
+  ley <- write_db("Leyte")
+  clown <- ley %>% 
+    tbl("clownfish") %>% 
+    collect()
+  write_csv(clown, path = paste0("../db_backups/", Sys.time(), "_clownfish_db.csv"))
+  
+    # write change
+# dbWriteTable(ley, "clownfish", fish, row.names = F, overwrite = T)
+# dbDisconnect(ley)
+```
+
+Try graphs again
+# Generate plots of distribution of distance between captures for obvious recaptures and flagged recaptures
+```{r plots 2}
+idcsv <- read_csv("data/seq03-33_identity/33-03_seq_identity_big_table.csv")
+
+# mark rows where the match was considered an obvious recapture based on genetics, size, lat lon.
+
+# get the most current gen_ids for the first samples 
+first <- full_meta(idcsv$first_sample_id, leyte)
+ names(first) <- paste0("first_", names(first)) 
+ 
+ # remove the sample_id from this group of names to use later
+ f_except <- select(first, -first_sample_id)
+ x <- names(f_except)
+
+# get the most current gen_ids for the second samples
+sec <- full_meta(idcsv$second_sample_id, leyte)
+names(sec) <- paste0("second_", names(sec))
+
+# remove the sample_id from this group of names to use later
+s_except <- select(sec, -second_sample_id)
+y <- names(s_except)
+
+# remove the above columns from idcsv so that the most updated version can be reattached
+idcsv <- idcsv %>% 
+  select(-x, -y)
+
+idcsv <- left_join(idcsv, first, by = "first_sample_id")
+idcsv <- left_join(idcsv, sec, by = "second_sample_id")
+
+# mark all of the rows where the genetic recapture is cofirmed by  size, location
+idcsv <- idcsv %>% 
+  mutate(mark = ifelse(first_gen_id == second_gen_id, "apparent", "questionable"), 
+         mark = ifelse(is.na(mark), "questionable", mark))
+
+dist <- idcsv %>% 
+  select(first_id, second_id, distkm, mark) %>% 
+  group_by(distkm, mark) %>% 
+  summarise(count = n())
+
+# convert to meters
+dist <- dist %>%
+  mutate(distm = distkm * 1000)
+
+```
+
+Ignore the questionable far distance fish
+```{r}
+dist_sm <- dist %>% 
+  filter(distm < 1000)
+
+ggplot(dist_sm, aes(x = mark, y = distm)) + 
+  geom_boxplot() +
+  coord_flip() +
+  geom_jitter()
+```
+
+Why are there still 2 dots below 100m for questionable? Because they are NA's because of the regenotype concatenation in the naming scheme.
+```{r}
+x <- dist_sm %>% 
+  filter(mark == "questionable", distkm < .1)
+
+idcsv %>% 
+  filter(distkm == x$distkm[1] | distkm == x$distkm[2])
+
+z <- tibble(sample_id = c("APCL17_080", "APCL16_037", "APCL15_374004"))
+
+# do these fish have any other matches?
+temp <- fish %>% 
+  filter(sample_id %in% z$sample_id) %>% 
+  select(sample_id, gen_id)
+
+# no other matches
+temp1 <- fish %>% 
+  filter(gen_id == temp$gen_id[3])
+
+temp <- temp %>% 
+  mutate(gen_id = 2917)
+
+# pull in the clownfish table from the database
+fish <- leyte %>% 
+  tbl("clownfish") %>% 
+  collect()
+
+# The following line didn't work, some sample_ids were not changed!!!
+# fish <- fish %>%
+# mutate(gen_id = ifelse(sample_id %in% fix_list$sample_id, fix_list$gen_id, gen_id))
+
+fish <- fish %>% 
+  mutate(gen_id = ifelse(sample_id == "APCL17_080", 2917, gen_id))
+
+
+ # backup db
+  ley <- write_db("Leyte")
+  clown <- ley %>% 
+    tbl("clownfish") %>% 
+    collect()
+  write_csv(clown, path = paste0("../db_backups/", Sys.time(), "_clownfish_db.csv"))
+  
+    # write change
+# dbWriteTable(ley, "clownfish", fish, row.names = F, overwrite = T)
+# dbDisconnect(ley)
+```
+Try graphs again
+# Generate plots of distribution of distance between captures for obvious recaptures and flagged recaptures
+```{r plots 2}
+idcsv <- read_csv("data/seq03-33_identity/33-03_seq_identity_big_table.csv")
+
+# mark rows where the match was considered an obvious recapture based on genetics, size, lat lon.
+
+# get the most current gen_ids for the first samples 
+first <- full_meta(idcsv$first_sample_id, leyte)
+ names(first) <- paste0("first_", names(first)) 
+ 
+ # remove the sample_id from this group of names to use later
+ f_except <- select(first, -first_sample_id)
+ x <- names(f_except)
+
+# get the most current gen_ids for the second samples
+sec <- full_meta(idcsv$second_sample_id, leyte)
+names(sec) <- paste0("second_", names(sec))
+
+# remove the sample_id from this group of names to use later
+s_except <- select(sec, -second_sample_id)
+y <- names(s_except)
+
+# remove the above columns from idcsv so that the most updated version can be reattached
+idcsv <- idcsv %>% 
+  select(-x, -y)
+
+idcsv <- left_join(idcsv, first, by = "first_sample_id")
+idcsv <- left_join(idcsv, sec, by = "second_sample_id")
+
+# mark all of the rows where the genetic recapture is cofirmed by  size, location
+idcsv <- idcsv %>% 
+  mutate(mark = ifelse(first_gen_id == second_gen_id, "apparent", "questionable"), 
+         mark = ifelse(is.na(mark), "questionable", mark))
+
+dist <- idcsv %>% 
+  select(first_id, second_id, distkm, mark) %>% 
+  group_by(distkm, mark) %>% 
+  summarise(count = n())
+
+# convert to meters
+dist <- dist %>%
+  mutate(distm = distkm * 1000)
+
+```
+
+Ignore the questionable far distance fish
+```{r}
+dist_sm <- dist %>% 
+  filter(distm < 1000)
+
+ggplot(dist_sm, aes(x = mark, y = distm)) + 
+  geom_boxplot() +
+  coord_flip() +
+  geom_jitter()
+```
+```{r}
+ggplot(dist, aes(distm, fill = mark)) +
+  geom_histogram(binwidth = 500, position = "dodge") +
+  scale_y_continuous(limits = c(0, 5))+
+  theme_bw()+
+  theme(
+    plot.background = element_blank()
+    ,panel.grid.major = element_blank()
+    ,panel.grid.minor = element_blank()
+    ,panel.border = element_blank()
+  ) 
+```
+
+
+
+
+
 
