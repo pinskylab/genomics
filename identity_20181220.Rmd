@@ -7,8 +7,8 @@ params:
  ---
 # Workspace setup
 ```{r}
- library(tidyverse)
- library(lubridate)
+library(tidyverse)
+library(lubridate)
 
 source("../laboratory/scripts/lab_helpers.R")
 source("scripts/gen_helpers.R")
@@ -612,7 +612,7 @@ i <- 17
     mutate(year = substr(sample_id, 5,6)) %>% 
     arrange(year)
   
-  This matches to an old id error
+  # This matches to an old id error
   z <- c("APCL14_305", "APCL14_306")
   test <- full_meta(z, leyte)
   # even though there is a match, can't tell which fish it was because they were caught on the same anemone in the same year
@@ -1171,13 +1171,13 @@ temp <- rbind(two, non)
 # i1 decision 
 Move the 2014 sample to the known_issues group, name the 2016 samples as matches and assign gen_id
 ```{r}
-max_gen <- fish %>% 
-  summarise(max = max(gen_id, na.rm = T)) %>% 
-  collect()
-
-fish <- fish %>% 
-  mutate(gen_id = ifelse(sample_id == "APCL14_454", NA, gen_id), 
-         gen_id = ifelse(sample_id %in% c("APCL16_085", "APCL16_781"), max_gen$max + 1, gen_id))
+# max_gen <- fish %>% 
+#   summarise(max = max(gen_id, na.rm = T)) %>% 
+#   collect()
+# 
+# fish <- fish %>% 
+#   mutate(gen_id = ifelse(sample_id == "APCL14_454", NA, gen_id), 
+#          gen_id = ifelse(sample_id %in% c("APCL16_085", "APCL16_781"), max_gen$max + 1, gen_id))
 ```
 
 i = 2 is the same set as above because it was a match of 3
@@ -1753,25 +1753,25 @@ same_pool <- site13_work %>%
 No possible mixup of 2013 samples
 # labwork on 2016 fish
 ```{r}
-site16_work <- work_history(non16, "sample_id")
-
-y_work <- work_history(y, "sample_id")
-
-same_ext <- site16_work %>% 
-  filter(plate.x %in% y_work$plate.x)
-
-same_dig <- site16_work %>% 
-  filter(plate.y %in% y_work$plate.y)
-# same_dig <- rbind(same_dig, y_work) # this catches all of the future "sames"
-
-same_lig <- site16_work %>% 
-  filter(plate %in% y_work$plate)
-
-same_barcode <- site16_work %>% 
-  filter(barcode_num %in% y_work$barcode_num)
-
-same_pool <- site16_work %>% 
-  filter(pool %in% y_work$pool)
+# site16_work <- work_history(non16, "sample_id")
+# 
+# y_work <- work_history(y, "sample_id")
+# 
+# same_ext <- site16_work %>% 
+#   filter(plate.x %in% y_work$plate.x)
+# 
+# same_dig <- site16_work %>% 
+#   filter(plate.y %in% y_work$plate.y)
+# # same_dig <- rbind(same_dig, y_work) # this catches all of the future "sames"
+# 
+# same_lig <- site16_work %>% 
+#   filter(plate %in% y_work$plate)
+# 
+# same_barcode <- site16_work %>% 
+#   filter(barcode_num %in% y_work$barcode_num)
+# 
+# same_pool <- site16_work %>% 
+#   filter(pool %in% y_work$pool)
 
 ```
 all 5 of the possible 2016 fish from Visca were on the same plate as the 2016 fish. Placing the 2016 fish in the known_issues group
@@ -4664,8 +4664,8 @@ Now compare the labwork sample that is from another site
 
 # site A - which fish were caught in the second site in the first year
 ```{r}
-nona <- meta_site_a(sitea = y$site[2], yeara = year(y$date[1]), sizea = y$size[2])
-nrow(nona)
+# nona <- meta_site_a(sitea = y$site[2], yeara = year(y$date[1]), sizea = y$size[2])
+# nrow(nona)
 ```
 
 # site A labwork - were any of those fish on the same plates as our match?
@@ -4723,9 +4723,9 @@ y$gen_id
 Suspicious that the fish are exactly the same size, 2 years apart
 Get site A info
 ```{r}
-nona <- meta_site_a(y$site[2], y$year[1], y$size[2])
-temp <- lab_site_a(nona)
-rm(temp)
+# nona <- meta_site_a(y$site[2], y$year[1], y$size[2])
+# temp <- lab_site_a(nona)
+# rm(temp)
 ```
 No labwork overlap
 
@@ -4800,10 +4800,10 @@ rm(z)
 Examine the questionable match between 2 fish in the same year at different sites 
 ```{r}
 # remove the "good match" from the table to examine the questionable match in more detail
-y <- filter(y, year == "16")
-
-nona <- meta_site_a(y$site[2], y$year[1], y$size[2])
-temp <- lab_site_a(nona)
+# y <- filter(y, year == "16")
+# 
+# nona <- meta_site_a(y$site[2], y$year[1], y$size[2])
+# temp <- lab_site_a(nona)
 ```
 There is a lot of potential for labwork overlap (~36 possible samples).  Move the San Agustin fish to the known issues table - already there as L4978
 
@@ -5397,8 +5397,8 @@ temp <- lab_site_a(nona)
 ```
 no overlap on the 2016 samples
 ```{r}
-nonb <- meta_site_b(y$site[1], y$year[2], y$size[2])
-temp <- lab_site_b(nonb)
+# nonb <- meta_site_b(y$site[1], y$year[2], y$size[2])
+# temp <- lab_site_b(nonb)
 ```
 The same barcode was used for the 2017 samples but no other overlap occurs.  These 2 samples were found in pools 92 and 93 with the same barcode.  A note has been made in known issues.
 ## 44
