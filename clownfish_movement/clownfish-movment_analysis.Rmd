@@ -1,0 +1,275 @@
+---
+title: "Analysis of clownfish movement"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+pacman::p_load(tidyverse, clownfish, geosphere, sf, install=FALSE)
+```
+
+Find all fish that have been recaptured
+```{r recaps}
+fish <- fish_anem_dive() %>% 
+  select(fish_table_id, sample_id, tag_id, recap, gen_id, anem_table_id, fish_obs_time, anem_obs_time, date, anem_id, anem_obs, gps) 
+
+# multiple observations of the same tag_id
+tag_recap <- fish %>% 
+  group_by(tag_id) %>% 
+  count() %>% 
+  filter(n > 1 & !is.na(tag_id)) %>% 
+  ungroup %>%
+  mutate(tag_recap_id = 1:nrow(tag_recap))
+
+# multiple observations of the same genetically identified fish
+gen_recap <- fish %>% 
+  group_by(gen_id) %>% 
+  count() %>% 
+  filter(n > 1 & !is.na(gen_id)) %>% 
+  ungroup() %>% 
+  mutate(gen_recap_id = 1:nrow(gen_recap))
+
+# join these back to fish for complete info
+fish_recaps <- fish %>% 
+  filter(gen_id %in% gen_recap$gen_id | tag_id %in% tag_recap$tag_id)
+
+
+
+# need to create a recap_id to match these fish up
+fish_recaps <- left_join(fish_recaps, select(tag_recap, -n), by = "tag_id")
+fish_recaps <- left_join(fish_recaps, select(gen_recap, -n), by = "gen_id")
+
+# add 300 to gen_recap_id to make sure it is not duplicated in tag_recap_id
+fish_recaps <- fish_recaps %>% 
+  mutate(gen_recap_id = gen_recap_id + 300) %>%
+  # if tag_recap_id is NA and gen_recap_id isn't
+  mutate(recap_id = ifelse(is.na(tag_recap_id), gen_recap_id, NA)) %>% 
+  # if tag_recap_id isn't and gen_recap_id is NA
+  mutate(recap_id = ifelse(is.na(gen_recap_id), tag_recap_id, recap_id))
+
+# if there is a value in both columns, need to get all of them
+multi_caps <- fish_recaps %>% 
+  filter(is.na(recap_id)) %>% 
+  select(tag_id, tag_recap_id, gen_id, gen_recap_id) %>% 
+  distinct()
+
+results <- tibble()
+
+for (i in seq(nrow(multi_caps))){
+  x <- fish_recaps %>% 
+    filter(gen_id == multi_caps$gen_id[i] | tag_id == multi_caps$tag_id[i]) %>% 
+    arrange(recap_id) %>% 
+    mutate(new_recap_id = recap_id[1])
+  
+  results <- rbind(results, x)
+}
+
+results <- results %>% 
+  select(fish_table_id, new_recap_id)
+
+fish_recaps <- left_join(fish_recaps, results, by = "fish_table_id")
+
+
+# add lat longs
+fish_coords <- fish_recaps %>% 
+ mutate(anem_obs_time = lubridate::force_tz(lubridate::ymd_hms(str_c(date, anem_obs_time, sep = " ")), tzone = "Asia/Manila"),
+           # convert to UTC
+           anem_obs_time = lubridate::with_tz(anem_obs_time, tzone = "UTC"),
+           gpx_date = lubridate::date(anem_obs_time),
+           gpx_hour = lubridate::hour(anem_obs_time),
+           minute = lubridate::minute(anem_obs_time))
+
+leyte <- read_db("Leyte")    
+  gpx <- leyte %>%
+    tbl("GPX") %>%
+    select(lat, lon, time, unit) %>%
+    collect() %>%
+    separate(time, into = c("gpx_date", "gps_time"), sep = " ") %>%
+    mutate(gpx_date = lubridate::date(gpx_date)) %>%
+    filter(gpx_date %in% fish_coords$gpx_date) %>%
+    separate(gps_time, into = c("gpx_hour", "minute", "second"), sep = ":") %>%
+    filter(as.numeric(gpx_hour) %in% fish_coords$gpx_hour & as.numeric(minute) %in% fish_coords$minute) %>%
+    mutate(gpx_hour = as.numeric(gpx_hour),
+           minute = as.numeric(minute))
+  
+  # find matches for times to assign lat long - there are more than one set of seconds (sec.y) that match
+  temporary <- left_join(fish_coords, gpx, by = c("gps" = "unit",  "gpx_date","gpx_hour", "minute")) %>%
+    mutate(lat = as.numeric(lat),
+           lon = as.numeric(lon)) # need to make decimal 5 digits - why? because that is all the gps can hold
+
+    
+  # calculate a mean lat lon for each fish_coords observation
+  coord <- temporary %>%
+    group_by(fish_table_id) %>% 
+    summarise(lat = mean(lat, na.rm = TRUE),
+              lon = mean(lon, na.rm = T))
+
+  fish_locs <- left_join(fish_coords, coord,  by = "fish_table_id") %>% 
+    select(fish_table_id, gen_id, tag_id, lat, lon) %>% 
+    filter(!is.na(lat))
+# decided not to create a loc column
+    # %>% 
+  #   mutate(loc = paste(lon, lat, sep = ","))
+ 
+```
+
+This attempt to use geoDist isn't great because we almost need the p1 and p2 locaitons to be in the same row of the data frame.  Trying to create a polygon instead (see below this chunk).
+```{r eval=FALSE} 
+  # calculate the distance between capture points
+  gen_caps <- distinct(fish_locs, gen_id) %>% 
+    filter(!is.na(gen_id))
+  # for every unique gen_id
+for (i in seq_along(gen_caps$gen_id)){
+  x <- fish_locs %>% 
+    filter(gen_id == gen_caps$gen_id[i])
+  # for every row that contains that specific gen_id
+  for (j in seq_along(x$loc)){
+    while(j < nrow(x))
+      dist <- distGeo(p1 = c(x$lon[j], x$lat[j]), p2 = c(x$lon[j+1], x$lat[j+1]))
+    
+  }
+}
+  
+
+```
+
+Create a polygon to calcuate area of home range based on this stack overflow post
+https://stackoverflow.com/questions/48383990/convert-sequence-of-longitude-and-latitude-to-polygon-via-sf-in-r
+```{r gen_home_range}
+gen_caps <- filter(fish_locs, !is.na(gen_id))
+gen_caps <- unique(gen_caps$gen_id)
+results <- tibble()
+
+for (i in seq_along(gen_caps)){
+  x <- filter(fish_locs, gen_id == gen_caps[i])
+  
+  # create a table of locations
+  df <- data.frame(lon = c(x$lon), 
+                   lat = c(x$lat))
+  
+  # close the polygon by adding the first line again
+  df <- rbind(df, df[1, ])
+  
+  poly <- st_sf(st_sfc(st_polygon(list(as.matrix(df)))), crs = 4326)
+
+
+  y <- tibble(gen_id = x$gen_id[1], gen_home_range = st_area(poly))
+  
+  results <- rbind(results, y)
+  
+}
+
+fish_locs <- left_join(fish_locs, results, by = "gen_id")
+```
+
+Calculate the home range of tag recaptures
+```{r tag_home_range}
+tag_caps <- filter(fish_locs, !is.na(tag_id))
+tag_caps <- unique(tag_caps$tag_id)
+tag_results <- tibble()
+
+for (i in seq_along(tag_caps)){
+  x <- filter(fish_locs, tag_id == tag_caps[i])
+  
+  # create a table of locations
+  df <- data.frame(lon = c(x$lon), 
+                   lat = c(x$lat))
+  
+  # close the polygon by adding the first line again
+  df <- rbind(df, df[1, ])
+  
+  poly <- st_sf(st_sfc(st_polygon(list(as.matrix(df)))), crs = 4326)
+
+
+  y <- tibble(tag_id = x$tag_id[1], tag_home_range = st_area(poly))
+  
+  tag_results <- rbind(tag_results, y)
+  
+}
+
+fish_locs <- left_join(fish_locs, tag_results, by = "tag_id")
+```
+
+Compare gen and tag home ranges
+```{r}
+fish_locs <- fish_locs %>% 
+  # if gen_home_range and tag_home_range are equal
+  mutate(home_range = ifelse(gen_home_range == tag_home_range, gen_home_range, NA)) %>% 
+  # if tag_home_range is NA and gen_home_range isn't
+  mutate(home_range = ifelse(is.na(tag_home_range), gen_home_range, home_range)) %>% 
+  # if gen_home_range is NA nad tag_home_range isn't
+  mutate(home_range = ifelse(is.na(gen_home_range), tag_home_range, home_range))
+```
+
+Now the fish with NA in the home range are fish that have both gen_ids and recaptured tags.  Combine all of their observed lat lons to make a polygon
+```{r multi}
+multi_caps <- fish_locs %>% 
+  filter(is.na(home_range)) %>% 
+  select(gen_id, tag_id) %>% 
+  distinct()
+
+results <- tibble()
+
+for(i in seq(nrow(multi_caps))){
+   x <- filter(fish_locs, tag_id == multi_caps$tag_id[i] | gen_id == multi_caps$gen_id[i])
+   g <- unique(x$gen_id)
+   t <- unique(x$tag_id)
+  
+  # create a table of locations
+  df <- data.frame(lon = c(x$lon), 
+                   lat = c(x$lat))
+  
+  # close the polygon by adding the first line again
+  df <- rbind(df, df[1, ])
+  
+  poly <- st_sf(st_sfc(st_polygon(list(as.matrix(df)))), crs = 4326)
+
+
+  y <- x %>% 
+    select(gen_id, tag_id) %>% 
+    mutate(new_home_range = st_area(poly))
+  
+  results <- rbind(results, y) %>% 
+    distinct()
+}
+
+gen_id_join <- results %>% 
+  select(-tag_id) %>% 
+  filter(!is.na(gen_id)) %>% 
+  distinct()
+
+test <- left_join(fish_locs, distinct(select(results, -tag_id)), by = "gen_id")
+
+```
+
+
+
+Inspect problems
+```{r issues, eval=FALSE}
+issue <- fish_anem_dive() %>% 
+  filter(fish_table_id == 432) %>% 
+  mutate(gpx_time = lubridate::force_tz(lubridate::ymd_hms(str_c(date, anem_obs_time, sep = " ")), tzone = "Asia/Manila")
+         , gpx_time = lubridate::with_tz(gpx_time, tzone = "UTC")
+         , gpx_date = lubridate::date(gpx_time)
+  )
+
+leyte <- read_db("Leyte")
+issue_gpx <- leyte %>% 
+  tbl("GPX") %>% 
+  collect() %>% 
+  filter(grepl(issue$gpx_date, time)) 
+
+
+issue <- fish_locs %>% 
+  filter(gen_id == 547)
+
+# these pit tags look similar enough to be type-os
+pit <- leyte %>% 
+  tbl("pitscan") %>% 
+  collect() %>% 
+  mutate(scan = paste0(city, tag)) %>% 
+  filter(scan %in% issue$tag_id)
+
+issue <- fish %>% 
+  filter(tag_id %in% pit$scan)
+```
+
