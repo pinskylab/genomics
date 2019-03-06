@@ -1,17 +1,21 @@
  ---
-title: "Identity Protocol for APCL project"
+title: "Identity Protocol for APCL project "
 output: html_notebook
 params:
- data_dir:  seq03-33_identity
- data_name:  33-03_seq_identity
+ data_dir: "seq03-33_identity"
+ data_name: "33-03_seq_identity"
  ---
 # Workspace setup
-```{r}
+```{r setup}
 library(tidyverse)
 library(lubridate)
-
+library(RMySQL)
 source("../laboratory/scripts/lab_helpers.R")
 source("scripts/gen_helpers.R")
+# leyte <- read_db("Leyte")
+# lab <- read_db("Laboratory")
+# 2019-03-06 have to add some code to get functions to work after updating packages and R
+source("../clownfish-pkg/R/db_connections.R")
 leyte <- read_db("Leyte")
 lab <- read_db("Laboratory")
 ```
@@ -304,8 +308,8 @@ site_fails <- idcsv %>%
 
 # Write big table into a file -----------------------
 ```{r}
-# write_csv(idcsv, paste0("data/", params$data_dir, "/", params$data_name, "_big_table.csv"))
-# write_csv(new_regenos, paste0("data/", params$data_dir, "/new_regenos.csv"))
+# #write_csv(idcsv, paste0("data/", params$data_dir, "/", params$data_name, "_big_table.csv"))
+# #write_csv(new_regenos, paste0("data/", params$data_dir, "/new_regenos.csv"))
 
 # idcsv <- read_csv("data/seq03-33_identity/33-03_seq_identity_big_table.csv")
 
@@ -1017,11 +1021,11 @@ clown <- leyte %>%
   tbl("clownfish") %>% 
   collect()
 
-write_csv(clown, path = paste0("../db_backups/", Sys.Date(), "_clownfish_db.csv"))
+#write_csv(clown, path = paste0("../db_backups/", Sys.Date(), "_clownfish_db.csv"))
 
 # can send the fish table to the database because I've been updating it all along
 # ley <- write_db("Leyte")
-# dbWriteTable(ley, "clownfish", fish, row.names = F, overwrite = T)
+# #dbWriteTable(ley, "clownfish", fish, row.names = F, overwrite = T)
 # dbDisconnect(ley)
 
 rm(fish, clown)
@@ -1052,6 +1056,8 @@ For a fish that changed sites, I can look at the lat lon of all of the fish in t
 
 ```{r compare fish from sites}
 # For a fish caputred in 2014 at Magbangon that matches 2 fish captured in Palanas in 2016
+source("../clownfish-pkg/R/db_connections.R")
+leyte <- read_db("Leyte")
 
 # find the 2014 fish in Palanas
 # get dives
@@ -1067,7 +1073,7 @@ temp <- leyte %>%
   tbl("anemones") %>% 
   filter(dive_table_id %in% pal14$dive_table_id) %>% 
   collect() %>% 
-  select(dive_table_id, anem_table_id, anem_id, obs_time, anem_obs)
+  select(dive_table_id, anem_table_id, anem_id, anem_obs_time, anem_obs)
 
 pal14 <- left_join(temp, pal14, by = "dive_table_id")
 
@@ -1084,10 +1090,10 @@ rm(temp)
 # get lat lon
 
 temp <- pal14 %>% 
-  mutate(obs_time = force_tz(ymd_hms(str_c(date, obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
-  mutate(obs_time = with_tz(obs_time, tzone = "UTC")) %>% 
-  mutate(hour = hour(obs_time), 
-         minute = minute(obs_time))
+  mutate(anem_obs_time = force_tz(ymd_hms(str_c(date, anem_obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
+  mutate(anem_obs_time = with_tz(anem_obs_time, tzone = "UTC")) %>% 
+  mutate(hour = hour(anem_obs_time), 
+         minute = minute(anem_obs_time))
 
 lat <- leyte %>%
     tbl("GPX")  %>% 
@@ -1124,7 +1130,7 @@ filter(size < 8.3)
 
 # out of these 7 fish, one was unsuccessfully genotyped, could it be the one that was mixed up?  APCL14_553
 
-source("../laboratory/scripts/lab_helpers.R")
+
 pal14_work <- work_history(pal14_small, "sample_id")
 
 y_work <- work_history(y, "sample_id")
@@ -1261,7 +1267,7 @@ temp <- leyte %>%
   tbl("anemones") %>% 
   filter(dive_table_id %in% site14$dive_table_id) %>% 
   collect() %>% 
-  select(dive_table_id, anem_table_id, anem_id, obs_time, anem_obs)
+  select(dive_table_id, anem_table_id, anem_id, anem_obs_time, anem_obs)
 
 site14 <- left_join(temp, site14, by = "dive_table_id")
 
@@ -1278,10 +1284,10 @@ rm(temp)
 # get lat lon
 
 temp <- site14 %>% 
-  mutate(obs_time = force_tz(ymd_hms(str_c(date, obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
-  mutate(obs_time = with_tz(obs_time, tzone = "UTC")) %>% 
-  mutate(hour = hour(obs_time), 
-         minute = minute(obs_time))
+  mutate(anem_obs_time = force_tz(ymd_hms(str_c(date, anem_obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
+  mutate(anem_obs_time = with_tz(anem_obs_time, tzone = "UTC")) %>% 
+  mutate(hour = hour(anem_obs_time), 
+         minute = minute(anem_obs_time))
 
 lat <- leyte %>%
     tbl("GPX")  %>% 
@@ -1341,7 +1347,7 @@ temp <- leyte %>%
   tbl("anemones") %>% 
   filter(dive_table_id %in% site16$dive_table_id) %>% 
   collect() %>% 
-  select(dive_table_id, anem_table_id, anem_id, obs_time, anem_obs)
+  select(dive_table_id, anem_table_id, anem_id, anem_obs_time, anem_obs)
 
 site16 <- left_join(temp, site16, by = "dive_table_id")
 
@@ -1358,10 +1364,10 @@ rm(temp)
 # get lat lon
 
 temp <- site16 %>% 
-  mutate(obs_time = force_tz(ymd_hms(str_c(date, obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
-  mutate(obs_time = with_tz(obs_time, tzone = "UTC")) %>% 
-  mutate(hour = hour(obs_time), 
-         minute = minute(obs_time))
+  mutate(anem_obs_time = force_tz(ymd_hms(str_c(date, anem_obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
+  mutate(anem_obs_time = with_tz(anem_obs_time, tzone = "UTC")) %>% 
+  mutate(hour = hour(anem_obs_time), 
+         minute = minute(anem_obs_time))
 
 lat <- leyte %>%
     tbl("GPX")  %>% 
@@ -1453,6 +1459,7 @@ same_pool <- site16_work %>%
 # i4 decision
 Move the 2014 fish to the known issues group, the 2016 fish appears fine. 
 ```{r}
+source("../clownfish-pkg/R/db_connections.R")
 fish <- fish %>% 
   mutate(gen_id = ifelse(sample_id == "APCL14_544", NA, gen_id))
 
@@ -1461,11 +1468,11 @@ lb <- write_db("Laboratory")
 iss <- lb %>% 
   tbl("known_issues") %>% 
   collect()
-write_csv(iss, paste0("../db_backups/", Sys.Date(), "known_issues.csv"))
+#write_csv(iss, paste0("../db_backups/", Sys.Date(), "known_issues.csv"))
 
 iss <- tibble(ligation_id = "L0621", issue = "This sample from 2014, APCL14_544 matches L5019, APCL16_254 but they are from different sites and many fish from the correct site are on the same plate for much of the lab work leading up to this ligation.  No robots were used in the making of this ligation.")
 
-dbWriteTable(lb, "known_issues", iss, row.names=F, append = T)
+# #dbWriteTable(lb, "known_issues", iss, row.names=F, append = T)
 ```
 
 #i5 
@@ -1541,11 +1548,11 @@ lb <- write_db("Laboratory")
 iss <- lb %>% 
   tbl("known_issues") %>% 
   collect()
-write_csv(iss, paste0("../db_backups/", Sys.Date(), "known_issues.csv"))
+#write_csv(iss, paste0("../db_backups/", Sys.Date(), "known_issues.csv"))
 
 iss <- tibble(ligation_id = "L4978", issue = "This ligation matches L5026 and has the same barcode number in an adjacent pool but not on the same plate.")
 
-dbWriteTable(lb, "known_issues", iss, row.names=F, append = T)
+#dbWriteTable(lb, "known_issues", iss, row.names=F, append = T)
 ```
 #i11 - different sites
 Fish from different sites
@@ -1587,7 +1594,7 @@ temp <- leyte %>%
   tbl("anemones") %>% 
   filter(dive_table_id %in% site13$dive_table_id) %>% 
   collect() %>% 
-  select(dive_table_id, anem_table_id, anem_id, obs_time, anem_obs)
+  select(dive_table_id, anem_table_id, anem_id, anem_obs_time, anem_obs)
 
 site13 <- left_join(temp, site13, by = "dive_table_id")
 
@@ -1604,10 +1611,10 @@ rm(temp)
 # get lat lon
 
 temp <- site13 %>% 
-  mutate(obs_time = force_tz(ymd_hms(str_c(date, obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
-  mutate(obs_time = with_tz(obs_time, tzone = "UTC")) %>% 
-  mutate(hour = hour(obs_time), 
-         minute = minute(obs_time))
+  mutate(anem_obs_time = force_tz(ymd_hms(str_c(date, anem_obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
+  mutate(anem_obs_time = with_tz(anem_obs_time, tzone = "UTC")) %>% 
+  mutate(hour = hour(anem_obs_time), 
+         minute = minute(anem_obs_time))
 
 lat <- leyte %>%
     tbl("GPX")  %>% 
@@ -1666,7 +1673,7 @@ temp <- leyte %>%
   tbl("anemones") %>% 
   filter(dive_table_id %in% site16$dive_table_id) %>% 
   collect() %>% 
-  select(dive_table_id, anem_table_id, anem_id, obs_time, anem_obs)
+  select(dive_table_id, anem_table_id, anem_id, anem_obs_time, anem_obs)
 
 site16 <- left_join(temp, site16, by = "dive_table_id")
 
@@ -1683,10 +1690,10 @@ rm(temp)
 # get lat lon
 
 temp <- site16 %>% 
-  mutate(obs_time = force_tz(ymd_hms(str_c(date, obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
-  mutate(obs_time = with_tz(obs_time, tzone = "UTC")) %>% 
-  mutate(hour = hour(obs_time), 
-         minute = minute(obs_time))
+  mutate(anem_obs_time = force_tz(ymd_hms(str_c(date, anem_obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
+  mutate(anem_obs_time = with_tz(anem_obs_time, tzone = "UTC")) %>% 
+  mutate(hour = hour(anem_obs_time), 
+         minute = minute(anem_obs_time))
 
 lat <- leyte %>%
     tbl("GPX")  %>% 
@@ -1781,11 +1788,11 @@ all 5 of the possible 2016 fish from Visca were on the same plate as the 2016 fi
 iss <- lb %>% 
   tbl("known_issues") %>% 
   collect()
-write_csv(iss, paste0("../db_backups/", Sys.Date(), "known_issues.csv"))
+#write_csv(iss, paste0("../db_backups/", Sys.Date(), "known_issues.csv"))
 
 iss <- tibble(ligation_id = "L5065", issue = "This ligation matches L2232 but is at a different site.  There are 5 possible fish that were caught at the right site that were also on the same plate as this ligation.")
 
-dbWriteTable(lb, "known_issues", iss, row.names=F, append = T)
+#dbWriteTable(lb, "known_issues", iss, row.names=F, append = T)
 ```
 
 #i12 - shrinkage
@@ -1853,11 +1860,11 @@ Once again, same barcode, pools 92 and 93, with the other samples, pool 92 was t
 iss <- lb %>% 
   tbl("known_issues") %>% 
   collect()
-write_csv(iss, paste0("../db_backups/", Sys.Date(), "known_issues.csv"))
+#write_csv(iss, paste0("../db_backups/", Sys.Date(), "known_issues.csv"))
 
 iss <- tibble(ligation_id = "L4964", issue = "This ligation matches L5012 but that was caught in the same year at a different site.  These have the same barcode number and are in pools 92 and 93")
 
-dbWriteTable(lb, "known_issues", iss, row.names=F, append = T)
+#dbWriteTable(lb, "known_issues", iss, row.names=F, append = T)
 ```
 
 #i14 - shrinkage
@@ -1972,7 +1979,7 @@ i <- 17
 
 ```
 # look at labwork among the matches
-```{r}
+```{r eval=FALSE}
 y_work <- work_history(y, "sample_id") %>% 
   distinct
 ```
@@ -1984,11 +1991,11 @@ These samples were on the same extract plate and same ligation plate (near each 
 iss <- lb %>% 
   tbl("known_issues") %>% 
   collect()
-write_csv(iss, paste0("../db_backups/", Sys.Date(), "known_issues.csv"))
+#write_csv(iss, paste0("../db_backups/", Sys.Date(), "known_issues.csv"))
 
 iss <- tibble(ligation_id = c("L2572", "L2579"), issue = c("This ligation matches L2579 but is at a different site, different size, same year.  These samples could have come into contact with each other during extraction or ligation.", "This ligation matches L2572 but is at a different site, different size, same year.  These samples could have come into contact with each other during extraction or ligation."))
 
-dbWriteTable(lb, "known_issues", iss, row.names=F, append = T)
+#dbWriteTable(lb, "known_issues", iss, row.names=F, append = T)
 ```
 
 # i 18 - shrinkage
@@ -2123,7 +2130,7 @@ temp <- leyte %>%
   tbl("anemones") %>% 
   filter(dive_table_id %in% site14$dive_table_id) %>% 
   collect() %>% 
-  select(dive_table_id, anem_table_id, anem_id, obs_time, anem_obs)
+  select(dive_table_id, anem_table_id, anem_id, anem_obs_time, anem_obs)
 
 site14 <- left_join(temp, site14, by = "dive_table_id")
 
@@ -2140,10 +2147,10 @@ rm(temp)
 # get lat lon
 
 temp <- site14 %>% 
-  mutate(obs_time = force_tz(ymd_hms(str_c(date, obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
-  mutate(obs_time = with_tz(obs_time, tzone = "UTC")) %>% 
-  mutate(hour = hour(obs_time), 
-         minute = minute(obs_time))
+  mutate(anem_obs_time = force_tz(ymd_hms(str_c(date, anem_obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
+  mutate(anem_obs_time = with_tz(anem_obs_time, tzone = "UTC")) %>% 
+  mutate(hour = hour(anem_obs_time), 
+         minute = minute(anem_obs_time))
 
 lat <- leyte %>%
     tbl("GPX")  %>% 
@@ -2199,7 +2206,7 @@ temp <- leyte %>%
   tbl("anemones") %>% 
   filter(dive_table_id %in% siteb$dive_table_id) %>% 
   collect() %>% 
-  select(dive_table_id, anem_table_id, anem_id, obs_time, anem_obs)
+  select(dive_table_id, anem_table_id, anem_id, anem_obs_time, anem_obs)
 
 siteb <- left_join(temp, siteb, by = "dive_table_id")
 
@@ -2216,10 +2223,10 @@ rm(temp)
 # get lat lon
 
 temp <- siteb %>% 
-  mutate(obs_time = force_tz(ymd_hms(str_c(date, obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
-  mutate(obs_time = with_tz(obs_time, tzone = "UTC")) %>% 
-  mutate(hour = hour(obs_time), 
-         minute = minute(obs_time))
+  mutate(anem_obs_time = force_tz(ymd_hms(str_c(date, anem_obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
+  mutate(anem_obs_time = with_tz(anem_obs_time, tzone = "UTC")) %>% 
+  mutate(hour = hour(anem_obs_time), 
+         minute = minute(anem_obs_time))
 
 lat <- leyte %>%
     tbl("GPX")  %>% 
@@ -2261,7 +2268,7 @@ nonb <- siteb_small %>%
 ```
 
 # labwork on 2014 fish
-```{r}
+```{r eval=FALSE}
 sitea_work <- work_history(non, "sample_id")
 
 y_work <- work_history(y, "sample_id")
@@ -2288,7 +2295,7 @@ same_pool <- sitea_work %>%
 No possible mixups in the 2014 labwork
 
 # labwork on 2015 fish
-```{r}
+```{r eval = FALSE}
 siteb_work <- work_history(nonb, "sample_id")
 
 # only consider samples that have been ligated
@@ -2328,7 +2335,7 @@ No possible mix-ups in the 2015 lab work
 Unlikely that there is a lab mixup because none of the fish who are potential candiates for a mistake were on the same plate as the sequencing match and the fish was captured at Wangag about 400m from where it was captured at Palanas
 ```{r}
 fish <- fish %>% 
-  mutate(notes = ifelse(sample_id %in% y$sample_id, "recapture at different site, APCL14_408 to APCL15_376136", notes))
+  mutate(fish_notes = ifelse(sample_id %in% y$sample_id, "recapture at different site, APCL14_408 to APCL15_376136", fish_notes))
 ```
 
 
@@ -2371,7 +2378,7 @@ temp <- leyte %>%
   tbl("anemones") %>% 
   filter(dive_table_id %in% sitea$dive_table_id) %>% 
   collect() %>% 
-  select(dive_table_id, anem_table_id, anem_id, obs_time, anem_obs)
+  select(dive_table_id, anem_table_id, anem_id, anem_obs_time, anem_obs)
 
 sitea <- left_join(temp, sitea, by = "dive_table_id")
 
@@ -2388,10 +2395,10 @@ rm(temp)
 # get lat lon
 
 temp <- sitea %>% 
-  mutate(obs_time = force_tz(ymd_hms(str_c(date, obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
-  mutate(obs_time = with_tz(obs_time, tzone = "UTC")) %>% 
-  mutate(hour = hour(obs_time), 
-         minute = minute(obs_time))
+  mutate(anem_obs_time = force_tz(ymd_hms(str_c(date, anem_obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
+  mutate(anem_obs_time = with_tz(anem_obs_time, tzone = "UTC")) %>% 
+  mutate(hour = hour(anem_obs_time), 
+         minute = minute(anem_obs_time))
 
 lat <- leyte %>%
     tbl("GPX")  %>% 
@@ -2435,7 +2442,7 @@ rm(alldists)
 ```
 
 # site A labwork
-```{r}
+```{r eval=FALSE}
 sitea_work <- work_history(nona, "sample_id")
 
 y_work <- work_history(y, "sample_id")
@@ -2473,11 +2480,11 @@ The 2 fish from the same site are recaptures but lab error cannot be ruled out f
 iss <- lb %>% 
   tbl("known_issues") %>% 
   collect()
-write_csv(iss, paste0("../db_backups/", Sys.Date(), "known_issues.csv"))
+#write_csv(iss, paste0("../db_backups/", Sys.Date(), "known_issues.csv"))
 
 iss <- tibble(ligation_id = "L1020", issue = "This ligation matches L5203 and L3608 but was captured at Wangag and they were captured at Palanas. The possibility of lab error cannot be ruled out because fish from Palanas were on the same digest plate.")
 
-dbWriteTable(lb, "known_issues", iss, row.names=F, append = T)
+#dbWriteTable(lb, "known_issues", iss, row.names=F, append = T)
 
 max_gen <- fish %>% 
   summarise(max = max(gen_id, na.rm = T)) %>% 
@@ -2646,7 +2653,7 @@ temp <- leyte %>%
   tbl("anemones") %>% 
   filter(dive_table_id %in% siteb$dive_table_id) %>% 
   collect() %>% 
-  select(dive_table_id, anem_table_id, anem_id, obs_time, anem_obs)
+  select(dive_table_id, anem_table_id, anem_id, anem_obs_time, anem_obs)
 
 siteb <- left_join(temp, siteb, by = "dive_table_id")
 
@@ -2663,10 +2670,10 @@ rm(temp)
 # get lat lon
 
 temp <- siteb %>% 
-  mutate(obs_time = force_tz(ymd_hms(str_c(date, obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
-  mutate(obs_time = with_tz(obs_time, tzone = "UTC")) %>% 
-  mutate(hour = hour(obs_time), 
-         minute = minute(obs_time))
+  mutate(anem_obs_time = force_tz(ymd_hms(str_c(date, anem_obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
+  mutate(anem_obs_time = with_tz(anem_obs_time, tzone = "UTC")) %>% 
+  mutate(hour = hour(anem_obs_time), 
+         minute = minute(anem_obs_time))
 
 lat <- leyte %>%
     tbl("GPX")  %>% 
@@ -2708,7 +2715,7 @@ rm(alldists, siteb, siteb_small)
 ```
 
 # site B labwork
-```{r}
+```{r eval=FALSE}
 siteb_work <- work_history(nona, "sample_id")
 
 y_work <- work_history(y, "sample_id")
@@ -2741,7 +2748,7 @@ There are no overlaps for lab work
 # decision 33 - match across different sites
 ```{r}
 fish <- fish %>% 
-  mutate(notes = ifelse(sample_id %in% y$sample_id, "recapture at different site, APCL14_547 to APCL15_404287 and to APCL16_800", notes), 
+  mutate(fish_notes = ifelse(sample_id %in% y$sample_id, "recapture at different site, APCL14_547 to APCL15_404287 and to APCL16_800", fish_notes), 
          gen_id = ifelse(sample_id == "APCL16_800", 1571, gen_id))
 ```
 
@@ -2845,7 +2852,7 @@ temp <- leyte %>%
   tbl("anemones") %>% 
   filter(dive_table_id %in% sitea$dive_table_id) %>% 
   collect() %>% 
-  select(dive_table_id, anem_table_id, anem_id, obs_time, anem_obs)
+  select(dive_table_id, anem_table_id, anem_id, anem_obs_time, anem_obs)
 
 sitea <- left_join(temp, sitea, by = "dive_table_id")
 
@@ -2862,10 +2869,10 @@ rm(temp)
 # get lat lon
 
 temp <- sitea %>% 
-  mutate(obs_time = force_tz(ymd_hms(str_c(date, obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
-  mutate(obs_time = with_tz(obs_time, tzone = "UTC")) %>% 
-  mutate(hour = hour(obs_time), 
-         minute = minute(obs_time))
+  mutate(anem_obs_time = force_tz(ymd_hms(str_c(date, anem_obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
+  mutate(anem_obs_time = with_tz(anem_obs_time, tzone = "UTC")) %>% 
+  mutate(hour = hour(anem_obs_time), 
+         minute = minute(anem_obs_time))
 
 lat <- leyte %>%
     tbl("GPX")  %>% 
@@ -2907,7 +2914,7 @@ rm(alldists, sitea, sitea_small)
 ```
 
 # site A labwork
-```{r}
+```{r eval=FALSE}
 sitea_work <- work_history(nona, "sample_id")
 
 y_work <- work_history(y, "sample_id")
@@ -2933,8 +2940,8 @@ same_pool <- sitea_work %>%
   filter(pool %in% y_work$pool, 
          !is.na(pool))
 
-rm(same_ext, same_dig, same_lig, same_pool, same_barcode)
-rm(sitea_work, y_work, nona)
+# rm(same_ext, same_dig, same_lig, same_pool, same_barcode)
+# rm(sitea_work, y_work, nona)
 ```
 No labwork overlaps for 2014
 
@@ -2953,7 +2960,7 @@ temp <- leyte %>%
   tbl("anemones") %>% 
   filter(dive_table_id %in% siteb$dive_table_id) %>% 
   collect() %>% 
-  select(dive_table_id, anem_table_id, anem_id, obs_time, anem_obs)
+  select(dive_table_id, anem_table_id, anem_id, anem_obs_time, anem_obs)
 
 siteb <- left_join(temp, siteb, by = "dive_table_id")
 
@@ -2970,10 +2977,10 @@ rm(temp)
 # get lat lon
 
 temp <- siteb %>% 
-  mutate(obs_time = force_tz(ymd_hms(str_c(date, obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
-  mutate(obs_time = with_tz(obs_time, tzone = "UTC")) %>% 
-  mutate(hour = hour(obs_time), 
-         minute = minute(obs_time))
+  mutate(anem_obs_time = force_tz(ymd_hms(str_c(date, anem_obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
+  mutate(anem_obs_time = with_tz(anem_obs_time, tzone = "UTC")) %>% 
+  mutate(hour = hour(anem_obs_time), 
+         minute = minute(anem_obs_time))
 
 lat <- leyte %>%
     tbl("GPX")  %>% 
@@ -3015,7 +3022,7 @@ rm(alldists, siteb, siteb_small)
 ```
 
 # site B labwork
-```{r}
+```{r eval=FALSE}
 siteb_work <- work_history(nonb, "sample_id")
 
 y_work <- work_history(y, "sample_id")
@@ -3048,7 +3055,7 @@ No labwork overlap in 2016
 
 ```{r}
 fish <- fish %>% 
-  mutate(notes = ifelse(sample_id %in% y$sample_id, "recapture at different site, APCL14_009 to APCL16_286", notes))
+  mutate(fish_notes = ifelse(sample_id %in% y$sample_id, "recapture at different site, APCL14_009 to APCL16_286", fish_notes))
 ```
 
 #i 39 - different sites
@@ -3091,7 +3098,7 @@ temp <- leyte %>%
   tbl("anemones") %>% 
   filter(dive_table_id %in% sitea$dive_table_id) %>% 
   collect() %>% 
-  select(dive_table_id, anem_table_id, anem_id, obs_time, anem_obs)
+  select(dive_table_id, anem_table_id, anem_id, anem_obs_time, anem_obs)
 
 sitea <- left_join(temp, sitea, by = "dive_table_id")
 
@@ -3108,10 +3115,10 @@ rm(temp)
 # get lat lon
 
 temp <- sitea %>% 
-  mutate(obs_time = force_tz(ymd_hms(str_c(date, obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
-  mutate(obs_time = with_tz(obs_time, tzone = "UTC")) %>% 
-  mutate(hour = hour(obs_time), 
-         minute = minute(obs_time))
+  mutate(anem_obs_time = force_tz(ymd_hms(str_c(date, anem_obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
+  mutate(anem_obs_time = with_tz(anem_obs_time, tzone = "UTC")) %>% 
+  mutate(hour = hour(anem_obs_time), 
+         minute = minute(anem_obs_time))
 
 lat <- leyte %>%
     tbl("GPX")  %>% 
@@ -3153,7 +3160,7 @@ nona <- sitea_small %>%
 ```
 
 # site A labwork
-```{r}
+```{r eval=FALSE}
 sitea_work <- work_history(nona, "sample_id")
 
 y_work <- work_history(y, "sample_id")
@@ -3191,11 +3198,11 @@ The samples from Palanas are clearly a recapture but lab error cannot be elimina
 iss <- lb %>% 
   tbl("known_issues") %>% 
   collect()
-write_csv(iss, paste0("../db_backups/", Sys.Date(), "known_issues.csv"))
+#write_csv(iss, paste0("../db_backups/", Sys.Date(), "known_issues.csv"))
 
 iss <- tibble(ligation_id = "L1237", issue = "This ligation matches L3037 and L5267 but is at a different site.  Cannot rule out lab error as a possibility because this sample was on the same digest plate as another sample that was collected at Palanas in 2014 that has not be genotyped.")
 
-dbWriteTable(lb, "known_issues", iss, row.names=F, append = T)
+#dbWriteTable(lb, "known_issues", iss, row.names=F, append = T)
 
 fish <- fish %>% 
   mutate(gen_id = ifelse(sample_id %in% c("APCL15_402189", "APCL16_574"), 1514, gen_id))
@@ -3307,11 +3314,11 @@ I think the 2 samples from the same site are a match and the other has a lab iss
 iss <- lb %>% 
   tbl("known_issues") %>% 
   collect()
-write_csv(iss, paste0("../db_backups/", Sys.Date(), "known_issues.csv"))
+#write_csv(iss, paste0("../db_backups/", Sys.Date(), "known_issues.csv"))
 
 iss <- tibble(ligation_id = "L4957", issue = "This ligation matches L5005 and has the same barcode number in an adjacent pool but not on the same plate.")
 
-dbWriteTable(lb, "known_issues", iss, row.names=F, append = T)
+#dbWriteTable(lb, "known_issues", iss, row.names=F, append = T)
 ```
 
 
@@ -3353,7 +3360,7 @@ temp <- leyte %>%
   tbl("anemones") %>% 
   filter(dive_table_id %in% sitea$dive_table_id) %>% 
   collect() %>% 
-  select(dive_table_id, anem_table_id, anem_id, obs_time, anem_obs)
+  select(dive_table_id, anem_table_id, anem_id, anem_obs_time, anem_obs)
 
 sitea <- left_join(temp, sitea, by = "dive_table_id")
 
@@ -3370,10 +3377,10 @@ rm(temp)
 # get lat lon
 
 temp <- sitea %>% 
-  mutate(obs_time = force_tz(ymd_hms(str_c(date, obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
-  mutate(obs_time = with_tz(obs_time, tzone = "UTC")) %>% 
-  mutate(hour = hour(obs_time), 
-         minute = minute(obs_time))
+  mutate(anem_obs_time = force_tz(ymd_hms(str_c(date, anem_obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
+  mutate(anem_obs_time = with_tz(anem_obs_time, tzone = "UTC")) %>% 
+  mutate(hour = hour(anem_obs_time), 
+         minute = minute(anem_obs_time))
 
 lat <- leyte %>%
     tbl("GPX")  %>% 
@@ -3415,7 +3422,7 @@ nona <- sitea_small %>%
 ```
 
 # site A labwork
-```{r}
+```{r eval=FALSE}
 sitea_work <- work_history(nona, "sample_id")
 
 y_work <- work_history(y, "sample_id")
@@ -3451,11 +3458,11 @@ There is potential for labwork overlap errors
 iss <- lb %>% 
   tbl("known_issues") %>% 
   collect()
-write_csv(iss, paste0("../db_backups/", Sys.Date(), "known_issues.csv"))
+#write_csv(iss, paste0("../db_backups/", Sys.Date(), "known_issues.csv"))
 
 iss <- tibble(ligation_id = "L0936", issue = "This ligation matches to fish caught in Palanas but this fish was caught in Wangag and lab error cannot be ruled out.")
 
-dbWriteTable(lb, "known_issues", iss, row.names=F, append = T)
+#dbWriteTable(lb, "known_issues", iss, row.names=F, append = T)
 
 ```
 Add the gen_id to the rest of them
@@ -3634,7 +3641,7 @@ temp <- leyte %>%
   tbl("anemones") %>% 
   filter(dive_table_id %in% sitea$dive_table_id) %>% 
   collect() %>% 
-  select(dive_table_id, anem_table_id, anem_id, obs_time, anem_obs)
+  select(dive_table_id, anem_table_id, anem_id, anem_obs_time, anem_obs)
 
 sitea <- left_join(temp, sitea, by = "dive_table_id")
 
@@ -3651,10 +3658,10 @@ rm(temp)
 # get lat lon
 
 temp <- sitea %>% 
-  mutate(obs_time = force_tz(ymd_hms(str_c(date, obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
-  mutate(obs_time = with_tz(obs_time, tzone = "UTC")) %>% 
-  mutate(hour = hour(obs_time), 
-         minute = minute(obs_time))
+  mutate(anem_obs_time = force_tz(ymd_hms(str_c(date, anem_obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
+  mutate(anem_obs_time = with_tz(anem_obs_time, tzone = "UTC")) %>% 
+  mutate(hour = hour(anem_obs_time), 
+         minute = minute(anem_obs_time))
 
 lat <- leyte %>%
     tbl("GPX")  %>% 
@@ -3696,7 +3703,7 @@ nona <- sitea_small %>%
 ```
 
 # site A labwork
-```{r}
+```{r eval=FALSE}
 sitea_work <- work_history(nona, "sample_id")
 
 y_work <- work_history(y, "sample_id")
@@ -3742,7 +3749,7 @@ temp <- leyte %>%
   tbl("anemones") %>% 
   filter(dive_table_id %in% siteb$dive_table_id) %>% 
   collect() %>% 
-  select(dive_table_id, anem_table_id, anem_id, obs_time, anem_obs)
+  select(dive_table_id, anem_table_id, anem_id, anem_obs_time, anem_obs)
 
 siteb <- left_join(temp, siteb, by = "dive_table_id")
 
@@ -3759,10 +3766,10 @@ rm(temp)
 # get lat lon
 
 temp <- siteb %>% 
-  mutate(obs_time = force_tz(ymd_hms(str_c(date, obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
-  mutate(obs_time = with_tz(obs_time, tzone = "UTC")) %>% 
-  mutate(hour = hour(obs_time), 
-         minute = minute(obs_time))
+  mutate(anem_obs_time = force_tz(ymd_hms(str_c(date, anem_obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
+  mutate(anem_obs_time = with_tz(anem_obs_time, tzone = "UTC")) %>% 
+  mutate(hour = hour(anem_obs_time), 
+         minute = minute(anem_obs_time))
 
 lat <- leyte %>%
     tbl("GPX")  %>% 
@@ -3804,7 +3811,7 @@ nonb <- siteb_small %>%
 ```
 
 # site B labwork
-```{r}
+```{r eval=FALSE}
 siteb_work <- work_history(nonb, "sample_id")
 
 y_work <- work_history(y, "sample_id")
@@ -3961,7 +3968,7 @@ temp <- leyte %>%
   tbl("anemones") %>% 
   filter(dive_table_id %in% sitea$dive_table_id) %>% 
   collect() %>% 
-  select(dive_table_id, anem_table_id, anem_id, obs_time, anem_obs)
+  select(dive_table_id, anem_table_id, anem_id, anem_obs_time, anem_obs)
 
 sitea <- left_join(temp, sitea, by = "dive_table_id")
 
@@ -3978,10 +3985,10 @@ rm(temp)
 # get lat lon
 
 temp <- sitea %>% 
-  mutate(obs_time = force_tz(ymd_hms(str_c(date, obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
-  mutate(obs_time = with_tz(obs_time, tzone = "UTC")) %>% 
-  mutate(hour = hour(obs_time), 
-         minute = minute(obs_time))
+  mutate(anem_obs_time = force_tz(ymd_hms(str_c(date, anem_obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
+  mutate(anem_obs_time = with_tz(anem_obs_time, tzone = "UTC")) %>% 
+  mutate(hour = hour(anem_obs_time), 
+         minute = minute(anem_obs_time))
 
 lat <- leyte %>%
     tbl("GPX")  %>% 
@@ -4023,7 +4030,7 @@ nona <- sitea_small %>%
 ```
 
 # site A labwork
-```{r}
+```{r eval=FALSE}
 sitea_work <- work_history(nona, "sample_id")
 
 y_work <- work_history(y, "sample_id")
@@ -4059,7 +4066,7 @@ No clownfish were collected from Sitio Tugas in 2016.
 # decision 60
 ```{r}
 fish <- fish %>% 
-  mutate(notes = ifelse(sample_id %in% y$sample_id, "recapture at different site, APCL13_103 to APCL16_152", notes))
+  mutate(fish_notes = ifelse(sample_id %in% y$sample_id, "recapture at different site, APCL13_103 to APCL16_152", fish_notes))
 ```
 
 # i 61 - no gen_ids
@@ -4384,7 +4391,7 @@ temp <- leyte %>%
   tbl("anemones") %>% 
   filter(dive_table_id %in% sitea$dive_table_id) %>% 
   collect() %>% 
-  select(dive_table_id, anem_table_id, anem_id, obs_time, anem_obs)
+  select(dive_table_id, anem_table_id, anem_id, anem_obs_time, anem_obs)
 
 sitea <- left_join(temp, sitea, by = "dive_table_id")
 
@@ -4401,10 +4408,10 @@ rm(temp)
 # get lat lon
 
 temp <- sitea %>% 
-  mutate(obs_time = force_tz(ymd_hms(str_c(date, obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
-  mutate(obs_time = with_tz(obs_time, tzone = "UTC")) %>% 
-  mutate(hour = hour(obs_time), 
-         minute = minute(obs_time))
+  mutate(anem_obs_time = force_tz(ymd_hms(str_c(date, anem_obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
+  mutate(anem_obs_time = with_tz(anem_obs_time, tzone = "UTC")) %>% 
+  mutate(hour = hour(anem_obs_time), 
+         minute = minute(anem_obs_time))
 
 lat <- leyte %>%
     tbl("GPX")  %>% 
@@ -4446,7 +4453,7 @@ nona <- sitea_small %>%
 ```
 
 # site A labwork
-```{r}
+```{r eval=FALSE}
 sitea_work <- work_history(nona, "sample_id")
 
 y_work <- work_history(y, "sample_id")
@@ -4492,7 +4499,7 @@ temp <- leyte %>%
   tbl("anemones") %>% 
   filter(dive_table_id %in% siteb$dive_table_id) %>% 
   collect() %>% 
-  select(dive_table_id, anem_table_id, anem_id, obs_time, anem_obs)
+  select(dive_table_id, anem_table_id, anem_id, anem_obs_time, anem_obs)
 
 siteb <- left_join(temp, siteb, by = "dive_table_id")
 
@@ -4509,10 +4516,10 @@ rm(temp)
 # get lat lon
 
 temp <- siteb %>% 
-  mutate(obs_time = force_tz(ymd_hms(str_c(date, obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
-  mutate(obs_time = with_tz(obs_time, tzone = "UTC")) %>% 
-  mutate(hour = hour(obs_time), 
-         minute = minute(obs_time))
+  mutate(anem_obs_time = force_tz(ymd_hms(str_c(date, anem_obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
+  mutate(anem_obs_time = with_tz(anem_obs_time, tzone = "UTC")) %>% 
+  mutate(hour = hour(anem_obs_time), 
+         minute = minute(anem_obs_time))
 
 lat <- leyte %>%
     tbl("GPX")  %>% 
@@ -4554,7 +4561,7 @@ nonb <- siteb_small %>%
 ```
 
 # site B labwork
-```{r}
+```{r eval=FALSE}
 siteb_work <- work_history(nonb, "sample_id")
 
 y_work <- work_history(y, "sample_id")
@@ -4591,11 +4598,11 @@ same_pool <- siteb_work %>%
 iss <- lb %>% 
   tbl("known_issues") %>% 
   collect()
-write_csv(iss, paste0("../db_backups/", Sys.Date(), "known_issues.csv"))
+#write_csv(iss, paste0("../db_backups/", Sys.Date(), "known_issues.csv"))
 
 iss <- tibble(ligation_id = c("L2837", "L3151"), issue = c("This ligation matches L3151 but is at a different site, different size, same year.  These samples could have come into contact with other during extraction.", "This ligation matches L2837 but is at a different site, different size, same year.  These samples could have come into contact with each other during extraction."))
 
-dbWriteTable(lb, "known_issues", iss, row.names=F, append = T)
+#dbWriteTable(lb, "known_issues", iss, row.names=F, append = T)
 ```
 ## i 73 - no gen ids
 3 fish, 2 are regenotypes, 1 is an identity match to the other 2 ligations
@@ -4730,7 +4737,7 @@ Get site A info
 No labwork overlap
 
 Get site B info
-```{r}
+```{r eval=FALSE}
 nonb <- meta_site_b(y$site[1], y$year[2], y$size[2])
 temp <- lab_site_b(nonb)
 
@@ -4746,7 +4753,7 @@ temp <- tibble(ligation_id = "L5019", issue = "This ligation matches to L0621, b
 
 # lb <- write_db("Laboratory")
 
-# dbWriteTable(lb, "known_issues", temp, append = T, row.names = F)
+# #dbWriteTable(lb, "known_issues", temp, append = T, row.names = F)
 # dbDisconnect(lb)
 # rm(lb)
 
@@ -4845,13 +4852,13 @@ y$site
 y$gen_id
 ```
 Different sites, check labwork
-```{r}
+```{r eval=FALSE}
 nona <- meta_site_a(y$site[2], y$year[1], y$size[2])
 temp <- lab_site_a(nona)
 rm(temp)
 ```
 no overlapping labwork from the 2013 fish
-```{r}
+```{r eval=FALSE}
 nonb <- meta_site_b(y$site[1], y$year[2], y$size[2])
 temp <- lab_site_b(nonb)
 
@@ -4892,7 +4899,7 @@ y$site
 y$gen_id
 ```
 Fish caught in the same year at different sites with shrinkage.  Check lab work
-```{r}
+```{r eval=FALSE}
 nona <- meta_site_a(y$site[2], y$year[1], y$size[2])
 temp <- lab_site_a(nona)
 rm(temp)
@@ -4974,7 +4981,7 @@ y$lat
 y$lon
 ```
 This fish was caught in the same year at different sites with very different sizes.  Check lab work
-```{r}
+```{r eval=FALSE}
 nona <- select(y, sample_id, size, color, lat, lon, gen_id)
 temp <- lab_site_a(nona)
 rm(temp)
@@ -5058,12 +5065,12 @@ y$lat
 y$lon
 ```
 Fish moved sites, check labwork
-```{r}
+```{r eval=FALSE}
 nona <- meta_site_a(y$site[2], y$year[1], y$size[2])
 temp <- lab_site_a(nona)
 ```
 No labwork overlap on 2014 fish
-```{r}
+```{r eval=FALSE}
 nonb <- meta_site_b(y$site[1], y$year[2], y$size[2])
 temp <- lab_site_b(nonb)
 ```
@@ -5073,13 +5080,13 @@ No labwork overlap on 2015 fish.  It appears this fish moved sites but we are no
 fish <- leyte %>% 
   tbl("clownfish") %>% 
   collect()
-write_csv(fish, paste0("../db_backups/", Sys.time(), "_clownfish.csv"))
+#write_csv(fish, paste0("../db_backups/", Sys.time(), "_clownfish.csv"))
 
 fish <- fish %>% 
-  mutate(notes = ifelse(sample_id %in% y$sample_id, ifelse(is.na(notes), "APCL15_376136 and APCL14_408 return as genetic recaptures but were captured at Wangag and Palanas.  There is no overlapping labwork and the proportion of mismatch is 0.06", paste("APCL15_376136 and APCL14_408 return as genetic recaptures but were captured at Wangag and Palanas.  There is no overlapping labwork and the proportion of mismatch is 0.06", notes, sep = ", ")), notes))
+  mutate(fish_notes = ifelse(sample_id %in% y$sample_id, ifelse(is.na(fish_notes), "APCL15_376136 and APCL14_408 return as genetic recaptures but were captured at Wangag and Palanas.  There is no overlapping labwork and the proportion of mismatch is 0.06", paste("APCL15_376136 and APCL14_408 return as genetic recaptures but were captured at Wangag and Palanas.  There is no overlapping labwork and the proportion of mismatch is 0.06", fish_notes, sep = ", ")), fish_notes))
 
 # ley <- write_db("Leyte")
-# dbWriteTable(ley, "clownfish", fish, overwrite = T, row.names = F)
+# #dbWriteTable(ley, "clownfish", fish, overwrite = T, row.names = F)
 # dbDisconnect(ley)
 rm(ley, fish, nona, nonb, same_barcode, same_dig, same_ext, same_lig, same_pool, temp, y, y_work)
 ```
@@ -5109,7 +5116,7 @@ y <- z
 rm(z)
 ```
 Check the labwork for the questionable match
-```{r}
+```{r eval=FALSE}
 
 nona <- meta_site_a(y$site[2], y$year[1], y$size[2])
 temp <- lab_site_a(nona)
@@ -5222,7 +5229,7 @@ y <- y %>%
 change_db_gen_id(y)
 ```
 Check labwork for other fish
-```{r}
+```{r eval=FALSE}
 nona <- meta_site_a(y$site[2], y$year[1], y$size[2])
 temp <- lab_site_a(nona)
 ```
@@ -5232,13 +5239,13 @@ No labwork overlap.  Making a note on the samples.
 fish <- leyte %>% 
   tbl("clownfish") %>% 
   collect()
-write_csv(fish, paste0("../db_backups/", Sys.time(), "_clownfish.csv"))
+#write_csv(fish, paste0("../db_backups/", Sys.time(), "_clownfish.csv"))
 
 fish <- fish %>% 
-  mutate(notes = ifelse(sample_id %in% y$sample_id, ifelse(is.na(notes), "APCL14_547, APCL15_404287, and APCL16_800 return as genetic recaptures but were captured at Wangag and Palanas.  There is no overlapping labwork and the proportion of mismatch is 0.04", paste("APCL14_547, APCL15_404287, and APCL16_800 return as genetic recaptures but were captured at Wangag and Palanas.  There is no overlapping labwork and the proportion of mismatch is 0.04", notes, sep = ", ")), notes))
+  mutate(fish_notes = ifelse(sample_id %in% y$sample_id, ifelse(is.na(fish_notes), "APCL14_547, APCL15_404287, and APCL16_800 return as genetic recaptures but were captured at Wangag and Palanas.  There is no overlapping labwork and the proportion of mismatch is 0.04", paste("APCL14_547, APCL15_404287, and APCL16_800 return as genetic recaptures but were captured at Wangag and Palanas.  There is no overlapping labwork and the proportion of mismatch is 0.04", fish_notes, sep = ", ")), fish_notes))
 
 # ley <- write_db("Leyte")
-# dbWriteTable(ley, "clownfish", fish, overwrite = T, row.names = F)
+# #dbWriteTable(ley, "clownfish", fish, overwrite = T, row.names = F)
 # dbDisconnect(ley)
 rm(ley, fish, nona, same_barcode, same_dig, same_ext, same_lig, same_pool, temp, y, y_work)
 ```
@@ -5299,29 +5306,29 @@ y$lat
 y$lon
 ```
 Fish moved sites, check labwork
-```{r}
+```{r eval=FALSE}
 nona <- meta_site_a(y$site[2], y$year[1], y$size[2])
 temp <- lab_site_a(nona)
 ```
 No labwork overlap
-```{r}
+```{r eval=FALSE}
 nonb <- meta_site_b(y$site[1], y$year[2], y$size[2])
 temp <- lab_site_b(nonb)
 ```
 Some potential for the 2016 fish to have labwork overlap.  Moving this fish to known issues
-```{r}
+```{r eval=FALSE}
 temp <- tibble(ligation_id = "L5050", issue = "This ligation matches to L0687, but this sample was captured at Elementary School and that sample was captured at Poroc San Flower.  There are seven possible alternate samples in the extraction, digest, and ligation plates as well as 4 in the same pool.")
 
 # lb <- write_db("Laboratory")
 # 
-# dbWriteTable(lb, "known_issues", temp, append = T, row.names = F)
+# #dbWriteTable(lb, "known_issues", temp, append = T, row.names = F)
 # dbDisconnect(lb)
 # rm(lb)
 
 rm(temp, same_barcode, same_dig, same_ext, same_lig, same_pool, nona, nonb)
 ```
 ## 39
-```{r}
+```{r eval=FALSE}
 i <- 39
 investigate$id_note[i]
 investigate$mismatch_prop[i]
@@ -5337,7 +5344,7 @@ y$lon
 Three fish, 2 appear to be a good match based on size and lat lon and have already been looked at up above, the third from 2014 and is in the known issues table.
 ## 40 same group
 ## 41
-```{r}
+```{r eval=FALSE}
 i <- 41
 investigate$id_note[i]
 investigate$mismatch_prop[i]
@@ -5351,13 +5358,13 @@ y$lat
 y$lon
 ```
 Fish caught in same spot, shrinkage is within allowable limits.
-```{r}
+```{r eval=FALSE}
 y <- y %>% 
   mutate(gen_id = gen_id[1])
 change_db_gen_id(y)
 ```
 ## 42
-```{r}
+```{r eval=FALSE}
 i <- 42
 investigate$id_note[i]
 investigate$mismatch_prop[i]
@@ -5371,13 +5378,13 @@ y$lat
 y$lon
 ```
 Fish needs gen_id
-```{r}
+```{r eval=FALSE}
 y <- create_genid(y)
 
 change_db_gen_id(y)
 ```
 ## 43
-```{r}
+```{r eval=FALSE}
 i <- 43
 investigate$id_note[i]
 investigate$mismatch_prop[i]
@@ -5391,18 +5398,18 @@ y$lat
 y$lon
 ```
 Fish captured at 2 very distant sites
-```{r}
+```{r eval=FALSE}
 nona <- meta_site_a(y$site[2], y$year[1], y$size[2])
 temp <- lab_site_a(nona)
 ```
 no overlap on the 2016 samples
-```{r}
+```{r eval=FALSE}
 # nonb <- meta_site_b(y$site[1], y$year[2], y$size[2])
 # temp <- lab_site_b(nonb)
 ```
 The same barcode was used for the 2017 samples but no other overlap occurs.  These 2 samples were found in pools 92 and 93 with the same barcode.  A note has been made in known issues.
 ## 44
-```{r}
+```{r eval=FALSE}
 i <- 44
 investigate$id_note[i]
 investigate$mismatch_prop[i]
@@ -5416,7 +5423,7 @@ y$lat
 y$lon
 ```
 Four fish, captured at 2 sites, the fish from 2014 was captured at Wangag, the rest are at Palanas and based on lat lon and size appear to be good matches.
-```{r}
+```{r eval=FALSE}
 z <- y
 y <- filter(y, site == "Palanas")
 y <- y %>% 
@@ -5424,7 +5431,7 @@ y <- y %>%
 change_db_gen_id(y)
 ```
 Check the labwork for the 2014 sample
-```{r}
+```{r eval=FALSE}
 y <- z
 nona <- meta_site_a(y$site[2], y$year[1], y$size[2])
 temp <- lab_site_a(nona)
@@ -5432,7 +5439,7 @@ temp <- lab_site_a(nona)
 There are opportunities for labwork overlap on the digest, ligation plates, with barcodes and pools for at least 1 sample but possibly 3 candidates in digest plate. Already noted in the known issues.  Interestingly, APCL14_450 was regenotyped and does not match to this ligation.
 ## 45-47 same group
 ## 48
-```{r}
+```{r eval=FALSE}
 i <- 48
 investigate$id_note[i]
 investigate$mismatch_prop[i]
@@ -5527,22 +5534,22 @@ y$lat
 y$lon
 ```
 Check labwork
-```{r}
+```{r eval=FALSE}
 nona <- meta_site_a(y$site[2], y$year[1], y$size[2])
 temp <- lab_site_a(nona)
 ```
 There are 7 potential samples that could've been mixed up with the 2014 sample on an extraction plate.
-```{r}
+```{r eval=FALSE}
 nonb <- meta_site_b(y$site[1], y$year[2], y$size[2])
 temp <- lab_site_b(nonb)
 ```
 There is 1 sample on a digest plate and 2 samples on a ligation plate that could've been mixed up with the 2016 sample.  Making a note for both samples
-```{r}
+```{r eval=FALSE}
 temp <- tibble(ligation_id = c("L0974", "L5107"), issue = c("This ligation matches to L5107, but this sample was captured at Palanasand that sample was captured at N. Magbangon.  There are seven possible alternate samples in the extraction plate.", "This ligation matches to L0974, but that sample was captured at Palanas and this sample was captured at N. Magbangon.  There are one or two possible alternate samples in the digest and ligation plates."))
 
 # lb <- write_db("Laboratory")
 # 
-# dbWriteTable(lb, "known_issues", temp, append = T, row.names = F)
+# #dbWriteTable(lb, "known_issues", temp, append = T, row.names = F)
 # dbDisconnect(lb)
 # rm(lb)
 
@@ -5655,13 +5662,13 @@ No labwork overlap.  Making a note on the samples.
 fish <- leyte %>% 
   tbl("clownfish") %>% 
   collect()
-write_csv(fish, paste0("../db_backups/", Sys.time(), "_clownfish.csv"))
+#write_csv(fish, paste0("../db_backups/", Sys.time(), "_clownfish.csv"))
 
 fish <- fish %>% 
-  mutate(notes = ifelse(sample_id %in% y$sample_id, ifelse(is.na(notes), "APCL13_103 and APCL16_152 return as genetic recaptures but were captured at Sitio Tugas and Cabatoan.  There is no overlapping labwork and the proportion of mismatch is 0.03", paste("APCL13_103 and APCL16_152 return as genetic recaptures but were captured at Sitio Tugas and Cabatoan.  There is no overlapping labwork and the proportion of mismatch is 0.03", notes, sep = ", ")), notes))
+  mutate(fish_notes = ifelse(sample_id %in% y$sample_id, ifelse(is.na(fish_notes), "APCL13_103 and APCL16_152 return as genetic recaptures but were captured at Sitio Tugas and Cabatoan.  There is no overlapping labwork and the proportion of mismatch is 0.03", paste("APCL13_103 and APCL16_152 return as genetic recaptures but were captured at Sitio Tugas and Cabatoan.  There is no overlapping labwork and the proportion of mismatch is 0.03", fish_notes, sep = ", ")), fish_notes))
 
 # ley <- write_db("Leyte")
-# dbWriteTable(ley, "clownfish", fish, overwrite = T, row.names = F)
+# #dbWriteTable(ley, "clownfish", fish, overwrite = T, row.names = F)
 # dbDisconnect(ley)
 rm(ley, fish, nona, same_barcode, same_dig, same_ext, same_lig, same_pool, temp, y, y_work)
 ```
@@ -5980,10 +5987,10 @@ y$tag_id
 test <- leyte %>% 
   tbl("clownfish") %>% 
   filter(sample_id %in% y$sample_id) %>% 
-  select(sample_id, gen_id, notes) %>% 
+  select(sample_id, gen_id, fish_notes) %>% 
   collect()
 test$gen_id
-test$notes
+test$fish_notes
 
 a <- lig_from_samp(y$sample_id)
 test <- lab %>% 
@@ -6020,11 +6027,11 @@ y$tag_id
 test <- leyte %>% 
   tbl("clownfish") %>% 
   filter(sample_id %in% y$sample_id) %>% 
-  select(sample_id, gen_id, notes) %>% 
+  select(sample_id, gen_id, fish_notes) %>% 
   collect()
 print("gen_id")
 test$gen_id
-test$notes
+test$fish_notes
 
 a <- lig_from_samp(y$sample_id)
 test <- lab %>% 
@@ -6062,11 +6069,11 @@ y$tag_id
 test <- leyte %>% 
   tbl("clownfish") %>% 
   filter(sample_id %in% y$sample_id) %>% 
-  select(sample_id, gen_id, notes) %>% 
+  select(sample_id, gen_id, fish_notes) %>% 
   collect()
 print("gen_id")
 test$gen_id
-test$notes
+test$fish_notes
 
 a <- lig_from_samp(y$sample_id)
 test <- lab %>% 
@@ -6103,11 +6110,11 @@ y$tag_id
 test <- leyte %>% 
   tbl("clownfish") %>% 
   filter(sample_id %in% y$sample_id) %>% 
-  select(sample_id, gen_id, notes) %>% 
+  select(sample_id, gen_id, fish_notes) %>% 
   collect()
 print("gen_id")
 test$gen_id
-test$notes
+test$fish_notes
 
 a <- lig_from_samp(y$sample_id)
 test <- lab %>% 
@@ -6143,11 +6150,11 @@ y$tag_id
 test <- leyte %>% 
   tbl("clownfish") %>% 
   filter(sample_id %in% y$sample_id) %>% 
-  select(sample_id, gen_id, notes) %>% 
+  select(sample_id, gen_id, fish_notes) %>% 
   collect()
 print("gen_id")
 test$gen_id
-test$notes
+test$fish_notes
 
 a <- lig_from_samp(y$sample_id)
 test <- lab %>% 
@@ -6182,11 +6189,11 @@ y$tag_id
 test <- leyte %>% 
   tbl("clownfish") %>% 
   filter(sample_id %in% y$sample_id) %>% 
-  select(sample_id, gen_id, notes) %>% 
+  select(sample_id, gen_id, fish_notes) %>% 
   collect()
 print("gen_id")
 test$gen_id
-test$notes
+test$fish_notes
 
 a <- lig_from_samp(y$sample_id)
 test <- lab %>% 
@@ -6221,11 +6228,11 @@ y$tag_id
 test <- leyte %>% 
   tbl("clownfish") %>% 
   filter(sample_id %in% y$sample_id) %>% 
-  select(sample_id, gen_id, notes) %>% 
+  select(sample_id, gen_id, fish_notes) %>% 
   collect()
 print("gen_id")
 test$gen_id
-test$notes
+test$fish_notes
 
 a <- lig_from_samp(y$sample_id)
 test <- lab %>% 
@@ -6259,11 +6266,11 @@ y$tag_id
 test <- leyte %>% 
   tbl("clownfish") %>% 
   filter(sample_id %in% y$sample_id) %>% 
-  select(sample_id, gen_id, notes) %>% 
+  select(sample_id, gen_id, fish_notes) %>% 
   collect()
 print("gen_id")
 test$gen_id
-test$notes
+test$fish_notes
 
 a <- lig_from_samp(y$sample_id)
 test <- lab %>% 
@@ -6299,11 +6306,11 @@ y$tag_id
 test <- leyte %>% 
   tbl("clownfish") %>% 
   filter(sample_id %in% y$sample_id) %>% 
-  select(sample_id, gen_id, notes) %>% 
+  select(sample_id, gen_id, fish_notes) %>% 
   collect()
 print("gen_id")
 test$gen_id
-test$notes
+test$fish_notes
 
 a <- lig_from_samp(y$sample_id)
 test <- lab %>% 
@@ -6339,11 +6346,11 @@ y$tag_id
 test <- leyte %>% 
   tbl("clownfish") %>% 
   filter(sample_id %in% y$sample_id) %>% 
-  select(sample_id, gen_id, notes) %>% 
+  select(sample_id, gen_id, fish_notes) %>% 
   collect()
 print("gen_id")
 test$gen_id
-test$notes
+test$fish_notes
 
 a <- lig_from_samp(y$sample_id)
 test <- lab %>% 
@@ -6380,11 +6387,11 @@ y$tag_id
 test <- leyte %>% 
   tbl("clownfish") %>% 
   filter(sample_id %in% y$sample_id) %>% 
-  select(sample_id, gen_id, notes) %>% 
+  select(sample_id, gen_id, fish_notes) %>% 
   collect()
 print("gen_id")
 test$gen_id
-test$notes
+test$fish_notes
 
 a <- lig_from_samp(y$sample_id)
 test <- lab %>% 
@@ -6418,11 +6425,11 @@ y$tag_id
 test <- leyte %>% 
   tbl("clownfish") %>% 
   filter(sample_id %in% y$sample_id) %>% 
-  select(sample_id, gen_id, notes) %>% 
+  select(sample_id, gen_id, fish_notes) %>% 
   collect()
 print("gen_id")
 test$gen_id
-test$notes
+test$fish_notes
 
 a <- lig_from_samp(y$sample_id)
 test <- lab %>% 
@@ -6456,11 +6463,11 @@ y$tag_id
 test <- leyte %>% 
   tbl("clownfish") %>% 
   filter(sample_id %in% y$sample_id) %>% 
-  select(sample_id, gen_id, notes) %>% 
+  select(sample_id, gen_id, fish_notes) %>% 
   collect()
 print("gen_id")
 test$gen_id
-test$notes
+test$fish_notes
 
 a <- lig_from_samp(y$sample_id)
 test <- lab %>% 
@@ -6494,11 +6501,11 @@ y$tag_id
 test <- leyte %>% 
   tbl("clownfish") %>% 
   filter(sample_id %in% y$sample_id) %>% 
-  select(sample_id, gen_id, notes) %>% 
+  select(sample_id, gen_id, fish_notes) %>% 
   collect()
 print("gen_id")
 test$gen_id
-test$notes
+test$fish_notes
 
 a <- lig_from_samp(y$sample_id)
 test <- lab %>% 
@@ -6535,11 +6542,11 @@ y$tag_id
 test <- leyte %>% 
   tbl("clownfish") %>% 
   filter(sample_id %in% y$sample_id) %>% 
-  select(sample_id, gen_id, notes) %>% 
+  select(sample_id, gen_id, fish_notes) %>% 
   collect()
 print("gen_id")
 test$gen_id
-test$notes
+test$fish_notes
 
 a <- lig_from_samp(y$sample_id)
 test <- lab %>% 
@@ -6573,11 +6580,11 @@ y$tag_id
 test <- leyte %>% 
   tbl("clownfish") %>% 
   filter(sample_id %in% y$sample_id) %>% 
-  select(sample_id, gen_id, notes) %>% 
+  select(sample_id, gen_id, fish_notes) %>% 
   collect()
 print("gen_id")
 test$gen_id
-test$notes
+test$fish_notes
 
 a <- lig_from_samp(y$sample_id)
 test <- lab %>% 
@@ -6626,7 +6633,7 @@ Remove 1678 from the database and then examine idcsv and remove any pairs that a
 # fish <- rbind(fish, change)
 # 
 # ley <- write_db("Leyte")
-# dbWriteTable(ley, "clownfish", fish, overwrite = T, row.names = F)
+# #dbWriteTable(ley, "clownfish", fish, overwrite = T, row.names = F)
 # dbDisconnect(ley) 
 rm(ley)
 
@@ -6770,11 +6777,11 @@ y$tag_id
 test <- leyte %>% 
   tbl("clownfish") %>% 
   filter(sample_id %in% y$sample_id) %>% 
-  select(sample_id, gen_id, notes) %>% 
+  select(sample_id, gen_id, fish_notes) %>% 
   collect()
 print("gen_id")
 test$gen_id
-test$notes
+test$fish_notes
 
 a <- lig_from_samp(y$sample_id)
 test <- lab %>% 
@@ -6811,11 +6818,11 @@ y$tag_id
 test <- leyte %>% 
   tbl("clownfish") %>% 
   filter(sample_id %in% y$sample_id) %>% 
-  select(sample_id, gen_id, notes) %>% 
+  select(sample_id, gen_id, fish_notes) %>% 
   collect()
 print("gen_id")
 test$gen_id
-test$notes
+test$fish_notes
 
 a <- lig_from_samp(y$sample_id)
 test <- lab %>% 
@@ -7028,7 +7035,7 @@ Sys.time()
 
 out <- c(msg, loci, 'pop', sample)
 
-write.table(out, file = paste("data/",Sys.Date(), "_norecap.gen", sep = ""), row.names=FALSE, quote=FALSE, col.names=FALSE)
+# write.table(out, file = paste("data/",Sys.Date(), "_norecap.gen", sep = ""), row.names=FALSE, quote=FALSE, col.names=FALSE)
 ```
 
 
@@ -7098,7 +7105,7 @@ fish <- rbind(fish, change)
 
 # write the fish table to the database
 # ley <- write_db("Leyte")
-# dbWriteTable(ley, "clownfish", fish, overwrite = T, row.names = F)
+# #dbWriteTable(ley, "clownfish", fish, overwrite = T, row.names = F)
 # dbDisconnect(ley)
 # rm(ley)
 ```
@@ -7255,10 +7262,10 @@ for (i in seq(fix_list$gen_id)){
   clown <- ley %>% 
     tbl("clownfish") %>% 
     collect()
-  write_csv(clown, path = paste0("../db_backups/", Sys.time(), "_clownfish_db.csv"))
+  #write_csv(clown, path = paste0("../db_backups/", Sys.time(), "_clownfish_db.csv"))
   
     # write change
-# dbWriteTable(ley, "clownfish", fish, row.names = F, overwrite = T)
+# #dbWriteTable(ley, "clownfish", fish, row.names = F, overwrite = T)
 # dbDisconnect(ley)
 ```
 Try graphs again
@@ -7351,16 +7358,16 @@ fish <- fish %>%
   clown <- ley %>% 
     tbl("clownfish") %>% 
     collect()
-  write_csv(clown, path = paste0("../db_backups/", Sys.time(), "_clownfish_db.csv"))
+  #write_csv(clown, path = paste0("../db_backups/", Sys.time(), "_clownfish_db.csv"))
   
     # write change
-# dbWriteTable(ley, "clownfish", fish, row.names = F, overwrite = T)
+# #dbWriteTable(ley, "clownfish", fish, row.names = F, overwrite = T)
 # dbDisconnect(ley)
 ```
 
 Try graphs again
 # Generate plots of distribution of distance between captures for obvious recaptures and flagged recaptures
-```{r plots 2}
+```{r plots 3}
 idcsv <- read_csv("data/seq03-33_identity/33-03_seq_identity_big_table.csv")
 
 # mark rows where the match was considered an obvious recapture based on genetics, size, lat lon.
@@ -7455,15 +7462,15 @@ fish <- fish %>%
   clown <- ley %>% 
     tbl("clownfish") %>% 
     collect()
-  write_csv(clown, path = paste0("../db_backups/", Sys.time(), "_clownfish_db.csv"))
+  #write_csv(clown, path = paste0("../db_backups/", Sys.time(), "_clownfish_db.csv"))
   
     # write change
-# dbWriteTable(ley, "clownfish", fish, row.names = F, overwrite = T)
+# #dbWriteTable(ley, "clownfish", fish, row.names = F, overwrite = T)
 # dbDisconnect(ley)
 ```
 Try graphs again
 # Generate plots of distribution of distance between captures for obvious recaptures and flagged recaptures
-```{r plots 2}
+```{r plots 4}
 idcsv <- read_csv("data/seq03-33_identity/33-03_seq_identity_big_table.csv")
 
 # mark rows where the match was considered an obvious recapture based on genetics, size, lat lon.
