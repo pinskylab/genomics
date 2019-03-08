@@ -1,0 +1,66 @@
+---
+title: "Color transitions in Leyte clownfish"
+output: html_notebook
+---
+Compare time, size and color transitions.
+
+```{r setup, include=FALSE}
+pacman::p_load(tidyverse, here, clownfish, install=FALSE)
+# library(tidylog)
+
+# because the myconfig db connection is still not working
+source("~/Documents/clownfish-pkg/R/db_connections.R")
+leyte <- read_db("Leyte")
+```
+
+
+```{r fish size}
+# pull in size and color data for the fish in the fish_recaps table
+add_colors <- fish_anem_dive() %>% 
+  filter(fish_table_id %in% fish_recaps$fish_table_id) %>% 
+  select(fish_table_id, size, color, sex)
+
+# add size & color to fish_recaps
+fish_colors <- left_join(fish_recaps, add_colors, by = "fish_table_id") %>% 
+  filter(!is.na(color))
+
+# which fish change colors
+diff_colors <- fish_colors %>% 
+  select(recap_id, color) %>% 
+  distinct() %>% 
+  group_by(recap_id) %>%
+  count() %>% 
+  filter(n > 1)
+
+# create a table of recaptured fish with multiple color observations
+fish_diff <- fish_colors %>% 
+  filter(recap_id %in% diff_colors$recap_id) %>% 
+  arrange(recap_id, date) %>% 
+  select(fish_table_id, recap_id, date, size, color, sex) %>% 
+  distinct() %>% 
+# assign sex as a factor
+  mutate(sex = ordered(as.factor(sex), levels = c("J", "M", "F")))
+
+# create a placeholder for fish that need to be checked
+out_of_order <- c()
+
+for (i in diff_colors$recap_id){
+  x <- fish_diff %>% 
+    filter(recap_id == i) %>% 
+    arrange(date)
+  
+  if(is.unsorted(x$sex)){
+    out_of_order <- c(out_of_order, x$recap_id)
+  }
+  }
+
+check_these_fish <- fish_diff %>% 
+  filter(recap_id %in% out_of_order) %>% 
+  distinct() %>% 
+  arrange(recap_id, date)
+
+
+```
+Visually check for fish that don't follow the normal progression and update the change database document as needed.  
+
+I noticed that some fish were 7 and "Y" with a "J" sex assignment and the next year were 8.3 with "YP" and a "F" sex assignment.  I was going to question these, but then saw some fish that were 4.3 "Y" and the next year were 9.3 "YP", so I am allowing that fish can rapidly be promoted in the social strucutre if the situation allows it.

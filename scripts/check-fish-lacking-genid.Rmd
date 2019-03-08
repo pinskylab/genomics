@@ -1,0 +1,65 @@
+---
+title: "Double checking fish lacking genid"
+output: html_notebook
+---
+
+Katrina found fish in her analysis are in the sequencing data and have a sample_id but no gen_id.
+
+Double checking to make sure they weren't missed in the gen_id assignment.
+
+Note, to have a gen_id, the sample should have been sucessfully sequenced and passed filtering.
+
+```{r setup, include=FALSE}
+pacman::p_load(tidyverse, here, clownfish, install=FALSE)
+# library(tidylog)
+source(here("scripts", "gen_helpers.R"))
+source("~/Documents/clownfish-pkg/R/db_connections.R")
+leyte <- read_db("Leyte")
+lab <- read_db("Laboratory")
+```
+
+Get all of the labwork for the fish in the nogenid table
+```{r labwork}
+labwork <- get_extr() %>% 
+  filter(sample_id %in% nogenid$sample_id) %>% 
+  select(sample_id, extraction_id) %>% 
+  left_join(get_dig(), by = "extraction_id") %>% 
+  select(sample_id, extraction_id, digest_id) %>% 
+  left_join(get_lig(), by = "digest_id") %>% 
+  select(sample_id, extraction_id, digest_id, ligation_id, retained)
+
+meta_data <- get_fish() %>% 
+  filter(sample_id %in% labwork$sample_id)
+
+full_info <- left_join(labwork, select(meta_data, sample_id, gen_id), by = "sample_id")
+
+knitr::kable(full_info) %>% 
+  kableExtra::kable_styling()
+```
+
+Pull in the genepop to see if these samples passed sequencing and filtering
+```{r}
+genfile <- here("data", "seq03-33_identity", "seq33_03_baits_only_SNPs.gen")
+genedf <- read_genepop(genfile) %>% 
+  select(names) %>% 
+  rename(ligation_id = names) %>% 
+  mutate(ligation_id = str_replace(ligation_id, "APCL_", ""))
+
+# which regenotypes are present in the genepop
+regenos <- genedf %>% 
+  filter(nchar(ligation_id) > 5)
+
+# what about post identity analysis genepop
+id_genfile <- here("data", "seq03-33_norecap.gen")
+id_genedf <- read_genepop(id_genfile) %>% 
+  select(names) %>% 
+  rename(ligation_id = names) 
+
+# which samples are in the genedf?
+need_gen_id <- full_info %>% 
+  filter(ligation_id %in% genedf$ligation_id)
+
+knitr::kable(need_gen_id) %>% 
+  kableExtra::kable_styling()
+```
+
