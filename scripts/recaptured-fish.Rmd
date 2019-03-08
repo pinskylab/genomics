@@ -56,6 +56,7 @@ results <- tibble()
 for (i in seq(nrow(multi_caps))){
   x <- fish_recaps %>% 
     filter(gen_id == multi_caps$gen_id[i] | tag_id == multi_caps$tag_id[i]) %>% 
+    distinct() %>% 
     arrange(recap_id) %>% 
     mutate(new_recap_id = recap_id[1])
   
@@ -71,7 +72,23 @@ for (i in seq(nrow(multi_caps))){
 }
 
 results <- results %>% 
-  select(fish_table_id, new_recap_id)
+  select(fish_table_id, new_recap_id) %>% 
+  distinct() 
+
+dup_recap_ids <- results %>% 
+  group_by(fish_table_id) %>% 
+  count() %>% 
+  filter(n > 1)
+
+for (i in seq(dup_recap_ids$fish_table_id)){
+  x <- results %>% 
+    filter(fish_table_id == dup_recap_ids$fish_table_id[i]) %>% 
+    arrange(new_recap_id) %>% 
+    slice(2:nrow(x))
+  
+  results <- results %>% 
+    filter(!new_recap_id %in% x$new_recap_id)
+}
 
 fish_recaps <- left_join(fish_recaps, results, by = "fish_table_id")
 
@@ -79,4 +96,5 @@ fish_recaps <- fish_recaps %>%
   mutate(recap_id = ifelse(!is.na(new_recap_id), new_recap_id, recap_id)) %>% 
   select(-new_recap_id)
 ```
+
 
