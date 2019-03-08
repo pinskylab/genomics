@@ -16,7 +16,11 @@ library(stringr)
 # return a data frame: col 1 is individual name, col 2 is population, cols 3 to 2n+2 are pairs of columns with locus IDs
 read_genepop <-  function(filename){
   # get all of the data
+  if(readLines(filename, n=3)[[3]] != "pop"){
   dat <- read.table(filename, skip = 2, sep = " ", stringsAsFactors = F, colClasses = "character") 
+  }else{
+    dat <-  read.table(filename, skip = 3, sep = " ", stringsAsFactors = F, colClasses = "character")
+  }
   
   # get the header info
   info <- readLines(filename, n = 2) 
@@ -31,6 +35,7 @@ read_genepop <-  function(filename){
   dat$names <- str_replace(dat$names, ",", "")
   
   return(dat)	
+  
 }
 
 
@@ -293,19 +298,16 @@ full_meta <- function(sample_ids, db){
   samps <- db %>% 
     tbl("clownfish") %>% 
     filter(sample_id %in% sample_ids) %>% 
-    select(fish_table_id, anem_table_id, size, sample_id, color, gen_id, recap, tag_id, fish_obs_time, collector, notes) %>% 
+    select(fish_table_id, anem_table_id, size, sample_id, color, gen_id, recap, tag_id, fish_obs_time, collector, fish_notes) %>% 
     collect() %>% 
-    rename(fish_notes = notes, 
-      fish_collector = collector)
+    rename(fish_collector = collector)
   
   anem <- db %>% 
     tbl("anemones") %>% 
     filter(anem_table_id %in% samps$anem_table_id) %>% 
-    select(anem_table_id, dive_table_id, obs_time, anem_id, anem_obs, collector, notes) %>% 
+    select(anem_table_id, dive_table_id, anem_obs_time, anem_id, anem_obs, collector, anem_notes) %>% 
     collect() %>% 
-    rename(anem_notes = notes, 
-      anem_obs_time = obs_time, 
-      anem_collector = collector)
+    rename(anem_collector = collector)
   
   samps <- left_join(samps, anem, by = "anem_table_id")
   rm(anem)
@@ -660,19 +662,17 @@ lab_site_b <- function(nonb){
 
 # check the work history of those sample_ids
 work_history <- function(table, column){
-  library(dplyr)
-  lab <- read_db("Laboratory")
   if(column == "sample_id"){
     hist <- lab %>% 
       tbl("extraction") %>% 
       filter(sample_id %in% table$sample_id) %>% 
-      select(sample_id, extraction_id) %>% 
+      select(sample_id, extraction_id, plate) %>% 
       collect()
     
     dig <- lab %>% 
       tbl("digest") %>% 
       filter(extraction_id %in% hist$extraction_id) %>% 
-      select(extraction_id, digest_id) %>% 
+      select(extraction_id, digest_id, plate) %>% 
       collect()
     hist <- left_join(hist, dig, by = "extraction_id")
     rm(dig)
@@ -680,7 +680,7 @@ work_history <- function(table, column){
     lig <- lab %>% 
       tbl("ligation") %>% 
       filter(digest_id %in% hist$digest_id) %>% 
-      select(ligation_id, digest_id, pool) %>% 
+      select(ligation_id, barcode_num,digest_id, pool, plate) %>% 
       collect()
     hist <- left_join(hist, lig, by = "digest_id")
     rm(lig)
@@ -690,13 +690,13 @@ work_history <- function(table, column){
     hist <- lab %>% 
       tbl("extraction") %>% 
       filter(extraction_id %in% table$extraction_id) %>% 
-      select(sample_id, extraction_id) %>% 
+      select(sample_id, extraction_id, plate) %>% 
       collect()
     
     dig <- lab %>% 
       tbl("digest") %>% 
       filter(extraction_id %in% hist$extraction_id) %>% 
-      select(extraction_id, digest_id) %>% 
+      select(extraction_id, digest_id, plate) %>% 
       collect()
     hist <- left_join(hist, dig, by = "extraction_id")
     rm(dig)
@@ -704,7 +704,7 @@ work_history <- function(table, column){
     lig <- lab %>% 
       tbl("ligation") %>% 
       filter(digest_id %in% hist$digest_id) %>% 
-      select(ligation_id, digest_id, pool) %>% 
+      select(ligation_id, barcode_num,digest_id, pool, plate) %>% 
       collect()
     hist <- left_join(hist, lig, by = "digest_id")
     rm(lig)
@@ -716,13 +716,13 @@ work_history <- function(table, column){
     hist <- lig <- lab %>% 
       tbl("ligation") %>% 
       filter(ligation_id %in% table$ligation_id) %>% 
-      select(ligation_id, digest_id, pool) %>% 
+      select(ligation_id, barcode_num,digest_id, pool, plate) %>% 
       collect()
     
     dig <- lab %>% 
       tbl("digest") %>% 
       filter(digest_id %in% hist$digest_id) %>% 
-      select(extraction_id, digest_id) %>% 
+      select(extraction_id, digest_id, plate) %>% 
       collect()
     hist <- left_join(hist, dig, by = "digest_id")
     rm(dig)
@@ -730,7 +730,7 @@ work_history <- function(table, column){
     extr <- lab %>% 
       tbl("extraction") %>% 
       filter(extraction_id %in% hist$extraction_id) %>% 
-      select(extraction_id, sample_id) %>% 
+      select(extraction_id, sample_id, plate) %>% 
       collect()
     hist <- left_join(hist, extr, by = "extraction_id")
     rm(extr)
