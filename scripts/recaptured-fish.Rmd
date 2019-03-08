@@ -1,0 +1,82 @@
+---
+title: "Find recaptured fish in the database"
+output: html_notebook
+---
+This notebook finds fish that were tag recaptured and genetically recaptured and connects all of the observations of those fish, assigning them a recapture id so all rows involving one fish can be found.
+
+```{r setup, include=FALSE}
+pacman::p_load(tidyverse, here, clownfish, install=FALSE)
+# library(tidylog)
+
+# because the myconfig db connection is still not working
+source("~/Documents/clownfish-pkg/R/db_connections.R")
+leyte <- read_db("Leyte")
+```
+
+Find all fish that have been recaptured
+```{r recaps}
+fish <- fish_anem_dive() %>% 
+  select(fish_table_id, sample_id, tag_id, recap, gen_id, anem_table_id, fish_obs_time, anem_obs_time, date, anem_id, anem_obs, gps) 
+
+# multiple observations of the same tag_id
+tag_recap <- fish %>% 
+  group_by(tag_id) %>% 
+  count() %>% 
+  filter(n > 1 & !is.na(tag_id)) %>% 
+  ungroup() 
+
+# multiple observations of the same genetically identified fish
+gen_recap <- fish %>% 
+  group_by(gen_id) %>% 
+  count() %>% 
+  filter(n > 1 & !is.na(gen_id)) %>% 
+  ungroup()
+
+# join these back to fish for complete info
+fish_recaps <- fish %>% 
+  filter(gen_id %in% gen_recap$gen_id | tag_id %in% tag_recap$tag_id)
+
+
+fish_recaps <- fish_recaps %>% 
+  # if tag_id is NA and gen_id isn't
+  mutate(recap_id = ifelse(is.na(tag_id), gen_id, NA)) %>% 
+  # if tag_id isn't and gen_id is NA
+  mutate(recap_id = ifelse(is.na(gen_id), tag_id, recap_id))
+# this excludes fish that have both a tag_id and gen_id
+
+# if there is a value in both columns, need to get all of them
+multi_caps <- fish_recaps %>% 
+  filter(is.na(recap_id)) %>% 
+  select(tag_id, gen_id, recap_id) %>% 
+  distinct()
+
+# create a blank table to hold results
+results <- tibble()
+
+for (i in seq(nrow(multi_caps))){
+  x <- fish_recaps %>% 
+    filter(gen_id == multi_caps$gen_id[i] | tag_id == multi_caps$tag_id[i]) %>% 
+    arrange(recap_id) %>% 
+    mutate(new_recap_id = recap_id[1])
+  
+  if (is.na(x$new_recap_id[1])){
+  x <- x %>% 
+    mutate(new_recap_id = gen_id[1])
+  }
+  
+  stopifnot(!is.na(x$new_recap_id))
+  
+  
+  results <- rbind(results, x)
+}
+
+results <- results %>% 
+  select(fish_table_id, new_recap_id)
+
+fish_recaps <- left_join(fish_recaps, results, by = "fish_table_id")
+
+fish_recaps <- fish_recaps %>% 
+  mutate(recap_id = ifelse(!is.na(new_recap_id), new_recap_id, recap_id)) %>% 
+  select(-new_recap_id)
+```
+
