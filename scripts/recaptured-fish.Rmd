@@ -95,6 +95,9 @@ fish_recaps <- left_join(fish_recaps, results, by = "fish_table_id")
 fish_recaps <- fish_recaps %>% 
   mutate(recap_id = ifelse(!is.na(new_recap_id), new_recap_id, recap_id)) %>% 
   select(-new_recap_id)
+
+save_loc <-  here("data", "recaptured-fish.Rdata")
+saveRDS(fish_recaps, file = save_loc)
 ```
 
 
