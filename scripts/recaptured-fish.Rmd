@@ -80,15 +80,21 @@ dup_recap_ids <- results %>%
   count() %>% 
   filter(n > 1)
 
+keep <- tibble()
 for (i in seq(dup_recap_ids$fish_table_id)){
   x <- results %>% 
     filter(fish_table_id == dup_recap_ids$fish_table_id[i]) %>% 
     arrange(new_recap_id) %>% 
-    slice(2:nrow(x))
+    slice(1:1)
   
-  results <- results %>% 
-    filter(!new_recap_id %in% x$new_recap_id)
+  keep <- rbind(keep, x)
 }
+
+toss <- results %>% 
+  filter(!new_recap_id %in% keep$new_recap_id)
+
+results <- results %>% 
+  filter(!new_recap_id %in% toss$new_recap_id)
 
 fish_recaps <- left_join(fish_recaps, results, by = "fish_table_id")
 

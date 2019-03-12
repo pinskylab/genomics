@@ -1,0 +1,135 @@
+---
+title: "Plot of size of clownfish when change from Male to Female"
+output: 
+  github_document: default
+  html_notebook: default
+---
+
+```{r setup, include=FALSE}
+#This line of code installs the pacman page if you do not have it installed - if you do, it simply loads the package
+if(!require(pacman))install.packages("pacman")
+
+# change install to true if you want to install any packages listed that you don't currently have.
+pacman::p_load(here, clownfish, dplyr, ggplot2, install = FALSE)
+
+# db connection still not working
+source("~/Documents/clownfish-pkg/R/db_connections.R")
+leyte <- read_db("Leyte")
+lab <- read_db("Laboratory")
+```
+
+```{r load data, include=FALSE}
+recaps <- readRDS(here("data", "recaptured-fish.Rdata"))
+```
+
+
+```{r sex change, include=FALSE}
+recap_fish <- fish_anem_dive() %>% 
+  filter(fish_table_id %in% recaps$fish_table_id)  %>% 
+  rename(dive_date = date)%>% 
+  select(fish_table_id, sex, size, dive_date) %>% 
+  right_join(recaps, by = "fish_table_id")
+
+sex_change <- recap_fish %>% 
+  select(recap_id, sex) %>% 
+  filter(!is.na(sex)) %>% 
+  distinct() %>% 
+  group_by(recap_id) %>% 
+  count() %>% 
+  filter(n > 1)
+
+recap_fish_change <- recap_fish %>%
+  filter(recap_id %in% sex_change$recap_id) %>%
+  arrange(recap_id, dive_date) %>% 
+  select(recap_id, dive_date, sex, size)
+```
+
+
+
+```{r to female, include=FALSE}
+# which sex changes involve becoming Female?
+# note all of these changes are not male to female, some are juvenile to female
+females <- recap_fish_change %>% 
+  filter(sex == "F")
+
+# remove multiple observations of the same fish
+dups <- females %>% 
+  group_by(recap_id) %>% 
+  count() %>% 
+  filter(n > 1)
+
+for (i in seq(dups$recap_id)){
+  x <- females %>% 
+    filter(recap_id == dups$recap_id[i]) %>% 
+    arrange(dive_date)
+  
+  if(nrow(x) > 1){
+    x <- x %>% 
+      slice(2:nrow(x))
+    females <- anti_join(females, x, by = c("recap_id", "dive_date", "sex", "size"))
+  }
+}
+```
+
+
+```{r j to M, include=FALSE}
+# which sex changes involve becoming Male?
+males <- recap_fish_change %>% 
+  filter(sex == "M")
+
+juveniles <- recap_fish_change %>% 
+  filter(sex == "J")
+
+# remove sex changes that do not involve a juvenile (remove male to female only sex changes)
+
+males <- males %>% 
+  filter(recap_id %in% juveniles$recap_id)
+
+# remove multiple observations of the same fish
+dups <- males %>% 
+  group_by(recap_id) %>% 
+  count() %>% 
+  filter(n > 1)
+
+for (i in seq(dups$recap_id)){
+  x <- males %>% 
+    filter(recap_id == dups$recap_id[i]) %>% 
+    arrange(dive_date)
+  
+  if(nrow(x) > 1){
+    x <- x %>% 
+      slice(2:nrow(x))
+    males <- anti_join(males, x, by = c("recap_id", "dive_date", "sex", "size"))
+  }
+}
+```
+
+
+```{r plot females, message=FALSE, echo=FALSE}
+	c <- ggplot(females, aes(as.numeric(size)
+	                         # , binwidth = 1
+	                         ))
+	
+	c + geom_density(kernel = "gaussian") + 
+	  theme_classic()+
+	  labs(title = "Distribution of sizes at sex change to female", 
+	       subtitle = "from either juvenile or male", 
+	       x = "Size at first F observation", 
+	       y = "count") 
+	
+	ggsave(filename = here("plots", "female-distribution-size-color-change.pdf"))
+```
+
+```{r plot males, message=FALSE, echo=FALSE}	
+		c <- ggplot(males, aes(as.numeric(size)))
+	
+	c + geom_density(kernel = "gaussian") + 
+	  theme_classic()+
+	  labs(title = "Distribution of sizes at sex change to male", 
+	       subtitle = "from juvenile", 
+	       x = "Size at first M observation", 
+	       y = "count") 
+	
+	ggsave(filename = here("plots", "female-distribution-size-color-change.pdf"))
+```
+
