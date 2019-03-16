@@ -1,0 +1,252 @@
+---
+title: "Double check size vs. sex"
+output: html_notebook
+---
+This notebook examines clownfish that are assigned a sex of female but are less than 8cm or a sex of male but are less than 7cm to make sure they have the correct sex assignment.
+
+```{r setup, include=FALSE}
+#This line of code installs the pacman page if you do not have it installed - if you do, it simply loads the package
+if(!require(pacman))install.packages("pacman")
+
+# change install to true if you want to install any packages listed that you don't currently have.
+pacman::p_load(RMySQL, here, clownfish, tidyverse, googlesheets4, googledrive, install = FALSE)
+
+# db connection still not working
+source("~/Documents/clownfish-pkg/R/db_connections.R")
+leyte <- read_db("Leyte")
+w_leyte <- write_db("Leyte")
+```
+
+Find fish whose size and sex don't match up
+```{r eval=FALSE}
+mismatch_males <- fish_anem_dive() %>% 
+  mutate(size = as.numeric(size)) %>% 
+  filter(sex == "M" & size < 7)
+
+mismatch_females <- fish_anem_dive() %>%
+  mutate(size = as.numeric(size)) %>% 
+  filter(sex == "F" & size < 8)
+
+```
+
+Automatically change any fish smaller than 5cm to J. - Moved this text to the db_corrections script for safekeeping.
+
+Try again without the small fish
+```{r}
+mismatch_males <- fish_anem_dive() %>% 
+  mutate(size = as.numeric(size)) %>% 
+  filter(sex == "M" & size < 7, 
+         # fish must have been captured
+         !is.na(tag_id) | !is.na(sample_id))
+
+mismatch_females <- fish_anem_dive() %>%
+  mutate(size = as.numeric(size)) %>% 
+  filter(sex == "F" & size < 8, 
+         # fish must have been captured
+         !is.na(tag_id) | !is.na(sample_id))
+```
+
+Automatically change any fish that do not have an anem_id because can't compare to other fish - moved this chunk to the db_corrections script for safekeeping
+
+
+
+Get the fish photo data from that project repo
+*Making this chunk eval=FALSE because skipping photo portion of analysis while working remotely*
+```{r eval=FALSE}
+fish_photo <- readRDS("../../Clownfish-tail-color/Data/kalisse_fish-photo-data.Rdata")
+```
+
+Find the target fish on the fish photo sheet
+*Making this chunk eval=FALSE because skipping photo portion of analysis while working remotely*
+```{r eval=FALSE}
+by_sample_id <- fish_photo %>% 
+  filter(sample_id %in% mismatch$sample_id)
+
+by_tag_id <- fish_photo %>% 
+  filter(tag_id %in% mismatch$tag_id)
+
+fish_with_photos <- rbind(by_sample_id, by_tag_id) %>% 
+  distinct()
+```
+
+Find other fish captured on same anemone in same field season.  I have to iterate through almost 300 fish.  Yay.
+*Making this chunk eval=FALSE because I figured out how to automate some of these decisions*
+```{r eval=FALSE}
+# decision <- tibble()
+# offline_db <- fish_anem_dive()
+# save decision to first_decision and filter for uncaptured fish then restart this.
+# first_decision <- decision
+# mismatch <- mismatch %>%
+#   filter(!is.na(sample_id) | !is.na(tag_id)) %>% 
+#   filter(!fish_table_id %in% first_decision$fish_table_id) %>%
+#   mutate(mismatch_id = 1:nrow(.))
+
+one_fish <- mismatch %>% 
+  filter(mismatch_id == i)
+
+one_fish$sample_id
+one_fish$tag_id
+one_fish$gen_id
+one_fish$anem_id
+one_fish$anem_obs
+
+# other_fish <- fish_anem_dive() %>% 
+other_fish <- offline_db %>% 
+  filter(
+    anem_id == one_fish$anem_id,
+         # date == one_fish$date
+         # , 
+    anem_obs == one_fish$anem_obs
+         # , tag_id == one_fish$tag_id
+         # , gen_id == one_fish$gen_id
+         ) %>% 
+  select(-dive_notes, -dive_corr_message, -cover) %>% 
+  arrange(size)
+
+knitr::kable(other_fish)
+
+# whats_up <- tibble(fish_table_id = one_fish$fish_table_id, decision = "Change sex from F to J, larger fish captured on anemone.")
+whats_up <- tibble(fish_table_id = one_fish$fish_table_id, decision = "No change.")
+
+decision <- rbind(decision, whats_up) %>% 
+  distinct()
+
+i <- i + 1
+
+# save up to this point as second decision and see if you can automate the questions below.
+second_decision <- decision
+
+```
+The questions I am asking are - is this the largest fish captured that day? - yes = look deeper, no = change to J
+Deeper:
+Is this this largest fish captured ever? If yes, no change, if no, go deeper.
+
+If a fish is larger, is it a recapture of this fish?  if yes, no change, if no, flag for follow up.
+```{r females, message=FALSE}
+
+females <- mismatch_females %>% 
+  # fish without anemones can't be compared to other fish on the same anemone
+  filter(!is.na(anem_id)) %>% 
+  select(fish_table_id, anem_id, date, size, anem_obs, sex, fish_notes, fish_corr_message, gen_id, tag_id) %>% 
+  mutate(female_id = 1:nrow(.), 
+         decision = NA)
+
+for (i in females$female_id){
+  one_fish <- females %>% 
+    filter(female_id == i)
+  
+  day_fish <- fish_anem_dive() %>% 
+    filter(anem_id == one_fish$anem_id,
+           date == one_fish$date) %>% 
+    arrange(size)
+  
+  if(!is.na(one_fish$anem_obs)){
+    all_fish <- fish_anem_dive() %>% 
+      filter(anem_obs == one_fish$anem_obs) %>% 
+      arrange(size) 
+  }else{
+    # create placeholders for loop to run
+    all_fish <- tibble(fish_table_id = NA)
+  }
+  
+  females <- females %>% 
+    mutate(decision = ifelse(fish_table_id == one_fish$fish_table_id,
+                             case_when(
+                               # if fish is female and not the largest fish caught on the anemone that day
+                               one_fish$fish_table_id != day_fish$fish_table_id[nrow(day_fish)] ~ "Change sex from F to J, larger fish captured on anemone that day.",
+                               # if fish is female and the biggest fish of all time
+                               one_fish$fish_table_id == day_fish$fish_table_id[nrow(day_fish)] & !is.na(one_fish$anem_obs) & one_fish$fish_table_id == all_fish$fish_table_id[nrow(all_fish)] ~ "No change, this is the biggest fish.",
+                               # if decision is still empty and there are no other anem obs
+                               is.na(one_fish$decision) & is.na(one_fish$anem_obs) ~ "No change because no other visits to anemone",
+                               # if fish is female, biggest fish that day and not biggest fish every day
+                               one_fish$fish_table_id == day_fish$fish_table_id[nrow(day_fish)] & !is.na(one_fish$anem_obs) & one_fish$fish_table_id != all_fish$fish_table_id[nrow(all_fish)] ~ "Follow up: This female fish is not the biggest fish and needs to be investigated"
+                             ), 
+                             decision))
+  rm(one_fish, day_fish, all_fish)
+  
+}
+```
+
+
+
+```{r males, message=FALSE}
+
+males <- mismatch_males %>% 
+  # fish without anemones can't be compared to other fish on the same anemone
+  filter(!is.na(anem_id)) %>% 
+  select(fish_table_id, anem_id, date, size, anem_obs, sex, fish_notes, fish_corr_message, gen_id, tag_id) %>% 
+  mutate(male_id = 1:nrow(.), 
+         decision = NA)
+
+for (i in males$male_id){
+  one_fish <- males %>% 
+    filter(male_id == i)
+  
+  day_fish <- fish_anem_dive() %>% 
+    filter(anem_id == one_fish$anem_id,
+           date == one_fish$date) %>% 
+    arrange(size)
+  
+  day_males <- day_fish %>% 
+    filter(sex == "M") %>% 
+    arrange(size)
+  
+  if(!is.na(one_fish$anem_obs)){
+    all_fish <- fish_anem_dive() %>% 
+      filter(anem_obs == one_fish$anem_obs) %>% 
+      arrange(size) 
+    
+    all_males <- all_fish %>% 
+      filter(sex == "M") %>% 
+      arrange(size)
+  }else{
+    # create placeholders for loop to run
+    all_fish <- tibble(fish_table_id = NA)
+    all_males <- tibble(fish_table_id = NA)
+  }
+  
+  males <- males %>% 
+    mutate(decision = ifelse(fish_table_id == one_fish$fish_table_id,
+                             case_when(
+                               # if fish is male and not the largest male caught that day
+                               one_fish$fish_table_id != day_males$fish_table_id[nrow(day_males)] ~ "Change sex from M to J, larger male fish captured on anemone that day.",
+                               # if decision is still empty and there are no other anem obs
+                               is.na(one_fish$decision) & is.na(one_fish$anem_obs) ~ "No change because no other visits to anemone",
+                               # if fish is male and the biggest male fish of all time
+                               one_fish$fish_table_id == day_males$fish_table_id[nrow(day_males)] & !is.na(one_fish$anem_obs) & one_fish$fish_table_id %in% all_males$fish_table_id[nrow(all_males)] ~ "No change, this is the biggest male.",
+                               # if fish is male and not the biggest fish of all time
+                               one_fish$sex == "M" & one_fish$fish_table_id == day_males$fish_table_id[nrow(day_males)] & !is.na(one_fish$anem_obs) & !one_fish$fish_table_id %in% all_males$fish_table_id[nrow(all_males)] ~ "Follow up: This male fish is not the biggest fish and needs to be investigated"
+                             ),
+                             decision)) 
+  rm(one_fish, day_fish, all_fish, day_males, all_males)
+  
+}
+
+
+```
+
+Check the fish that are flagged for follow up
+- Made a github issue #8 comment about what to do with a fish that is the largest fish captured in the most recent year, but not the largest of all time.  Are the other fish dead and this is now YP or did we miss the bigger fish?
+```{r}
+follow_up <- filter(females, grepl("Follow up", decision)) %>% 
+  rename(male_id = female_id) %>% 
+  rbind(filter(males, grepl("Follow up", decision))) %>% 
+  rename(mismatch_id = male_id) %>% 
+  mutate(mismatch_id = 1:nrow(.))
+
+i <- 18
+
+one_fish <- follow_up %>% 
+    filter(mismatch_id == i)
+
+all_fish <- fish_anem_dive() %>% 
+      filter(anem_obs == one_fish$anem_obs, 
+             fish_spp == "APCL") %>% 
+      arrange(size) %>% 
+  select(date, everything())
+
+
+```
+
+
+

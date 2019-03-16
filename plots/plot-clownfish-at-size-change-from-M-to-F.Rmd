@@ -15,7 +15,6 @@ pacman::p_load(here, clownfish, dplyr, ggplot2, install = FALSE)
 # db connection still not working
 source("~/Documents/clownfish-pkg/R/db_connections.R")
 leyte <- read_db("Leyte")
-lab <- read_db("Laboratory")
 ```
 
 ```{r load data, include=FALSE}
