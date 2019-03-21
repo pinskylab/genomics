@@ -16,6 +16,8 @@ source(here("scripts", "gen_helpers.R"))
 source("~/Documents/clownfish-pkg/R/db_connections.R")
 leyte <- read_db("Leyte")
 lab <- read_db("Laboratory")
+
+nogenid <- readRDS("~/Downloads/nogenid_seq03-33.rds")
 ```
 
 Get all of the labwork for the fish in the nogenid table
@@ -35,6 +37,7 @@ full_info <- left_join(labwork, select(meta_data, sample_id, gen_id), by = "samp
 
 knitr::kable(full_info) %>% 
   kableExtra::kable_styling()
+
 ```
 
 Pull in the genepop to see if these samples passed sequencing and filtering
@@ -61,5 +64,8 @@ need_gen_id <- full_info %>%
 
 knitr::kable(need_gen_id) %>% 
   kableExtra::kable_styling()
+
+saveRDS(need_gen_id, here("data", "need_gen_id.RData"))
 ```
 
+Copied the need_gen_id.RData file over to the leyteBuildDB/data folder to be added to the database.
