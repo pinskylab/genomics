@@ -17,7 +17,7 @@ source("~/Documents/clownfish-pkg/R/db_connections.R")
 leyte <- read_db("Leyte")
 lab <- read_db("Laboratory")
 
-nogenid <- readRDS("~/Downloads/nogenid_seq03-33.rds")
+nogenid <- readRDS(here("data", "172_nogenid.rds"))
 ```
 
 Get all of the labwork for the fish in the nogenid table
@@ -46,7 +46,8 @@ genfile <- here("data", "seq03-33_identity", "seq33_03_baits_only_SNPs.gen")
 genedf <- read_genepop(genfile) %>% 
   select(names) %>% 
   rename(ligation_id = names) %>% 
-  mutate(ligation_id = str_replace(ligation_id, "APCL_", ""))
+  mutate(ligation_id = str_replace(ligation_id, "APCL_", ""), 
+         ligation_id = str_replace(ligation_id, ".F", ""))
 
 # which regenotypes are present in the genepop
 regenos <- genedf %>% 
