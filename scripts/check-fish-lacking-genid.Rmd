@@ -35,10 +35,17 @@ meta_data <- get_fish() %>%
 
 full_info <- left_join(labwork, select(meta_data, sample_id, gen_id), by = "sample_id")
 
+full_info <- full_info %>% 
+  filter(is.na(gen_id))
+
 knitr::kable(full_info) %>% 
   kableExtra::kable_styling()
 
+
+
 ```
+
+
 
 Pull in the genepop to see if these samples passed sequencing and filtering
 ```{r}
@@ -67,6 +74,50 @@ knitr::kable(need_gen_id) %>%
   kableExtra::kable_styling()
 
 saveRDS(need_gen_id, here("data", "need_gen_id.RData"))
+
+
+### need to assign the gen_id here and then write it to the db in the other repo##
+# are there regenos in the genepop that need a gen_id?
+
+max <- get_fish() %>% 
+  summarise(gen_id = max(gen_id, na.rm = T))
+
+regeno_need_genid <- tibble()
+for(i in seq(full_info$ligation_id)){
+  x <- genedf %>% 
+    # for each ligation id that is missing a gen_id
+    filter(grepl(full_info$ligation_id[i], ligation_id)) %>% 
+    # separate out any regenotyped fish
+    separate(ligation_id, into = c("fish1", "fish2", "fish3"), sep = "\\." ) %>% 
+    # create a column that holds all of the ligation ids
+    gather(., key = "fish", value = "ligation_id")
+  
+  if(nrow(x) >= 1){
+    y <- full_info %>% 
+      filter(ligation_id %in% x$ligation_id) %>% 
+      distinct(sample_id) 
+    
+    regeno_need_genid <- rbind(regeno_need_genid, y) %>% 
+      distinct()
+  }
+  
+}
+
+regeno_need_genid <- regeno_need_genid %>% 
+  mutate(gen_id = (max$gen_id + 1):(max$gen_id + nrow(.)))
+
+saveRDS(regeno_need_genid, here("data", "regeno-need-genid.RData"))
+
 ```
 
-Copied the need_gen_id.RData file over to the leyteBuildDB/data folder to be added to the database.
+Copied the need_gen_id.RData file over to the leyteBuildDB/data folder to be added to the database. Copied the regeno_need_genid.RData file over too.
+
+```{r test}
+nogenid <- readRDS(here("data", "172_nogenid.rds"))
+
+still_need <- get_fish() %>% 
+  filter(is.na(gen_id), 
+         sample_id %in% nogenid$sample_id)
+```
+
+still_need has zero obs.
