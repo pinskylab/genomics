@@ -117,6 +117,7 @@ for (i in seq(dups$recap_id)){
 	       y = "count") 
 	
 	ggsave(filename = here("plots", "female-distribution-size-color-change.pdf"))
+	saveRDS(females, here("data", "recap_first_female.RData"))
 ```
 
 ```{r plot males, message=FALSE, echo=FALSE}	
@@ -130,5 +131,6 @@ for (i in seq(dups$recap_id)){
 	       y = "count") 
 	
 	ggsave(filename = here("plots", "female-distribution-size-color-change.pdf"))
+	saveRDS(males, here("data", "recap_first_male.RData"))
 ```
 
