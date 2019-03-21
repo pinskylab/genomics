@@ -11,6 +11,8 @@ pacman::p_load(tidyverse, here, clownfish, install=FALSE)
 # because the myconfig db connection is still not working
 source("~/Documents/clownfish-pkg/R/db_connections.R")
 leyte <- read_db("Leyte")
+
+fish_recaps <- readRDS(here("data", "recaptured-fish.Rdata"))
 ```
 
 
