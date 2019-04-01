@@ -1,19 +1,19 @@
 ---
 title: "SNP FILTERING"
 output:
-  html_document:
-    toc: no
   html_notebook:
     code_folding: hide
     df_print: paged
     highlight: kate
     theme: yeti
     toc: no
+  html_document:
+    toc: no
 ---
 
 ```{r setup, message=FALSE, warning=FALSE}
 
-knitr::opts_chunk$set(warning = FALSE, message = FALSE, include = FALSE)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 
 library(ggplot2)
 library(readr)
@@ -21,6 +21,9 @@ library(dplyr)
 library(here)
 source(here("scripts", "ggplot.R"))
 source(here("scripts", "VCFfilterstats.R"))
+source(here("scripts", "xtrafunctions.R"))
+
+
 ```
 
 ## Filtering to yield more loci than FS6
@@ -28,29 +31,54 @@ source(here("scripts", "VCFfilterstats.R"))
 ### Step 1: Filter LQ loci
 
 Remove SNPs with quality score < 20, minimum depth per genotype < 5, minimum mean depth < 15.  
-This chunk can take some time because it is filtering out the full data set.
+This chunk can take some time because it is filtering out the full data set. Adding maf 0.2 here results in ~1000 SNPs, trying to add it later.
 
-```{bash, message=FALSE}
+```{bash include=FALSE}
 cd ../
-vcftools --vcf /data/apcl/all_samples/20181127/TotalRawSNPs.vcf --out results/minQ20minDP5meanDP15 --minQ 20 --minDP 5 --min-meanDP 15 --recode --recode-INFO-all
+vcftools --vcf /data/apcl/all_samples/20181127/TotalRawSNPs.vcf --out results/step1 --minQ 20 --minDP 5 --min-meanDP 15 --recode --recode-INFO-all
 ```
 
+```{bash echo=FALSE}
+cd ../
+echo "FILTER SNP CONTIG INDV" > Filter.count
+
+  SNP=$(grep -cv '#' results/step1.recode.vcf)
+  CONTIG=$(grep -v '#' results/step1.recode.vcf | cut -f 1 | sort | uniq | wc -l)
+  INDV=$(vcfsamplenames results/step1.recode.vcf | wc -l)
+  echo "step1.recode.vcf $SNP $CONTIG $INDV" >> Filter.count
+
+cat Filter.count
+```
 
 ### Step 2: Missing data indvidiuals/loci 
+The max-missing option excludes sites based on the proportion of missing data where 0 is completely missing and 1 is not missing at all.
 
-Retain loci with genotype call rate > 50% and flag individuals with missing data.
-```{bash, message=FALSE}
+#### 2a: Retain loci with genotype call rate > 50% and flag individuals with missing data.
+```{bash include=FALSE}
 cd ../
-vcftools --vcf results/minQ20minDP5meanDP15.recode.vcf --out results/minQ20minDP5meanDP15geno50 --max-missing 0.5 --recode --recode-INFO-all
+vcftools --vcf results/step1.recode.vcf --out results/step2a --max-missing 0.5 --recode --recode-INFO-all
 
-vcftools --vcf results/minQ20minDP5meanDP15geno50.recode.vcf --out results/it1 --missing-indv
+vcftools --vcf results/step2a.recode.vcf --out results/it1 --missing-indv
 
 ```
 
-Identify individuals with > 90% missing data.  
+```{bash echo=FALSE}
+cd ../
+echo "FILTER SNP CONTIG INDV" > Filter.count
+
+  SNP=$(grep -cv '#' results/step2a.recode.vcf)
+  CONTIG=$(grep -v '#' results/step2a.recode.vcf | cut -f 1 | sort | uniq | wc -l)
+  INDV=$(vcfsamplenames results/step2a.recode.vcf | wc -l)
+  echo "step2a.recode.vcf $SNP $CONTIG $INDV" >> Filter.count
+  
+  cat Filter.count
+```
+
+
+#### 2b: Identify individuals with > 90% missing data.  
 Everything to the right of the blue line will be eliminated.
 
-```{r}
+```{r message=FALSE}
 imiss <- read_delim(here("results", "it1.imiss"), delim = "\t")
 
 ggplot(imiss, aes(x = F_MISS)) +
@@ -68,11 +96,24 @@ write.table(LQ_indv, here("results", "LQ_Ind_it1a"),
 
 ```
 
-Remove flagged individuals
+Remove flagged individuals, adding maf 0.2 here results in 0 SNPs, trying later.
 
-```{bash, message=FALSE}
+```{bash include=FALSE}
 cd ../
-vcftools --vcf results/minQ20minDP5meanDP15geno50.recode.vcf --out results/minQ20minDP5meanDP15geno50ind90 --remove results/LQ_Ind_it1a --recode --recode-INFO-all
+vcftools --vcf results/step2a.recode.vcf --out results/step2b --remove results/LQ_Ind_it1a --recode --recode-INFO-all
+```
+
+
+```{bash echo=FALSE}
+cd ../
+echo "FILTER SNP CONTIG INDV" > Filter.count
+
+  SNP=$(grep -cv '#' results/step2b.recode.vcf)
+  CONTIG=$(grep -v '#' results/step2b.recode.vcf | cut -f 1 | sort | uniq | wc -l)
+  INDV=$(vcfsamplenames results/step2b.recode.vcf | wc -l)
+  echo "step2b.recode.vcf $SNP $CONTIG $INDV" >> Filter.count
+  
+  cat Filter.count
 ```
 
 ### Step 3: Info flag filtering
@@ -81,27 +122,28 @@ vcftools --vcf results/minQ20minDP5meanDP15geno50.recode.vcf --out results/minQ2
 
 AB: Allele balance at heterozygous sites: a number between 0 and 1 representing the ratio of reads showing the reference allele to all reads, considering only reads from individuals called as heterozygous
 
-```{bash query INFO stats I, eval=FALSE, include=FALSE}
+```{bash include=FALSE}
 cd ../
 # allele balance
-cut -f8 results/minQ20minDP5meanDP15geno50ind90.recode.vcf | grep -oe "AB=[[:digit:]].[[:digit:]][[:digit:]][[:digit:]]" | sed -s 's/AB=//g' > results/minQ20minDP5meanDP15geno50ind90.AB
+cut -f8 results/step2b.recode.vcf | grep -oe "AB=[[:digit:]].[[:digit:]][[:digit:]][[:digit:]]" | sed -s 's/AB=//g' > results/step3.AB
 
 # site Depth
-cut -f8 results/minQ20minDP5meanDP15geno50ind90.recode.vcf | grep -oe "DP=[0-9]*" | sed -s 's/DP=//g' > results/minQ20minDP5meanDP15geno50ind90.DEPTH
+cut -f8 results/step2b.recode.vcf | grep -oe "DP=[0-9]*" | sed -s 's/DP=//g' > results/step3.DEPTH
 
 # quality score
-mawk '!/#/' results/minQ20minDP5meanDP15geno50ind90.recode.vcf | cut -f1,2,6 > results/minQ20minDP5meanDP15geno50ind90.QUAL
+mawk '!/#/' results/step2b.recode.vcf | cut -f1,2,6 > results/step3.QUAL
 
 # mapping quality
-cut -f8 results/minQ20minDP5meanDP15geno50ind90.recode.vcf | grep -oe "MQM=[0-9]*" | sed -s 's/MQM=//g' > results/minQ20minDP5meanDP15geno50ind90.MQM
-cut -f8 results/minQ20minDP5meanDP15geno50ind90.recode.vcf | grep -oe "MQMR=[0-9]*" | sed -s 's/MQMR=//g' > results/minQ20minDP5meanDP15geno50ind90.MQMR
+cut -f8 results/step2b.recode.vcf | grep -oe "MQM=[0-9]*" | sed -s 's/MQM=//g' > results/step3.MQM
+cut -f8 results/step2b.recode.vcf | grep -oe "MQMR=[0-9]*" | sed -s 's/MQMR=//g' > results/step3.MQMR
 
 ```
 
 Allele balance is the ratio of reads for reference allele to all reads, considering only reads from individuals called as heterozygous. Values range from 0 - 1; allele balance (for real loci) should be approx. 0.5. Filter contigs SNPs for which the with allele balance < 0.25 and > 0.75.
 
-```{r plot AB}
-read_delim(here("results", "minQ20minDP5meanDP15geno50ind90.AB"), delim = "\t") %>%
+```{r}
+read.table(here("results", "step3.AB"),
+           col.names = "AB", stringsAsFactors = FALSE) %>%
   ggplot(aes(x = AB)) +
   geom_histogram(binwidth = 0.01, color = "black", fill = "grey95") +
   geom_vline(xintercept = 0.5, color = "red", linetype = "dashed") +
@@ -109,27 +151,28 @@ read_delim(here("results", "minQ20minDP5meanDP15geno50ind90.AB"), delim = "\t") 
   geom_vline(xintercept = 0.8, color = "darkblue", linetype = "dashed") +
   labs(x = "Allele balance ") +
   theme_standard
-
 ```
 
 Filter contigs with SNP calls with AB > 0.2, AB > 0.8; retain loci very close to 0 (retain loci that are fixed variants). Remove genotypes if the quality sum of the reference or alternate allele was 0.
 
-```{bash}
-vcffilter -s -f "AB > 0.2 & AB < 0.8 | AB < 0.01 | AB > 0.99" -s -g "QR > 0 | QA > 0"  results/minQ20minDP5meanDP15geno50ind90.recode.vcf >  results/minQ20minDP5meanDP15geno50ind90AB.recode.vcf 
+```{bash include=FALSE}
+cd ../
 
-mawk '!/#/' results/minQ20minDP5meanDP15geno50ind90AB.recode.vcf | wc -l
+vcffilter -s -f "AB > 0.2 & AB < 0.8 | AB < 0.01 | AB > 0.99" -s -g "QR > 0 | QA > 0"  results/step2b.recode.vcf >  results/step3AB.recode.vcf 
+
+mawk '!/#/' results/step3AB.recode.vcf | wc -l
 
 echo $?
 
 # allele balance
-cut -f8 results/minQ20minDP5meanDP15geno50ind90AB.recode.vcf | grep -oe "AB=[[:digit:]].[[:digit:]][[:digit:]][[:digit:]]" | sed -s 's/AB=//g' > results/minQ20minDP5meanDP15geno50ind90AB.AB
+cut -f8 results/step3AB.recode.vcf | grep -oe "AB=[[:digit:]].[[:digit:]][[:digit:]][[:digit:]]" | sed -s 's/AB=//g' > results/step3AB.AB
 
 ```
 
-# replot to make sure the changes were effective
-```{r}
+#### replot to make sure the changes were effective
+```{r message=FALSE}
 
-read.table("results/minQ20minDP5meanDP15geno50ind90AB.AB",
+read.table(here("results", "step3AB.AB"),
            col.names = "AB", stringsAsFactors = FALSE) %>%
   ggplot(aes(x = AB)) +
   geom_histogram(binwidth = 0.01, color = "black", fill = "grey95") +
@@ -148,11 +191,11 @@ Compare quality/depth.
 ```{r, fig.height=10, fig.width=8, message=FALSE, warning=FALSE}
 
 # depth
-depth <- read.table("results/minQ20minDP5meanDP15geno50ind90.DEPTH",
+depth <- read.table(here("results", "step3.DEPTH"),
                     col.names = "depth")
 
 # quality score
-qual <- read.table("results/minQ20minDP5meanDP15geno50ind90.QUAL",
+qual <- read.table(here("results", "step3.QUAL"),
                    col.names = c("locus", "pos", "qual"))
 
 df <- bind_cols(qual, depth) %>%
@@ -169,31 +212,31 @@ ggplot(df, aes(x = ratio)) +
 
 Remove loci with quality/depth ratio < 0.2
 
-```{bash}
+```{bash include=FALSE}
+cd ../
+vcffilter -s -f "QUAL / DP > 0.2" results/step3AB.recode.vcf > results/step3ABQDPTH.recode.vcf
 
-vcffilter -s -f "QUAL / DP > 0.2" results/minQ20minDP5meanDP15geno50ind90AB.recode.vcf > results/minQ20minDP5meanDP15geno50ind90ABQDPTH.recode.vcf
-
-mawk '!/#/' results/minQ20minDP5meanDP15geno50ind90ABQDPTH.recode.vcf | wc -l
+mawk '!/#/' results/step3ABQDPTH.recode.vcf | wc -l
 
 echo $?
 
 # site Depth
-cut -f8 results/minQ20minDP5meanDP15geno50ind90ABQDPTH.recode.vcf | grep -oe "DP=[0-9]*" | sed -s 's/DP=//g' > results/minQ20minDP5meanDP15geno50ind90ABQDPTH.DEPTH
+cut -f8 results/step3ABQDPTH.recode.vcf | grep -oe "DP=[0-9]*" | sed -s 's/DP=//g' > results/step3ABQDPTH.DEPTH
 
 # quality score
-mawk '!/#/' results/minQ20minDP5meanDP15geno50ind90ABQDPTH.recode.vcf | cut -f1,2,6 > results/minQ20minDP5meanDP15geno50ind90ABQDPTH.QUAL
+mawk '!/#/' results/step3ABQDPTH.recode.vcf | cut -f1,2,6 > results/step3ABQDPTH.QUAL
 
 
 ```
 
-```{r, fig.height=10, fig.width=8, message=FALSE, warning=FALSE}
+```{r fig.height=10, fig.width=8}
 
 # depth
-depth <- read.table("results/minQ20minDP5meanDP15geno50ind90ABQDPTH.DEPTH",
+depth <- read.table(here("results", "step3ABQDPTH.DEPTH"),
                     col.names = "depth")
 
 # quality score
-qual <- read.table("results/minQ20minDP5meanDP15geno50ind90ABQDPTH.QUAL",
+qual <- read.table(here("results", "step3ABQDPTH.QUAL"),
                    col.names = c("locus", "pos", "qual"))
 
 df <- bind_cols(qual, depth) %>%
@@ -212,13 +255,13 @@ Based on the above graph, I was going to re-do the cutoff at 0.5 but the y-axis 
 
 #### ratio mapping quality
 
-Remove loci based on ratio of mapping quality for reference and alternate allele, i.e. sites that have a high discrepancy between the mapping qualities of two alleles.
+Remove loci based on ratio of mapping quality for reference and alternate allele, i.e. sites that have a high discrepancy between the mapping qualities of two alleles.  Skipping this step because vcf tools takes more than the red circles.
 
-```{r plot map qual ratios}
+```{r}
 
-temp <- read.table("results/minQ20minDP5meanDP15geno50ind90.MQM", col.names = "MQM")
+temp <- read.table(here("results", "step3.MQM"), col.names = "MQM")
 
-mapqual <- read.table("results/minQ20minDP5meanDP15geno50ind90.MQMR", col.names = "MQMR")
+mapqual <- read.table(here("results", "step3.MQMR"), col.names = "MQMR")
 
 mapqual <- bind_cols(mapqual, temp) %>%
   mutate(ratio = MQM/MQMR)
@@ -241,44 +284,44 @@ ggplot(mapqual, aes(x = MQM, y = MQMR)) +
 
 Filter loci with mapping quality ratio < 0.25 and > 1.75.
 
-```{bash filter map qual ratio}
+<!-- ```{bash include=FALSE} -->
+<!-- cd ../ -->
+<!-- vcffilter -s -f "MQM / MQMR > 0.25 & MQM / MQMR < 1.75" results/step3ABQDPTH.recode.vcf > results/step3ABQDPTHMQM.recode.vcf -->
 
-vcffilter -s -f "MQM / MQMR > 0.25 & MQM / MQMR < 1.75" results/minQ20minDP5meanDP15geno50ind90ABQDPTH.recode.vcf > results/minQ20minDP5meanDP15geno50ind90ABQDPTHMQM.recode.vcf
+<!-- mawk '!/#/' results/step3ABQDPTHMQM.recode.vcf | wc -l -->
 
-mawk '!/#/' results/minQ20minDP5meanDP15geno50ind90ABQDPTHMQM.recode.vcf | wc -l
+<!-- echo $? -->
 
-echo $?
+<!-- # mapping quality -->
+<!-- cut -f8 results/step3ABQDPTH.recode.vcf | grep -oe "MQM=[0-9]*" | sed -s 's/MQM=//g' > results/step3ABQDPTH.MQM -->
+<!-- cut -f8 results/step3ABQDPTH.recode.vcf | grep -oe "MQMR=[0-9]*" | sed -s 's/MQMR=//g' > results/step3ABQDPTH.MQMR -->
 
-# mapping quality
-cut -f8 results/minQ20minDP5meanDP15geno50ind90ABQDPTH.recode.vcf | grep -oe "MQM=[0-9]*" | sed -s 's/MQM=//g' > results/minQ20minDP5meanDP15geno50ind90ABQDPTH.MQM
-cut -f8 results/minQ20minDP5meanDP15geno50ind90ABQDPTH.recode.vcf | grep -oe "MQMR=[0-9]*" | sed -s 's/MQMR=//g' > results/minQ20minDP5meanDP15geno50ind90ABQDPTH.MQMR
+<!-- ``` -->
 
-```
-
-```{r}
-
-temp <- read.table("results/minQ20minDP5meanDP15geno50ind90ABQDPTH.MQM", col.names = "MQM")
-
-mapqual <- read.table("results/minQ20minDP5meanDP15geno50ind90ABQDPTH.MQMR", col.names = "MQMR")
-
-mapqual <- bind_cols(mapqual, temp) %>%
-  mutate(ratio = MQM/MQMR)
-
-filter <- mapqual %>%
-  filter(ratio < 0.25 | ratio > 1.75)
-
-ggplot(mapqual, aes(x = MQM, y = MQMR)) +
-  geom_point(shape = 1) + 
-  geom_abline(intercept = 0, slope = 1, size = 1, color = "red", linetype = "dashed") +
-  geom_abline(intercept = 0, slope = 4, size = 1, color = "darkblue", linetype = "dashed") +
-  geom_abline(intercept = 0, slope = 0.571, size = 1, color = "darkblue", linetype = "dashed") +
-  geom_point(data = filter, aes(x = MQM, y = MQMR), shape = 1, color = "red") +
-  scale_x_continuous(limits = c(0, 65)) + 
-  scale_y_continuous(limits = c(0, 65)) +
-  labs(x = "mean mapping quality alt allele ", y = "mean mapping quality ref allele ") +
-  theme_standard
-
-```
+# ```{r eval=FALSE}
+# 
+# temp <- read.table(here("results", "step3ABQDPTH.MQM"), col.names = "MQM")
+# 
+# mapqual <- read.table(here("results", "step3ABQDPTH.MQMR"), col.names = "MQMR")
+# 
+# mapqual <- bind_cols(mapqual, temp) %>%
+#   mutate(ratio = MQM/MQMR)
+# 
+# filter <- mapqual %>%
+#   filter(ratio < 0.25 | ratio > 1.75)
+# 
+# ggplot(mapqual, aes(x = MQM, y = MQMR)) +
+#   geom_point(shape = 1) + 
+#   geom_abline(intercept = 0, slope = 1, size = 1, color = "red", linetype = "dashed") +
+#   geom_abline(intercept = 0, slope = 4, size = 1, color = "darkblue", linetype = "dashed") +
+#   geom_abline(intercept = 0, slope = 0.571, size = 1, color = "darkblue", linetype = "dashed") +
+#   geom_point(data = filter, aes(x = MQM, y = MQMR), shape = 1, color = "red") +
+#   scale_x_continuous(limits = c(0, 65)) + 
+#   scale_y_continuous(limits = c(0, 65)) +
+#   labs(x = "mean mapping quality alt allele ", y = "mean mapping quality ref allele ") +
+#   theme_standard
+# 
+# ```
 It seems like this is cutting out a lot more loci than the red ones in the first graph.  I'm not sure the vcffilter is doing what it thinks it is.  Undo the cut of loci.
 
 
@@ -294,11 +337,11 @@ Calculate average depth and standard deviation:
 ```{r plot depth vs qual}
 
 # depth
-depth <- read.table("results/minQ20minDP5meanDP15geno50ind90.DEPTH",
+depth <- read.table(here("results", "step3.DEPTH"),
                     col.names = "depth")
 
 # quality score
-qual <- read.table("results/minQ20minDP5meanDP15geno50ind90.QUAL",
+qual <- read.table(here("results", "step3.QUAL"),
                    col.names = c("locus", "pos", "qual"))
 
 # mean depth
@@ -318,7 +361,7 @@ temp <- bind_cols(qual, depth) %>%
   filter(qual < 2*depth) %>%
   select(locus)
 
-write.table(temp, "results/DEPTH.lowQloci", col.names = FALSE, row.names = FALSE, quote = FALSE)
+write.table(temp, here("results", "DEPTH.lowQloci"), col.names = FALSE, row.names = FALSE, quote = FALSE)
 
 df <- bind_cols(qual, depth) %>%
   mutate(qualcutoff = 2*depth)
@@ -337,15 +380,15 @@ ggplot(df, aes(x = depth, y = qual)) +
 
 ```
 
-Mean depth per locus (across all indivuals) is `r mean_depth` and the standard deviation is `r std`. 
+<!-- Mean depth per locus (across all indivuals) is `r mean_depth` and the standard deviation is `r std`.  -->
 
-Filter SNP site with depth > mean depth + 1 standard deviation = `r sum(mean_depth + 2*std)` and that have quality scores < 2x the depth at that site and output depth per site.
+<!-- Filter SNP site with depth > mean depth + 1 standard deviation = `r sum(mean_depth + 2*std)` and that have quality scores < 2x the depth at that site and output depth per site. -->
 
-```{bash filter depth qual}
+```{bash include=FALSE}
+cd ../
+vcftools --vcf  results/step3ABQDPTH.recode.vcf --exclude-positions results/DEPTH.lowQloci --recode --recode-INFO-all --out results/step3ABQDPTHQUAL
 
-vcftools --vcf  results/minQ20minDP5meanDP15geno50ind90ABQDPTH.recode.vcf --exclude-positions results/DEPTH.lowQloci --recode --recode-INFO-all --out results/minQ20minDP5meanDP15geno50ind90ABQDPTHQUAL
-
-vcftools --vcf results/minQ20minDP5meanDP15geno50ind90ABQDPTHQUAL.recode.vcf --out results/minQ20minDP5meanDP15geno50ind90ABQDPTHQUAL --site-mean-depth
+vcftools --vcf results/step3ABQDPTHQUAL.recode.vcf --out results/step3ABQDPTHQUAL --site-mean-depth
 
 ```
 
@@ -354,7 +397,7 @@ Compare the distribution of mean depth per site averaged across individuals to d
 ```{r plot depth dist, message=FALSE, warning=FALSE}
 
 # calculate mean depth per site (177 individuals)
-depth <- read.table("results/minQ20minDP5meanDP15geno50ind90ABQDPTHQUAL.ldepth.mean",header = TRUE, stringsAsFactors = FALSE)
+depth <- read.table(here("results", "step3ABQDPTHQUAL.ldepth.mean"),header = TRUE, stringsAsFactors = FALSE)
   
 # mean mean depth
 mean <- mean(depth$MEAN_DEPTH)
@@ -380,11 +423,11 @@ ggplot(depth, aes(x = MEAN_DEPTH)) +
 
 ```
 
-Choose cut-off for maximum mean read depth = 120 (calculate mean + 2x std: `r sum(mean + (2*std))`)
+Choose cut-off for maximum mean read depth = 200 (calculate mean + 2x std: `r sum(mean + (2*std))`)
 
-```{bash filter max depth}
-
-vcftools --vcf  results/minQ20minDP5meanDP15geno50ind90ABQDPTHQUAL.recode.vcf --max-meanDP 200 --exclude-positions results/DEPTH.lowQloci --recode --recode-INFO-all --out results/FIL_6
+```{bash include=FALSE}
+cd ../
+vcftools --vcf  results/step3ABQDPTHQUAL.recode.vcf --max-meanDP 200 --exclude-positions results/DEPTH.lowQloci --recode --recode-INFO-all --out results/FIL_6
 
 # depth indv/locus
 vcftools --vcf results/FIL_6.recode.vcf --out results/FIL_6 --depth
@@ -402,14 +445,26 @@ vcftools --vcf results/FIL_6.recode.vcf --out results/FIL_6 --site-quality
 
 ```
 
+```{bash echo=FALSE}
+cd ../
+echo "FILTER SNP CONTIG INDV" > Filter.count
+
+  SNP=$(grep -cv '#' results/FIL_6.recode.vcf)
+  CONTIG=$(grep -v '#' results/FIL_6.recode.vcf | cut -f 1 | sort | uniq | wc -l)
+  INDV=$(vcfsamplenames results/FIL_6.recode.vcf | wc -l)
+  echo "FIL_6.recode.vcf $SNP $CONTIG $INDV" >> Filter.count
+
+cat Filter.count
+```
+
 #### Plot stats after FIL_6 filters
 
-```{r stats FIL_6, fig.height=20, fig.width=10, message=FALSE, warning=FALSE}
+```{r}
 
 # load stats files ----
-ind_stats_FIL_6 <- read.ind.stats(dir = "results", vcf = "FIL_6")
+ind_stats_FIL_6 <- read.ind.stats(dir = "../results", vcf = "FIL_6")
 
-loc_stats_FIL_6 <- read.loc.stats(dir = "results", vcf = "FIL_6")
+loc_stats_FIL_6 <- read.loc.stats(dir = "../results", vcf = "FIL_6")
 
 # plot missing data per indv ----
 p1 <- ggplot(ind_stats_FIL_6, aes(x = F_MISS)) +
@@ -536,7 +591,7 @@ p11 <- left_join(temp, loc_stats_FIL_6) %>%
   theme_standard
 
 # plot depth vs SNP quality ----
-site_qual <- read.table("results/FIL_6.lqual", header = TRUE, stringsAsFactors = FALSE) %>%
+site_qual <- read.table(here("results", "FIL_6.lqual"), header = TRUE, stringsAsFactors = FALSE) %>%
   mutate(PROB = 10^(-QUAL/10))
 
 temp <- tibble(depth = loc_stats_FIL_6$MEAN_DEPTH, qual = site_qual$QUAL) 
@@ -561,20 +616,95 @@ m6 <- multiplot(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, cols=2)
 ### Step 4: Filter Missing data loci/indv
 
 Remove loci with genotype call rate < 60%.
+```{bash include=FALSE}
+cd ../
+vcftools --vcf results/FIL_6.recode.vcf --out results/step4a --max-missing 0.6 --recode --recode-INFO-all
 
-```{bash}
+vcftools --vcf results/step4a.recode.vcf --out results/step4a --missing-indv
 
-vcftools --vcf results/FIL_6.recode.vcf --out results/minQ20minDP5meanDP15mac3geno60ind90 --max-missing 0.6 --recode --recode-INFO-all
+```
 
-vcftools --vcf results/minQ20minDP5meanDP15mac3geno60ind90.recode.vcf --out results/minQ20minDP5meanDP15mac3geno60ind90 --missing-indv
+```{bash echo=FALSE}
+cd ../
+echo "FILTER SNP CONTIG INDV" > Filter.count
 
+  SNP=$(grep -cv '#' results/step4a.recode.vcf)
+  CONTIG=$(grep -v '#' results/step4a.recode.vcf | cut -f 1 | sort | uniq | wc -l)
+  INDV=$(vcfsamplenames results/step4a.recode.vcf | wc -l)
+  echo "step4a.recode.vcf $SNP $CONTIG $INDV" >> Filter.count
+
+cat Filter.count
+```
+
+Identify individuals with > 80% missing data
+
+```{r}
+
+imiss <- read.table(here("results", "step4a.imiss"), 
+                    header = TRUE, stringsAsFactors = FALSE)
+
+ggplot(imiss, aes(x = F_MISS)) +
+  geom_histogram(binwidth = 0.05, color = "black", fill = "grey75") +
+  geom_vline(xintercept = .8, color = "darkred", linetype = "dashed") +
+  scale_x_continuous(limits = c(0, 1)) +
+  theme_standard
+
+LQ_indv <- imiss %>%
+  filter(F_MISS > 0.8) %>%
+  select(INDV)
+
+write.table(LQ_indv, here("results", "LQ_Ind_FIL_6a"),
+            col.names = FALSE, row.names = FALSE, quote = FALSE)
+
+```
+
+Remove flagged individuals
+
+```{bash include=FALSE}
+cd ../
+vcftools --vcf results/step4a.recode.vcf --out results/step4b --remove results/LQ_Ind_FIL_6a --recode --recode-INFO-all
+
+```
+
+```{bash echo=FALSE}
+cd ../
+echo "FILTER SNP CONTIG INDV" > Filter.count
+
+  SNP=$(grep -cv '#' results/step4b.recode.vcf)
+  CONTIG=$(grep -v '#' results/step4b.recode.vcf | cut -f 1 | sort | uniq | wc -l)
+  INDV=$(vcfsamplenames results/step4b.recode.vcf | wc -l)
+  echo "step4b.recode.vcf $SNP $CONTIG $INDV" >> Filter.count
+
+cat Filter.count
+```
+
+
+Remove loci with genotype call rate < 70%.
+```{bash include=FALSE}
+cd ../
+vcftools --vcf results/step5a.recode.vcf --out results/step5a --max-missing 0.7 --recode --recode-INFO-all
+
+vcftools --vcf results/step5a.recode.vcf --out results/step5a --missing-indv
+
+```
+
+```{bash echo=FALSE}
+cd ../
+echo "FILTER SNP CONTIG INDV" > Filter.count
+
+  SNP=$(grep -cv '#' results/step5a.recode.vcf)
+  CONTIG=$(grep -v '#' results/step5a.recode.vcf | cut -f 1 | sort | uniq | wc -l)
+  INDV=$(vcfsamplenames results/step5a.recode.vcf | wc -l)
+  echo "step5a.recode.vcf $SNP $CONTIG $INDV" >> Filter.count
+
+cat Filter.count
 ```
 
 Identify individuals with > 70% missing data
 
 ```{r}
 
-imiss <- read.table("results/minQ20minDP5meanDP15mac3geno60ind90.imiss", 
+imiss <- read.table(here("results", "step5a.imiss"), 
                     header = TRUE, stringsAsFactors = FALSE)
 
 ggplot(imiss, aes(x = F_MISS)) +
@@ -587,34 +717,120 @@ LQ_indv <- imiss %>%
   filter(F_MISS > 0.7) %>%
   select(INDV)
 
-write.table(LQ_indv, "results/LQ_Ind_FIL_6a",
+write.table(LQ_indv, here("results", "LQ_Ind_FIL_6b"),
             col.names = FALSE, row.names = FALSE, quote = FALSE)
 
 ```
 
 Remove flagged individuals
 
-```{bash}
-
-vcftools --vcf results/minQ20minDP5meanDP15mac3geno60ind90.recode.vcf --out results/minQ20minDP5meanDP15mac3geno60ind70 --remove results/LQ_Ind_FIL_6a --recode --recode-INFO-all
-
-```
-
-Remove loci with genotype call rate < 95% (can skip from 60 to 95 because it doesn't remove any loci)
-
-```{bash}
-
-vcftools --vcf results/minQ20minDP5meanDP15mac3geno60ind70.recode.vcf --out results/minQ20minDP5meanDP15mac3geno95ind70 --max-missing 0.95 --recode --recode-INFO-all
-
-vcftools --vcf results/minQ20minDP5meanDP15mac3geno95ind70.recode.vcf --out results/minQ20minDP5meanDP15mac3geno95ind70 --missing-indv
+```{bash include=FALSE}
+cd ../
+vcftools --vcf results/step5a.recode.vcf --out results/step5b --remove results/LQ_Ind_FIL_6b --recode --recode-INFO-all
 
 ```
 
-Identify individuals with > 25% missing data (skipping right to 25 because we aren't losing any more loci)
+```{bash echo=FALSE}
+cd ../
+echo "FILTER SNP CONTIG INDV" > Filter.count
+
+  SNP=$(grep -cv '#' results/step5b.recode.vcf)
+  CONTIG=$(grep -v '#' results/step5b.recode.vcf | cut -f 1 | sort | uniq | wc -l)
+  INDV=$(vcfsamplenames results/step5b.recode.vcf | wc -l)
+  echo "step5b.recode.vcf $SNP $CONTIG $INDV" >> Filter.count
+
+cat Filter.count
+```
+
+Remove loci with genotype call rate < 80%.
+```{bash include=FALSE}
+cd ../
+vcftools --vcf results/step5b.recode.vcf --out results/step6a --max-missing 0.8 --recode --recode-INFO-all
+
+vcftools --vcf results/step6a.recode.vcf --out results/step6a --missing-indv
+
+```
+
+```{bash echo=FALSE}
+cd ../
+echo "FILTER SNP CONTIG INDV" > Filter.count
+
+  SNP=$(grep -cv '#' results/step6a.recode.vcf)
+  CONTIG=$(grep -v '#' results/step6a.recode.vcf | cut -f 1 | sort | uniq | wc -l)
+  INDV=$(vcfsamplenames results/step6a.recode.vcf | wc -l)
+  echo "step6a.recode.vcf $SNP $CONTIG $INDV" >> Filter.count
+
+cat Filter.count
+```
+
+Identify individuals with > 60% missing data
 
 ```{r}
 
-imiss <- read.table("results/minQ20minDP5meanDP15mac3geno95ind70.imiss", 
+imiss <- read.table(here("results", "step6a.imiss"), 
+                    header = TRUE, stringsAsFactors = FALSE)
+
+ggplot(imiss, aes(x = F_MISS)) +
+  geom_histogram(binwidth = 0.05, color = "black", fill = "grey75") +
+  geom_vline(xintercept = .6, color = "darkred", linetype = "dashed") +
+  scale_x_continuous(limits = c(0, 1)) +
+  theme_standard
+
+LQ_indv <- imiss %>%
+  filter(F_MISS > 0.6) %>%
+  select(INDV)
+
+write.table(LQ_indv, here("results", "LQ_Ind_FIL_6c"),
+            col.names = FALSE, row.names = FALSE, quote = FALSE)
+
+```
+
+Remove flagged individuals
+
+```{bash include=FALSE}
+cd ../
+vcftools --vcf results/step6a.recode.vcf --out results/step6b --remove results/LQ_Ind_FIL_6c --recode --recode-INFO-all
+
+```
+
+```{bash echo=FALSE}
+cd ../
+echo "FILTER SNP CONTIG INDV" > Filter.count
+
+  SNP=$(grep -cv '#' results/step6b.recode.vcf)
+  CONTIG=$(grep -v '#' results/step6b.recode.vcf | cut -f 1 | sort | uniq | wc -l)
+  INDV=$(vcfsamplenames results/step6b.recode.vcf | wc -l)
+  echo "step6b.recode.vcf $SNP $CONTIG $INDV" >> Filter.count
+
+cat Filter.count
+```
+
+Remove loci with genotype call rate < 95%.
+```{bash include=FALSE}
+cd ../
+vcftools --vcf results/step6b.recode.vcf --out results/step7a --max-missing 0.95 --recode --recode-INFO-all
+
+vcftools --vcf results/step7a.recode.vcf --out results/step7a --missing-indv
+```
+
+```{bash echo=FALSE}
+cd ../
+echo "FILTER SNP CONTIG INDV" > Filter.count
+
+  SNP=$(grep -cv '#' results/step7a.recode.vcf)
+  CONTIG=$(grep -v '#' results/step7a.recode.vcf | cut -f 1 | sort | uniq | wc -l)
+  INDV=$(vcfsamplenames results/step7a.recode.vcf | wc -l)
+  echo "step7a.recode.vcf $SNP $CONTIG $INDV" >> Filter.count
+
+cat Filter.count
+```
+
+
+Identify individuals with > 25% missing data
+
+```{r}
+
+imiss <- read.table(here("results", "step7a.imiss"), 
                     header = TRUE, stringsAsFactors = FALSE)
 
 ggplot(imiss, aes(x = F_MISS)) +
@@ -627,25 +843,35 @@ LQ_indv <- imiss %>%
   filter(F_MISS > 0.25) %>%
   select(INDV)
 
-write.table(LQ_indv, "results/LQ_Ind_FIL_6b",
+write.table(LQ_indv, here("results", "LQ_Ind_FIL_6d"),
             col.names = FALSE, row.names = FALSE, quote = FALSE)
 
 ```
 
 Remove flagged individuals
 
-```{bash}
-
-vcftools --vcf results/minQ20minDP5meanDP15mac3geno95ind70.recode.vcf --out results/minQ20minDP5meanDP15mac3geno95ind25 --remove results/LQ_Ind_FIL_6b --recode --recode-INFO-all
+```{bash include=FALSE}
+cd ../
+vcftools --vcf results/step7a.recode.vcf --out results/step7b --remove results/LQ_Ind_FIL_6d --recode --recode-INFO-all
 
 ```
 
+```{bash echo=FALSE}
+cd ../
+echo "FILTER SNP CONTIG INDV" > Filter.count
+
+  SNP=$(grep -cv '#' results/step7b.recode.vcf)
+  CONTIG=$(grep -v '#' results/step7b.recode.vcf | cut -f 1 | sort | uniq | wc -l)
+  INDV=$(vcfsamplenames results/step7b.recode.vcf | wc -l)
+  echo "step7b.recode.vcf $SNP $CONTIG $INDV" >> Filter.count
+
+cat Filter.count
+```
 
 
-
-
-```{bash}
-vcfallelicprimitives results/minQ20minDP5meanDP15mac3geno95ind25.recode.vcf --keep-info --keep-geno > results/SNPs.vcf
+```{bash include=FALSE}
+cd ../
+vcfallelicprimitives results/step7b.recode.vcf --keep-info --keep-geno > results/SNPs.vcf
 
 vcftools --vcf results/SNPs.vcf --out results/FIL_6 --remove-indels --recode --recode-INFO-all
 
@@ -667,12 +893,12 @@ vcftools --vcf results/FIL_6.recode.vcf --out results/FIL_6 --site-quality
 
 ### Plot stats for filtered data set
 
-```{r fig.height=20, fig.width=10, message=FALSE, warning=FALSE}
+```{r}
 
 # load stats files ----
-ind_stats_FIL_6 <- read.ind.stats(dir = "results", vcf = "FIL_6")
+ind_stats_FIL_6 <- read.ind.stats(dir = "../results", vcf = "FIL_6")
 
-loc_stats_FIL_6 <- read.loc.stats(dir = "results", vcf = "FIL_6")
+loc_stats_FIL_6 <- read.loc.stats(dir = "../results", vcf = "FIL_6")
 
 # plot missing data per indv ----
 p1 <- ggplot(ind_stats_FIL_6, aes(x = F_MISS)) +
@@ -799,7 +1025,7 @@ p11 <- left_join(temp, loc_stats_FIL_6) %>%
   theme_standard
 
 # plot depth vs SNP quality ----
-site_qual <- read.table("results/FIL_6.lqual", header = TRUE, stringsAsFactors = FALSE) %>%
+site_qual <- read.table(here("results", "FIL_6.lqual"), header = TRUE, stringsAsFactors = FALSE) %>%
   mutate(PROB = 10^(-QUAL/10))
 
 temp <- tibble(depth = loc_stats_FIL_6$MEAN_DEPTH, qual = site_qual$QUAL) 
@@ -825,8 +1051,10 @@ Data set contains `r nrow(ind_stats_FIL_6)` individuals and `r nrow(loc_stats_FI
 
 
 ## Run SNP counting script
+Compare SNPs/contigs/indv at each filtering step and between filtering schemes.
 
-```{bash, eval=FALSE, include=FALSE}
+```{bash include=FALSE}
+cd ../
 echo "FILTER SNP CONTIG INDV" > Filter.count
 
   SNP=$(grep -cv '#' results/FIL_6.recode.vcf)
@@ -834,18 +1062,12 @@ echo "FILTER SNP CONTIG INDV" > Filter.count
   INDV=$(vcfsamplenames results/FIL_6.recode.vcf | wc -l)
   echo "FIL_6.recode.vcf $SNP $CONTIG $INDV" >> Filter.count
 
-```
-
-Compare SNPs/contigs/indv at each filtering step and between filtering schemes.
-
-```{r}
-
-count <- read.table("Filter.count", 
+count <- read.table(here("Filter.count"), 
                     header = TRUE, stringsAsFactors = FALSE)
 knitr::kable(count)
 ```
 Convert the vcf to a genepop
-```{bash}
+```{bash include=FALSE}
 vcf2genepop.pl vcf=results/FIL_6.recode.vcf > seq33_03_baits_only_SNPs.gen
 ```
 
