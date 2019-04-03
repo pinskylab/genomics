@@ -1,4 +1,5 @@
-# This repository contains code and data for analysing genomic data for the clownfish project in the Pinsky lab.
+# This repository contains code and data for analysing genomic data for the clownfish project in the Pinsky lab.  
+## Open this Rproject on the RStudio Server on amphiprion to use for calling snps or filtering.
 
 # Navigation
 

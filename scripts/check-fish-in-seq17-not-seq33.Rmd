@@ -1,0 +1,58 @@
+---
+title: "Find out why fish are in seq17 but not seq33"
+output: 
+  github_document: default
+  html_notebook: default
+---
+
+There were 157 ligation/gen_ids that were in seq 17 but not in seq 33. We think that these samples were dropped during the population level filtering of seq33 data. 
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+pacman::p_load(tidyverse, here, clownfish, install = FALSE)
+
+source("~/Documents/clownfish-pkg/R/db_connections.R")
+leyte <- read_db("Leyte")
+lab <- read_db("Laboratory")
+
+ligs <- readRDS(here("data", "lig_in_seq17_not_seq33.rds"))
+
+gene17 <- read_genepop(here("data", "809_seq17_03.gen")) %>% 
+  select(names) %>% 
+  mutate(ligation_id = str_extract(names, "L\\d\\d\\d\\d"))
+  
+gene33 <- read_genepop(here("data", "seq03-33_identity", "seq33_03_baits_only_SNPs.gen")) %>% 
+  select(names) %>% 
+  mutate(ligation_id = str_extract(names, "L\\d\\d\\d\\d"))
+```
+
+Are any of these 157 ligation ids in both genepops?
+```{r}
+in_17 <- gene17 %>% 
+  filter(ligation_id %in% ligs)
+
+
+in_33 <- gene33 %>% 
+  filter(ligation_id %in% ligs)
+
+
+```
+`r nrow(in_17)` in the seq17 genepop  
+`r nrow(in_33)` in the seq33 genepop
+
+Fish that were in one genepop but not the next might have been dropped based on the shifting structure of the population genotypes with the addition of more individuals.
+
+Double check that the 11 that are in 33 have gen_ids.
+```{r}
+with_sample_ids <- samp_from_lig(in_33) 
+
+with_gen_id <- get_fish() %>% 
+  filter(sample_id %in% with_sample_ids$sample_id) %>% 
+  left_join(with_sample_ids, by = "sample_id") %>% 
+  select(ligation_id, sample_id, gen_id, fish_notes, fish_correction) 
+
+knitr::kable(with_gen_id) %>% 
+  kableExtra::kable_styling()
+```
+
+It looks like out of these fish in question, some did not pass genotype filters applied either during SNP calling by freebayes or during the filtering process.  The remaining 11 are in both genepops and have gen_ids.
+

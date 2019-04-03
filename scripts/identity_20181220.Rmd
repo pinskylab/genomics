@@ -10,12 +10,15 @@ params:
 library(tidyverse)
 library(lubridate)
 library(RMySQL)
-source("../laboratory/scripts/lab_helpers.R")
-source("scripts/gen_helpers.R")
+library(here)
+library(clownfish)
+library(janitor) # clean_names
+# source("../laboratory/scripts/lab_helpers.R")
+# source("scripts/gen_helpers.R")
 # leyte <- read_db("Leyte")
 # lab <- read_db("Laboratory")
 # 2019-03-06 have to add some code to get functions to work after updating packages and R
-source("../clownfish-pkg/R/db_connections.R")
+source("../../clownfish-pkg/R/db_connections.R")
 leyte <- read_db("Leyte")
 lab <- read_db("Laboratory")
 ```
@@ -61,7 +64,7 @@ The genepop should be stored either on google drive or github and downloaded ont
 ### Import the data into R
  
 ```{r}
-idcsv <- read_csv("data/seq03-33_identity/33-03_seq_identity_ID.csv", col_types = cols(
+idcsv <- read_csv(here("data","seq03-33_identity/33-03_seq_identity_ID.csv"), col_types = cols(
   `First ID` = col_character(),
   `Loci typed` = col_integer(),
   `Second ID` = col_character(),
@@ -71,9 +74,12 @@ idcsv <- read_csv("data/seq03-33_identity/33-03_seq_identity_ID.csv", col_types 
   pID = col_double(),
   pIDsib = col_double(),
   Status = col_character()
-))
+)) %>% 
+  clean_names() %>% 
+  rename(first_loci_typed = loci_typed, 
+         second_loci_typed = loci_typed_1)
 
-names(idcsv) <- c("first_id",  "first_loci_typed",  "second_id",  "second_loci_typed",  "matching_loci",  "mismatching_loci",  "pID",  "pIDsib",  "status")
+names(idcsv)
 
 # add mismatch rate
 idcsv <- idcsv %>%
@@ -116,8 +122,8 @@ ggplot(idcsv, aes(x = matching_loci, y = mismatch_prop)) +
  regenos <- idcsv %>%
    filter(grepl("\\.", first_id) | grepl("\\.", second_id))
  
-idcsv <- anti_join(idcsv, regenos, by = c("first_id", "first_loci_typed", "second_id", "second_loci_typed", "matching_loci", "mismatching_loci", "pID", "pIDsib", "status", "mismatch_prop"))
- 
+idcsv <- anti_join(idcsv, regenos, by = c("first_id", "first_loci_typed", "second_id", "second_loci_typed", "matching_loci", "mismatching_loci", "p_id", "p_i_dsib", "status", "mismatch_prop"))
+
  idcsv <- left_join(idcsv, lab1, by = c("first_id" = "first_ligation_id"))
  idcsv <- left_join(idcsv, lab2, by = c("second_id" = "second_ligation_id"))
  
@@ -158,11 +164,11 @@ regenos <- regenos %>%
   
 # ### Add field data
 ```{r}
- leyte <- read_db("Leyte")
- 
- first <- full_meta(idcsv$first_sample_id, leyte)
+ first <- fish_anem_dive() %>% 
+  filter(sample_id %in% idcsv$first_sample_id)
  names(first) <- paste0("first_", names(first))
- sec <- full_meta(idcsv$second_sample_id, leyte)
+ sec <- fish_anem_dive() %>% 
+   filter(sample_id %in% idcsv$second_sample_id)
 names(sec) <- paste0("second_", names(sec))
 
 
@@ -244,7 +250,7 @@ rm(lat, second)
 new_regenos <- idcsv %>% 
   filter(first_sample_id == second_sample_id)
 
-idcsv <- anti_join(idcsv, new_regenos, by = c("first_id", "first_loci_typed", "first_sample_id", "first_fish_table_id", "first_anem_table_id", "first_size", "first_color", "first_gen_id", "first_recap", "first_tag_id", "first_fish_obs_time", "first_fish_collector", "first_fish_notes", "first_dive_table_id", "first_anem_obs_time", "first_anem_id", "first_anem_obs", "first_anem_collector", "first_anem_notes", "first_dive_num", "first_date", "first_site", "first_gps", "first_divers", "second_id", "second_loci_typed", "second_sample_id", "second_fish_table_id", "second_anem_table_id", "second_size", "second_color", "second_gen_id", "second_recap", "second_tag_id", "second_fish_obs_time", "second_fish_collector", "second_fish_notes", "second_dive_table_id", "second_anem_obs_time", "second_anem_id", "second_anem_obs", "second_anem_collector", "second_anem_notes", "second_dive_num", "second_date", "second_site", "second_gps", "second_divers", "matching_loci", "mismatching_loci", "pID", "pIDsib", "status", "mismatch_prop", "first_lat", "first_lon", "second_lat", "second_lon"))
+idcsv <- anti_join(idcsv, new_regenos)
 ```
 
 
@@ -618,7 +624,7 @@ i <- 17
   
   # This matches to an old id error
   z <- c("APCL14_305", "APCL14_306")
-  test <- full_meta(z, leyte)
+  test <- fish_anem_dive(z, leyte)
   # even though there is a match, can't tell which fish it was because they were caught on the same anemone in the same year
   
   fish <- fish %>%
@@ -6641,11 +6647,11 @@ rm(ley)
 idcsv <- read_csv("data/seq03-33_identity/33-03_seq_identity_big_table.csv")
 idcsv <- idcsv %>% 
   select(-first_gen_id, -second_gen_id)
-first <- full_meta(idcsv$first_sample_id, leyte) %>% 
+first <- fish_anem_dive(idcsv$first_sample_id, leyte) %>% 
   select(sample_id, gen_id) %>% 
   rename(first_gen_id = gen_id)
   
-second <- full_meta(idcsv$second_sample_id, leyte) %>% 
+second <- fish_anem_dive(idcsv$second_sample_id, leyte) %>% 
   select(sample_id, gen_id) %>% 
   rename(second_gen_id = gen_id)
 
@@ -7119,7 +7125,7 @@ idcsv <- read_csv("data/seq03-33_identity/33-03_seq_identity_big_table.csv")
 # mark rows where the match was considered an obvious recapture based on genetics, size, lat lon.
 
 # get the most current gen_ids for the first samples 
-first <- full_meta(idcsv$first_sample_id, leyte)
+first <- fish_anem_dive(idcsv$first_sample_id, leyte)
  names(first) <- paste0("first_", names(first)) 
  
  # remove the sample_id from this group of names to use later
@@ -7127,7 +7133,7 @@ first <- full_meta(idcsv$first_sample_id, leyte)
  x <- names(f_except)
 
 # get the most current gen_ids for the second samples
-sec <- full_meta(idcsv$second_sample_id, leyte)
+sec <- fish_anem_dive(idcsv$second_sample_id, leyte)
 names(sec) <- paste0("second_", names(sec))
 
 # remove the sample_id from this group of names to use later
@@ -7278,7 +7284,7 @@ idcsv <- read_csv("data/seq03-33_identity/33-03_seq_identity_big_table.csv")
 # mark rows where the match was considered an obvious recapture based on genetics, size, lat lon.
 
 # get the most current gen_ids for the first samples 
-first <- full_meta(idcsv$first_sample_id, leyte)
+first <- fish_anem_dive(idcsv$first_sample_id, leyte)
  names(first) <- paste0("first_", names(first)) 
  
  # remove the sample_id from this group of names to use later
@@ -7286,7 +7292,7 @@ first <- full_meta(idcsv$first_sample_id, leyte)
  x <- names(f_except)
 
 # get the most current gen_ids for the second samples
-sec <- full_meta(idcsv$second_sample_id, leyte)
+sec <- fish_anem_dive(idcsv$second_sample_id, leyte)
 names(sec) <- paste0("second_", names(sec))
 
 # remove the sample_id from this group of names to use later
@@ -7375,7 +7381,7 @@ idcsv <- read_csv("data/seq03-33_identity/33-03_seq_identity_big_table.csv")
 # mark rows where the match was considered an obvious recapture based on genetics, size, lat lon.
 
 # get the most current gen_ids for the first samples 
-first <- full_meta(idcsv$first_sample_id, leyte)
+first <- fish_anem_dive(idcsv$first_sample_id, leyte)
  names(first) <- paste0("first_", names(first)) 
  
  # remove the sample_id from this group of names to use later
@@ -7383,7 +7389,7 @@ first <- full_meta(idcsv$first_sample_id, leyte)
  x <- names(f_except)
 
 # get the most current gen_ids for the second samples
-sec <- full_meta(idcsv$second_sample_id, leyte)
+sec <- fish_anem_dive(idcsv$second_sample_id, leyte)
 names(sec) <- paste0("second_", names(sec))
 
 # remove the sample_id from this group of names to use later
@@ -7478,7 +7484,7 @@ idcsv <- read_csv("data/seq03-33_identity/33-03_seq_identity_big_table.csv")
 # mark rows where the match was considered an obvious recapture based on genetics, size, lat lon.
 
 # get the most current gen_ids for the first samples 
-first <- full_meta(idcsv$first_sample_id, leyte)
+first <- fish_anem_dive(idcsv$first_sample_id, leyte)
  names(first) <- paste0("first_", names(first)) 
  
  # remove the sample_id from this group of names to use later
@@ -7486,7 +7492,7 @@ first <- full_meta(idcsv$first_sample_id, leyte)
  x <- names(f_except)
 
 # get the most current gen_ids for the second samples
-sec <- full_meta(idcsv$second_sample_id, leyte)
+sec <- fish_anem_dive(idcsv$second_sample_id, leyte)
 names(sec) <- paste0("second_", names(sec))
 
 # remove the sample_id from this group of names to use later
