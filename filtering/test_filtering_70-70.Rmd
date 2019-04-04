@@ -14,7 +14,8 @@ This filtering scheme follows the FS6 scheme of SJO'Leary but stops the alternat
 knitr::opts_chunk$set(
 	echo = FALSE,
 	message = FALSE,
-	warning = FALSE
+	warning = FALSE, 
+	cache = TRUE
 )
 library(ggplot2)
 library(readr)
