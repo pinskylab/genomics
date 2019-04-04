@@ -12,16 +12,15 @@ output:
 ---
 
 ```{r setup, message=FALSE, warning=FALSE}
-
 knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 
 library(ggplot2)
 library(readr)
 library(dplyr)
 library(here)
-source(here("scripts", "ggplot.R"))
-source(here("scripts", "VCFfilterstats.R"))
-source(here("scripts", "xtrafunctions.R"))
+source(here("filtering", "ggplot.R"))
+source(here("filtering", "VCFfilterstats.R"))
+source(here("filtering", "xtrafunctions.R"))
 
 
 ```
@@ -41,11 +40,11 @@ vcftools --vcf /data/apcl/all_samples/20181127/TotalRawSNPs.vcf --out results/st
 ```{bash echo=FALSE}
 cd ../
 echo "FILTER SNP CONTIG INDV" > Filter.count
-
+  FILTER=$("step1")
   SNP=$(grep -cv '#' results/step1.recode.vcf)
   CONTIG=$(grep -v '#' results/step1.recode.vcf | cut -f 1 | sort | uniq | wc -l)
   INDV=$(vcfsamplenames results/step1.recode.vcf | wc -l)
-  echo "step1.recode.vcf $SNP $CONTIG $INDV" >> Filter.count
+  echo "step1.recode.vcf $FILTER $SNP $CONTIG $INDV" >> Filter.count
 
 cat Filter.count
 ```
@@ -65,11 +64,11 @@ vcftools --vcf results/step2a.recode.vcf --out results/it1 --missing-indv
 ```{bash echo=FALSE}
 cd ../
 echo "FILTER SNP CONTIG INDV" > Filter.count
-
+  FILTER=$("step2a")
   SNP=$(grep -cv '#' results/step2a.recode.vcf)
   CONTIG=$(grep -v '#' results/step2a.recode.vcf | cut -f 1 | sort | uniq | wc -l)
   INDV=$(vcfsamplenames results/step2a.recode.vcf | wc -l)
-  echo "step2a.recode.vcf $SNP $CONTIG $INDV" >> Filter.count
+  echo "step2a.recode.vcf $FILTER $SNP $CONTIG $INDV" >> Filter.count
   
   cat Filter.count
 ```
@@ -107,11 +106,11 @@ vcftools --vcf results/step2a.recode.vcf --out results/step2b --remove results/L
 ```{bash echo=FALSE}
 cd ../
 echo "FILTER SNP CONTIG INDV" > Filter.count
-
+  FILTER=$("step2b")
   SNP=$(grep -cv '#' results/step2b.recode.vcf)
   CONTIG=$(grep -v '#' results/step2b.recode.vcf | cut -f 1 | sort | uniq | wc -l)
   INDV=$(vcfsamplenames results/step2b.recode.vcf | wc -l)
-  echo "step2b.recode.vcf $SNP $CONTIG $INDV" >> Filter.count
+  echo "step2b.recode.vcf $FILTER $SNP $CONTIG $INDV" >> Filter.count
   
   cat Filter.count
 ```
@@ -448,11 +447,11 @@ vcftools --vcf results/FIL_6.recode.vcf --out results/FIL_6 --site-quality
 ```{bash echo=FALSE}
 cd ../
 echo "FILTER SNP CONTIG INDV" > Filter.count
-
+  FILTER=$("FIL_6_early")
   SNP=$(grep -cv '#' results/FIL_6.recode.vcf)
   CONTIG=$(grep -v '#' results/FIL_6.recode.vcf | cut -f 1 | sort | uniq | wc -l)
   INDV=$(vcfsamplenames results/FIL_6.recode.vcf | wc -l)
-  echo "FIL_6.recode.vcf $SNP $CONTIG $INDV" >> Filter.count
+  echo "FIL_6.recode.vcf $FILTER $SNP $CONTIG $INDV" >> Filter.count
 
 cat Filter.count
 ```
@@ -627,11 +626,11 @@ vcftools --vcf results/step4a.recode.vcf --out results/step4a --missing-indv
 ```{bash echo=FALSE}
 cd ../
 echo "FILTER SNP CONTIG INDV" > Filter.count
-
+  FILTER=$("step4a")
   SNP=$(grep -cv '#' results/step4a.recode.vcf)
   CONTIG=$(grep -v '#' results/step4a.recode.vcf | cut -f 1 | sort | uniq | wc -l)
   INDV=$(vcfsamplenames results/step4a.recode.vcf | wc -l)
-  echo "step4a.recode.vcf $SNP $CONTIG $INDV" >> Filter.count
+  echo "step4a.recode.vcf $FILTER $SNP $CONTIG $INDV" >> Filter.count
 
 cat Filter.count
 ```
@@ -669,11 +668,11 @@ vcftools --vcf results/step4a.recode.vcf --out results/step4b --remove results/L
 ```{bash echo=FALSE}
 cd ../
 echo "FILTER SNP CONTIG INDV" > Filter.count
-
+  FILTER=$("step4b")   
   SNP=$(grep -cv '#' results/step4b.recode.vcf)
   CONTIG=$(grep -v '#' results/step4b.recode.vcf | cut -f 1 | sort | uniq | wc -l)
   INDV=$(vcfsamplenames results/step4b.recode.vcf | wc -l)
-  echo "step4b.recode.vcf $SNP $CONTIG $INDV" >> Filter.count
+  echo "step4b.recode.vcf $FILTER $SNP $CONTIG $INDV" >> Filter.count
 
 cat Filter.count
 ```
@@ -691,11 +690,11 @@ vcftools --vcf results/step5a.recode.vcf --out results/step5a --missing-indv
 ```{bash echo=FALSE}
 cd ../
 echo "FILTER SNP CONTIG INDV" > Filter.count
-
+  FILTER=$("step5a")   
   SNP=$(grep -cv '#' results/step5a.recode.vcf)
   CONTIG=$(grep -v '#' results/step5a.recode.vcf | cut -f 1 | sort | uniq | wc -l)
   INDV=$(vcfsamplenames results/step5a.recode.vcf | wc -l)
-  echo "step5a.recode.vcf $SNP $CONTIG $INDV" >> Filter.count
+  echo "step5a.recode.vcf $FILTER $SNP $CONTIG $INDV" >> Filter.count
 
 cat Filter.count
 ```
@@ -733,11 +732,11 @@ vcftools --vcf results/step5a.recode.vcf --out results/step5b --remove results/L
 ```{bash echo=FALSE}
 cd ../
 echo "FILTER SNP CONTIG INDV" > Filter.count
-
+  FILTER=$("step5b")   
   SNP=$(grep -cv '#' results/step5b.recode.vcf)
   CONTIG=$(grep -v '#' results/step5b.recode.vcf | cut -f 1 | sort | uniq | wc -l)
   INDV=$(vcfsamplenames results/step5b.recode.vcf | wc -l)
-  echo "step5b.recode.vcf $SNP $CONTIG $INDV" >> Filter.count
+  echo "step5b.recode.vcf $FILTER $SNP $CONTIG $INDV" >> Filter.count
 
 cat Filter.count
 ```
@@ -754,11 +753,11 @@ vcftools --vcf results/step6a.recode.vcf --out results/step6a --missing-indv
 ```{bash echo=FALSE}
 cd ../
 echo "FILTER SNP CONTIG INDV" > Filter.count
-
+  FILTER=$("step6a")   
   SNP=$(grep -cv '#' results/step6a.recode.vcf)
   CONTIG=$(grep -v '#' results/step6a.recode.vcf | cut -f 1 | sort | uniq | wc -l)
   INDV=$(vcfsamplenames results/step6a.recode.vcf | wc -l)
-  echo "step6a.recode.vcf $SNP $CONTIG $INDV" >> Filter.count
+  echo "step6a.recode.vcf $FILTER $SNP $CONTIG $INDV" >> Filter.count
 
 cat Filter.count
 ```
@@ -796,11 +795,11 @@ vcftools --vcf results/step6a.recode.vcf --out results/step6b --remove results/L
 ```{bash echo=FALSE}
 cd ../
 echo "FILTER SNP CONTIG INDV" > Filter.count
-
+  FILTER=$("step6b")   
   SNP=$(grep -cv '#' results/step6b.recode.vcf)
   CONTIG=$(grep -v '#' results/step6b.recode.vcf | cut -f 1 | sort | uniq | wc -l)
   INDV=$(vcfsamplenames results/step6b.recode.vcf | wc -l)
-  echo "step6b.recode.vcf $SNP $CONTIG $INDV" >> Filter.count
+  echo "step6b.recode.vcf $FILTER $SNP $CONTIG $INDV" >> Filter.count
 
 cat Filter.count
 ```
@@ -816,11 +815,11 @@ vcftools --vcf results/step7a.recode.vcf --out results/step7a --missing-indv
 ```{bash echo=FALSE}
 cd ../
 echo "FILTER SNP CONTIG INDV" > Filter.count
-
+  FILTER=$("step7a")   
   SNP=$(grep -cv '#' results/step7a.recode.vcf)
   CONTIG=$(grep -v '#' results/step7a.recode.vcf | cut -f 1 | sort | uniq | wc -l)
   INDV=$(vcfsamplenames results/step7a.recode.vcf | wc -l)
-  echo "step7a.recode.vcf $SNP $CONTIG $INDV" >> Filter.count
+  echo "step7a.recode.vcf $FILTER $SNP $CONTIG $INDV" >> Filter.count
 
 cat Filter.count
 ```
@@ -859,11 +858,11 @@ vcftools --vcf results/step7a.recode.vcf --out results/step7b --remove results/L
 ```{bash echo=FALSE}
 cd ../
 echo "FILTER SNP CONTIG INDV" > Filter.count
-
+  FILTER=$("step7b")   
   SNP=$(grep -cv '#' results/step7b.recode.vcf)
   CONTIG=$(grep -v '#' results/step7b.recode.vcf | cut -f 1 | sort | uniq | wc -l)
   INDV=$(vcfsamplenames results/step7b.recode.vcf | wc -l)
-  echo "step7b.recode.vcf $SNP $CONTIG $INDV" >> Filter.count
+  echo "step7b.recode.vcf $FILTER $SNP $CONTIG $INDV" >> Filter.count
 
 cat Filter.count
 ```
@@ -1056,11 +1055,11 @@ Compare SNPs/contigs/indv at each filtering step and between filtering schemes.
 ```{bash include=FALSE}
 cd ../
 echo "FILTER SNP CONTIG INDV" > Filter.count
-
+  FILTER=$("FIL_6_later")   
   SNP=$(grep -cv '#' results/FIL_6.recode.vcf)
   CONTIG=$(grep -v '#' results/FIL_6.recode.vcf | cut -f 1 | sort | uniq | wc -l)
   INDV=$(vcfsamplenames results/FIL_6.recode.vcf | wc -l)
-  echo "FIL_6.recode.vcf $SNP $CONTIG $INDV" >> Filter.count
+  echo "FIL_6.recode.vcf $FILTER $SNP $CONTIG $INDV" >> Filter.count
 
 count <- read.table(here("Filter.count"), 
                     header = TRUE, stringsAsFactors = FALSE)
