@@ -1,15 +1,11 @@
 ---
 title: "SNP FILTERING"
 output:
-  github_document: default
   html_notebook:
-    code_folding: hide
-    df_print: paged
     highlight: kate
-    theme: yeti
-    toc: no
-  html_document:
-    toc: no
+    theme: cosmo
+    toc: yes
+    toc_float: yes
 ---
 This filtering scheme follows the FS6 scheme of SJO'Leary but stops the alternate paring of genotypes and missing individuals with missing data at the 70% / 70% step.
 
