@@ -7,13 +7,19 @@ output:
 
 ```{r setup, include=FALSE}
 #This line of code installs the pacman page if you do not have it installed - if you do, it simply loads the package
-if(!require(pacman))install.packages("pacman")
+# if(!require(pacman))install.packages("pacman")
 
 # change install to true if you want to install any packages listed that you don't currently have.
-pacman::p_load(here, clownfish, dplyr, ggplot2, install = FALSE)
+# pacman::p_load(here, clownfish, dplyr, ggplot2, install = FALSE)
+# library(here)
+# library(clownfish)
+# library(dplyr)
+# library(ggplot2)
+
 
 # db connection still not working
-source("~/Documents/clownfish-pkg/R/db_connections.R")
+source("../../clownfish-pkg/R/db_connections.R")
+source("../../clownfish-pkg/R/funs-sample-meta.R")
 leyte <- read_db("Leyte")
 ```
 
@@ -21,7 +27,7 @@ leyte <- read_db("Leyte")
 recaps <- readRDS(here("data", "recaptured-fish.Rdata"))
 ```
 
-
+Which recaptured fish changed sex?
 ```{r sex change, include=FALSE}
 recap_fish <- fish_anem_dive() %>% 
   filter(fish_table_id %in% recaps$fish_table_id)  %>% 
@@ -44,7 +50,8 @@ recap_fish_change <- recap_fish %>%
 ```
 
 
-
+Which sex changes involve becoming Female?
+*note all of these changes are not male to female, some are juvenile to female*
 ```{r to female, include=FALSE}
 # which sex changes involve becoming Female?
 # note all of these changes are not male to female, some are juvenile to female
@@ -69,17 +76,49 @@ for (i in seq(dups$recap_id)){
   }
 }
 ```
+To find out which fish went from J to F vs. which fish went from M to F, dive deeper
+```{r}
+# find sex changes that involve becoming F
+to_F <- recap_fish_change %>% 
+  filter(recap_id %in% females$recap_id)
+
+# find sex changes that involve M
+with_M <-  to_F %>% 
+  filter(sex == "M")
+
+M_to_F <- to_F %>% 
+  filter(recap_id %in% with_M$recap_id) %>% 
+  rename(date = dive_date)
+
+females_from_males <- females %>% 
+  filter(recap_id %in% M_to_F$recap_id)
+
+females_from_juveniles <- females %>% 
+  filter(!recap_id %in% M_to_F$recap_id)
+
+saveRDS(females_from_males, here("data", "females_from_males.RData"))
+saveRDS(females_from_juveniles, here("data", "females_from_juveniles.RData"))
+```
+M_to_F made some sex assignments very clearly incorrect.  Going to fix the db in leyteBuildDB and then come back and re-run code to this point and re-examine M_to_F table, in order to do this, need fish_table_ids
+```{r, eval=FALSE, include=FALSE}
+with_fti <- left_join(M_to_F, recaps, by = c("recap_id","date")) %>% 
+  select(fish_table_id, recap_id, sex, size, date) %>% 
+  arrange(recap_id, date)
+```
 
 
+
+
+
+Which sex changes involve becoming Male?
 ```{r j to M, include=FALSE}
-# which sex changes involve becoming Male?
 males <- recap_fish_change %>% 
   filter(sex == "M")
 
 juveniles <- recap_fish_change %>% 
   filter(sex == "J")
 
-# remove sex changes that do not involve a juvenile (remove male to female only sex changes)
+# remove sex changes that do not involve a juvenile (remove male to female only sex changes) because we want to know the size to go from juvenile to male, not male to female.
 
 males <- males %>% 
   filter(recap_id %in% juveniles$recap_id)
