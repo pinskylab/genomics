@@ -924,5 +924,5 @@ Convert the vcf to a genepop
 vcf2genepop.pl vcf=results/FIL_6.recode.vcf > seq33_03_baits_only_SNPs.gen
 ```
 
-
+Next step is to remove regenotypes from the genepop.
 
