@@ -10,7 +10,7 @@ output:
     toc_depth: 4
     toc_float: yes
 ---
-This filtering scheme follows the FS6 scheme of SJO'Leary but stops the alternate paring of genotypes and missing individuals with missing data at the 70% / 70% step.
+This filtering scheme follows the FS6 scheme of [SJO'Leary](https://github.com/sjoleary/SNPFILT) modified to include any genotypes called in 70% of the population and any individuals with no more than 35% missing data and to include a maf filter of 0.2 at the end.
 
 
 ```{r setup, message=FALSE, warning=FALSE}
@@ -369,9 +369,9 @@ ggplot(df, aes(x = depth, y = qual)) +
 
 ```
 
-<!-- Mean depth per locus (across all indivuals) is `r mean_depth` and the standard deviation is `r std`.  -->
+Mean depth per locus (across all indivuals) is `r mean_depth` and the standard deviation is `r std`.
 
-<!-- Filter SNP site with depth > mean depth + 1 standard deviation = `r sum(mean_depth + 2*std)` and that have quality scores < 2x the depth at that site and output depth per site. -->
+Filter SNP site with depth > mean depth + 1 standard deviation = `r sum(mean_depth + 2*std)` and that have quality scores < 2x the depth at that site and output depth per site.
 
 ```{bash include=FALSE}
 
@@ -676,7 +676,7 @@ vcftools --vcf results/step5a.recode.vcf --out results/step5a --missing-indv
   echo "step5a.recode.vcf $FILTER $SNP $CONTIG $INDV" >> Filter.count
 ```
 
-Identify individuals with > 70% missing data
+Identify individuals with > 35% missing data
 
 ```{r}
 
@@ -685,12 +685,12 @@ imiss <- read.table(here("filtering","results", "step5a.imiss"),
 
 ggplot(imiss, aes(x = F_MISS)) +
   geom_histogram(binwidth = 0.05, color = "black", fill = "grey75") +
-  geom_vline(xintercept = .7, color = "darkred", linetype = "dashed") +
+  geom_vline(xintercept = .35, color = "darkred", linetype = "dashed") +
   scale_x_continuous(limits = c(0, 1)) +
   theme_standard
 
 LQ_indv <- imiss %>%
-  filter(F_MISS > 0.7) %>%
+  filter(F_MISS > 0.35) %>%
   select(INDV)
 
 write.table(LQ_indv, here("filtering","results", "LQ_Ind_FIL_6b"),
