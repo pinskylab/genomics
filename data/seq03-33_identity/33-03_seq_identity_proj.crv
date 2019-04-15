@@ -11,7 +11,7 @@ Code=
 [FileInfo]
 FileName=C:\Users\Pinsky\Desktop\Michelle\seq03-33_identity\33-03_seq_identity_proj.crv
 FileType=.crv
-CreationDate=12/20/2018 10:19:54 AM
+CreationDate=4/15/2019 11:32:21 AM
 
 [GenotypeFile]
 FileName=C:\Users\Pinsky\Desktop\Michelle\seq03-33_identity\33-03_seq_identity_convert.csv
@@ -19,7 +19,7 @@ HeaderRow=1
 ReadLocusNames=1
 FirstAlleleColumnNumber=3
 IDColumnNumber=2
-NLoci=1447
+NLoci=1005
 PropLociTyped=0
 ColumnsPerLocus=2
 SexColumn=0
@@ -132,9 +132,9 @@ IncludeNonExclusionProbabilities=0
 
 [IdentityParameters]
 TestSexesSeparately=0
-MinMatchingLoci=1158
+MinMatchingLoci=804
 AllowFuzzyMatching=1
-MaxMismatchingLoci=144
+MaxMismatchingLoci=101
 ShowAllComparisons=0
 
 [IdentitySummaryFile]
@@ -144,7 +144,7 @@ FileName=C:\Users\Pinsky\Desktop\Michelle\seq03-33_identity\33-03_seq_identity_I
 FileName=C:\Users\Pinsky\Desktop\Michelle\seq03-33_identity\33-03_seq_identity_ID.csv
 
 [ConversionSourceFile]
-FileName=C:\Users\Pinsky\Downloads\seq33_03_baits_only_SNPs.gen
+FileName=C:\Users\Pinsky\Downloads\seq33-03_noregeno.gen
 HeaderRow=0
 AlleleIDLength=2
 UseFirstIDAsPopulationName=0
