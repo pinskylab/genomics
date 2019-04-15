@@ -7,27 +7,26 @@ params:
  ---
 # Workspace setup
 ```{r}
- library(tidyverse)
- library(lubridate)
+pacman::p_load(tidyverse, here, lubridate, clownfish, install=FALSE)
+ # library(tidyverse)
+ # library(lubridate)
 
-source("../laboratory/scripts/lab_helpers.R")
-source("scripts/gen_helpers.R")
+# while db connection using helper file isn't working 
+source("~/Documents/clownfish-pkg/R/db_connections.R")
 leyte <- read_db("Leyte")
 lab <- read_db("Laboratory")
 ```
 
-This notebook continues where filtering left off, moving the genepop into cervus and processing identity results.
+This notebook continues where filtering and removing regenos left off, moving the genepop into cervus and processing identity results.
  
 ## Import the genepop to cervus
-The genepop should be stored either on google drive or github and downloaded onto the windows machine.
+The genepop should be stored either on github and downloaded onto the windows machine.
 
-**Because I did not run the process genepop script first, I had to open the file and add a "pop" line between the contig header and the first sample info**
- 
 ###Open Cervus and convert the genepop to ceruvs:
  - Tools > Convert genotype file > Genepop to Cervus
  - A window will open, navigate to the genepop file that has been downloaded to the windows machine
  - Choose 2 digit format, do not use the first id as a population name
- **(2893 individuals, 1447 loci)**
+ **(2790 individuals, 1005 loci)**
  
 ### Run an allele frequency analysis:
  - Analysis > Allele frequency analysis
@@ -48,8 +47,8 @@ The genepop should be stored either on google drive or github and downloaded ont
  * Do not test sexes separately
  * Allele freq data should be autofilled with the AF file created above
  * Save as “…._ID"
- * Fill in minimum number of matching loci (80% of total = 1158)
- * allow fuzzy matching with 10% mismatch (10% of total = 144)
+ * Fill in minimum number of matching loci (80% of total = 804)
+ * allow fuzzy matching with 10% mismatch (10% of total = 101)
  * don’t show all comparisons - this generates a HUGE csv of every single pairwise comparison.
  
 ### Upload the output to github
