@@ -31,43 +31,30 @@ mismatch_females <- fish_anem_dive() %>%
 
 Automatically change any fish smaller than 5cm to J. - Moved this text to the db_corrections script for safekeeping.
 
-Try again without the small fish
+Try again without the small fish and only include fish on known anemones
 ```{r}
 mismatch_males <- fish_anem_dive() %>% 
   mutate(size = as.numeric(size)) %>% 
   filter(sex == "M" & size < 7, 
          # fish must have been captured
-         !is.na(tag_id) | !is.na(sample_id))
+         !is.na(tag_id) | !is.na(sample_id), 
+         !is.na(anem_id))
 
 mismatch_females <- fish_anem_dive() %>%
   mutate(size = as.numeric(size)) %>% 
   filter(sex == "F" & size < 8, 
          # fish must have been captured
-         !is.na(tag_id) | !is.na(sample_id))
+         !is.na(tag_id) | !is.na(sample_id), 
+         !is.na(anem_id))
+
+
 ```
 
 Automatically change any fish that do not have an anem_id because can't compare to other fish - moved this chunk to the db_corrections script for safekeeping
 
 
 
-Get the fish photo data from that project repo
-*Making this chunk eval=FALSE because skipping photo portion of analysis while working remotely*
-```{r eval=FALSE}
-fish_photo <- readRDS("../../Clownfish-tail-color/Data/kalisse_fish-photo-data.Rdata")
-```
 
-Find the target fish on the fish photo sheet
-*Making this chunk eval=FALSE because skipping photo portion of analysis while working remotely*
-```{r eval=FALSE}
-by_sample_id <- fish_photo %>% 
-  filter(sample_id %in% mismatch$sample_id)
-
-by_tag_id <- fish_photo %>% 
-  filter(tag_id %in% mismatch$tag_id)
-
-fish_with_photos <- rbind(by_sample_id, by_tag_id) %>% 
-  distinct()
-```
 
 Find other fish captured on same anemone in same field season.  I have to iterate through almost 300 fish.  Yay.
 *Making this chunk eval=FALSE because I figured out how to automate some of these decisions*
@@ -167,6 +154,28 @@ for (i in females$female_id){
 }
 ```
 
+Prep data for entry into db using the leyteBuildDB repo, db_corrections script dated 2019-04-04 and 2019-04-08.
+```{r eval=FALSE}
+change <- females %>% 
+  filter(grepl("F to J", decision))
+
+# saveRDS(change, "../../leyteBuildDB/data/F-should-be-J.RData")
+
+no_change <- females %>% 
+  filter(grepl("No change", decision))
+# saveRDS(no_change, "../../leyteBuildDB/data/no-change-F.RData")
+```
+Updated the db with these females to J.
+Updated the db with females that cannot be changed.
+
+Which fish are still raising a flag as small F?  These fish are the largest fish captured that day but not the largest fish ever captured.  Are they recaptures?
+```{r}
+followup <- females %>% 
+  filter(grepl("Follow", decision))
+
+# these fish 
+
+```
 
 
 ```{r males, message=FALSE}
@@ -250,3 +259,21 @@ all_fish <- fish_anem_dive() %>%
 
 
 
+Get the fish photo data from that project repo
+*Making this chunk eval=FALSE because skipping photo portion of analysis while working remotely*
+```{r eval=FALSE}
+fish_photo <- readRDS("../../Clownfish-tail-color/Data/kalisse_fish-photo-data.Rdata")
+```
+
+Find the target fish on the fish photo sheet
+*Making this chunk eval=FALSE because skipping photo portion of analysis while working remotely*
+```{r eval=FALSE}
+by_sample_id <- fish_photo %>% 
+  filter(sample_id %in% mismatch$sample_id)
+
+by_tag_id <- fish_photo %>% 
+  filter(tag_id %in% mismatch$tag_id)
+
+fish_with_photos <- rbind(by_sample_id, by_tag_id) %>% 
+  distinct()
+```

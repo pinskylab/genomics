@@ -2,12 +2,9 @@
 title: "SNP FILTERING"
 output:
   html_notebook:
-    fig_height: 3
-    fig_width: 4
     highlight: kate
     theme: cosmo
     toc: yes
-    toc_depth: 4
     toc_float: yes
 ---
 This filtering scheme follows the FS6 scheme of SJO'Leary but stops the alternate paring of genotypes and missing individuals with missing data at the 70% / 70% step.

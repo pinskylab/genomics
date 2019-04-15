@@ -2,5 +2,9 @@ FILTER SNP CONTIG INDV
 step1.recode.vcf step1 6739 534 3153
 step2a.recode.vcf step2a 6736 534 3153
 step2b.recode.vcf step2b 6736 534 3005
-step5b.recode.vcf step5b 2186 510 2908
-FIL_6.recode.vcf FIL_6_later 1005 484 2908
+FIL_6.recode.vcf FIL_6_early 2269 514 3005
+step4a.recode.vcf step4a 2264 512 3005
+step4b.recode.vcf step4b 2264 512 2999
+step5a.recode.vcf step5a 2186 510 2999
+step5b.recode.vcf step5b 2186 510 2979
+FIL_6.recode.vcf FIL_6_later 1004 484 2979
