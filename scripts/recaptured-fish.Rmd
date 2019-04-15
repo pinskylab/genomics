@@ -42,7 +42,7 @@ fish_recaps <- fish_recaps %>%
   mutate(recap_id = ifelse(is.na(tag_id), gen_id, NA)) %>% 
   # if tag_id isn't and gen_id is NA
   mutate(recap_id = ifelse(is.na(gen_id), tag_id, recap_id))
-# this excludes fish that have both a tag_id and gen_id
+# this does nothing for fish that have both a tag_id and gen_id
 
 # if there is a value in both columns, need to get all of them
 multi_caps <- fish_recaps %>% 
@@ -96,11 +96,15 @@ toss <- results %>%
 results <- results %>% 
   filter(!new_recap_id %in% toss$new_recap_id)
 
-fish_recaps <- left_join(fish_recaps, results, by = "fish_table_id")
+new_fish_recaps <- left_join(fish_recaps, results, by = "fish_table_id")
 
-fish_recaps <- fish_recaps %>% 
-  mutate(recap_id = ifelse(!is.na(new_recap_id), new_recap_id, recap_id)) %>% 
-  select(-new_recap_id)
+new_fish_recaps <- new_fish_recaps %>% 
+  mutate(recap_id = ifelse(!is.na(new_recap_id), new_recap_id, recap_id))
+
+# %>% 
+#   select(-new_recap_id)
+
+need_recap_id <- 
 
 save_loc <-  here("data", "recaptured-fish.Rdata")
 saveRDS(fish_recaps, file = save_loc)
