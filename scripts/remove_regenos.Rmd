@@ -11,11 +11,12 @@ This script is written to take the filtered genepop file from dDocent and
 
 # Set up workspace ---------------------------------------------
 ```{r setup}
-library(dplyr) 
-library(stringr)
-library(readr)
-library(clownfish)
-library(here)
+pacman::p_load(dplyr, stringr, readr, clownfish, here, install = FALSE)
+# library(dplyr) 
+# library(stringr)
+# library(readr)
+# library(clownfish)
+# library(here)
 
 # while db connection using helper file isn't working 
 source("~/Documents/clownfish-pkg/R/db_connections.R")
@@ -32,48 +33,33 @@ genedf <- read_genepop(here("filtering", genfile))%>%
   # 2) strip any named samples down to pure ligation number ---- 
   mutate(ligation_id = str_extract(ligation_id, "L\\d+"))
 ```
+# 3) Remove samples with known issues -------------------------------------
+# pull in the known issues table
+```{r}
+iss <- lab %>% tbl("known_issues") %>% collect()
+
+# remove issues from largedf
+genedf <- genedf %>%
+  filter(!ligation_id %in% iss$ligation_id)
+```
+
+
 # Add sample IDs ----------------------------------------------------------
 
 ```{r}
 samples <- samp_from_lig(genedf)
-```
-
 
 # Merge the two dataframes so that lig IDs match up -----------------------
-```{r}
 largedf <- left_join(genedf, samples, by = "ligation_id") %>% 
   select(sample_id, ligation_id, everything()) # move the sample_id column to the beginning
-rm(samples)
-```
 
-
-
-```{r}
-# tests
+# tests ------------------------------------------------------------------
+# # make sure all of the Ligation ids have sample ids
+# filter(largedf, is.na(sample_id))
+# # returns 0 rows
 # nrow(genedf) == nrow(largedf) # should be TRUE
-# # look for missing names
+# # # look for missing names
 # setdiff(genedf$ligation_id, largedf$ligation_id) # should be character(0)
-
-rm(genedf, genfile)
-```
-
-
-# 3) Remove samples with known issues ----------------------------------------
-# pull in the known issues table
-```{r}
-iss <- lab %>% tbl("known_issues") %>% collect()
-```
-
-
-# remove issues from largedf
-```{r}
-largedf <- largedf %>%
-  filter(!ligation_id %in% iss$ligation_id)
-```
-
-# make sure all of the Ligation ids have sample ids
-```{r}
-which(is.na(largedf$sample_id)) 
 
 # should return integer(0)
 # else trouble <- largedf %>% filter(is.na(largedf$sample_id)) - 
@@ -84,7 +70,7 @@ which(is.na(largedf$sample_id))
 #   filter(ligation_id %in% iss$ligation_id)
 # nrow(j) # should return 0
 # rm(j)
-rm(iss)
+rm(genedf, genfile, samples, iss)
 ```
 
 
@@ -101,59 +87,56 @@ largedf[largedf == "0000"] = NA
 # which(largedf == "0000") # should return integer(0)
 
 # count the number of loci per individual (have to use for loop)
-```{r}
+```{r cache=TRUE}
 for(i in 1:nrow(largedf)){
   largedf$numloci[i] <- sum(!is.na(largedf[i,]))
 }
-```
 
 # # TEST - make sure all of the numloci were populated ----------------------
 # which(is.na(largedf$numloci)) # should return integer(0)
-
-# make a list of all of the sample ID's that have duplicates (some on this list occur more than once because there are 3 regenos)
-# this line of code keeps any sample_id that comes up as TRUE for being duplicated
-```{r}
-regenod <- largedf %>%
-  filter(duplicated(largedf$sample_id)) %>%
-  select(sample_id)
 ```
 
 
-# TEST - make sure a list was generated
+
 ```{r}
-k <- nrow(regenod) # keep for later
-largedf$drop <- NA # place holder
+
 #run through all of the SampleIDs that are found more than once and keep the one with the most loci
-# i <- 1 # test
 
-test <- largedf %>% 
-  filter(sample_id %in% regenod$sample_id) 
+# create a data frame of sample ids to keep or drop based on the number of loci present
+regeno_drop <- largedf %>% 
+  # select only the columns to identify which to keep
+  select(sample_id, ligation_id, numloci) %>%
+  group_by(sample_id) %>% 
+  # create a maxloci column that holds the most loci each sample id carries
+  mutate(maxloci = max(numloci), 
+   # create a drop column that holds the decision to keep or drop that row
+         drop = ifelse(numloci == maxloci, "KEEP", "DROP")) %>% 
+  # keep only the columns that hold the maxloci and say "KEEP"
+  filter(drop == "KEEP") %>% 
+  ungroup() %>% 
+  # keep only the columns needed to identify these "keeper rows"
+  select(ligation_id)
+
+# keep only the version of the sample id that has the most loci
+noregeno <- largedf %>% 
+  filter(ligation_id %in% regeno_drop$ligation_id)
+```
+# Some samples were not dropped because both regenotypes have the same number of loci.
+```{r}
+regenod <- noregeno %>%
+  filter(duplicated(noregeno$sample_id)) %>%
+  select(sample_id, ligation_id) %>% 
+  distinct()
+
+# drop the ligation_ids for these duplicated samples
+noregeno <- noregeno %>% 
+  filter(!ligation_id %in% regenod$ligation_id)
 
 
-for(i in 1:nrow(regenod)){
-  # the row number from largedf that matches an ID in the regenod list
-  regeno_drop <- which(largedf$sample_id == regenod[i,]) 
-  # df is the data frame that holds all of the regenotyped versions of the sample, pulled from largedf
-  df <- largedf[regeno_drop, ]  
-  # convert the drop column of large df from na to KEEP
-  largedf$drop[regeno_drop[which.max(df$numloci)]] <- "KEEP"
-  
-  # find the row numbers of largedf that need to be dropped
-  # test j <- 2
-  for(j in 1:length(regeno_drop)){ # for all of the rows in the tiny df of mutliple ligs for one sample_id
-    if(is.na(largedf$drop[regeno_drop[j]])){ # if the drop column is na (not keep from above)
-      largedf$drop[regeno_drop[j]] <- "DROP" # make that row number drop value "DROP"
-    }
-  }
-}
 
-# TEST - make sure all of the regenos were dropped ----------------------------
-a <- length(which(largedf$drop == "KEEP")) # num keeps
-b <- length(which(duplicated(regenod) == TRUE)) # num samples that were seq'd more than twice
-a  + b == nrow(regenod) # should return TRUE 
-length(which(largedf$drop == "DROP")) == nrow(regenod) # should be TRUE
 
 ```
+
 
 
 
