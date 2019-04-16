@@ -11,7 +11,7 @@ This script is written to take the filtered genepop file from dDocent and
 
 # Set up workspace ---------------------------------------------
 ```{r setup}
-pacman::p_load(dplyr, stringr, readr, clownfish, here, install = FALSE)
+pacman::p_load(tidyr, dplyr, stringr, readr, clownfish, here, install = FALSE)
 # library(dplyr) 
 # library(stringr)
 # library(readr)
@@ -79,7 +79,8 @@ rm(genedf, genfile, samples, iss)
 
 # convert 0000 to NA in the genepop data
 ```{r}
-largedf[largedf == "0000"] = NA
+largedf <- largedf %>% 
+  na_if(., "0000")
 ```
 
 
@@ -87,10 +88,16 @@ largedf[largedf == "0000"] = NA
 # which(largedf == "0000") # should return integer(0)
 
 # count the number of loci per individual (have to use for loop)
-```{r cache=TRUE}
-for(i in 1:nrow(largedf)){
-  largedf$numloci[i] <- sum(!is.na(largedf[i,]))
-}
+```{r}
+# create an object that is the total number of cells that are not NA for each row in the largedf
+numloci <- largedf %>% 
+  is.na %>% 
+  `!` %>% 
+  rowSums
+
+# add numloci as a column
+largedf <- cbind(largedf, numloci)
+
 
 # # TEST - make sure all of the numloci were populated ----------------------
 # which(is.na(largedf$numloci)) # should return integer(0)
