@@ -202,21 +202,21 @@ rm(lat, second)
 # cleanup
 # rm(alldists)
 ```
+
 # Does the first gen_id match the second gen id?
 ```{r}
 old_pairs <- idcsv %>% 
   filter(first_gen_id == second_gen_id, 
          !is.na(first_gen_id)) %>% 
-  select(first_gen_id, second_gen_id, everything())
+  select(first_sample_id, second_sample_id, first_gen_id, second_gen_id, first_tag_id, second_tag_id, mismatching_loci, matching_loci, contains("lat"), contains("lon"), contains("sex"))
 ```
 
 
 # Examine new matches
 ```{r}
-new_pairs <- anti_join(idcsv, old_pairs) %>% 
+new_pairs <- anti_join(idcsv, old_pairs, by = c("first_sample_id", "first_tag_id", "first_gen_id", "second_sample_id", "second_tag_id", "second_gen_id", "matching_loci", "mismatching_loci", "first_lat", "first_lon", "second_lat", "second_lon", "first_sex", "second_sex")) %>% 
   # reduce number of columns
-  select(-contains("fish_spp"), -contains("fish_obs"), -contains("fin_id"), -contains("corr"), -contains("collect")) %>% 
-  select(first_sample_id, second_sample_id, first_gen_id, second_gen_id, first_tag_id, second_tag_id, mismatching_loci, matching_loci, everything()) %>% 
+  select(first_sample_id, second_sample_id, first_gen_id, second_gen_id, first_tag_id, second_tag_id, mismatching_loci, matching_loci, contains("lat"), contains("lon"), contains("sex")) %>% 
   mutate(lat_diff = first_lat - second_lat, 
          lon_diff = first_lon - second_lon)
 ```
@@ -250,7 +250,7 @@ new_gen_ids <- new_pairs %>%
 new_gen_ids <- new_gen_ids %>% 
   mutate(first_gen_id = ifelse(is.na(first_gen_id), second_gen_id, first_gen_id))
 
-saveRDS(new_gen_ids, "~/Documents/leyteBuildDB/data/new-gen-ids_2019-04-15.RData")
+saveRDS(new_gen_ids, "~/Documents/leyteBuildDB/data/new-gen-ids_2019-04-16.RData")
 ```
 # Next change the db with these new gen_ids in the db_corrections.Rmd
 
@@ -270,14 +270,70 @@ gen_ids <- get_fish() %>%
   select(sample_id, gen_id) %>% 
   left_join(sample_ids, by = "sample_id")
 
-# which gen_ids are duplicated?
-dups <- gen_ids %>% 
-  group_by(gen_id) %>% 
-  count() %>% 
-  filter(n > 1)
+# replace 0000 with na
+non_zero <- genedf  %>% 
+  na_if(., "0000")
+
+# count how many loci are represented on each line
+numloci <- non_zero %>% 
+  is.na %>% 
+  `!` %>% 
+  rowSums
+
+# add numloci as a column
+numgen <- cbind(gen_ids, numloci)
+
+##### stopping for the night########
+# # which gen_ids are duplicated and which have the most loci?
+# dups <- gen_ids %>% 
+#   group_by(gen_id) %>% 
+#   count() %>% 
+#   filter(n > 1) %>% 
+#   left_join(numgen, by = "gen_id") %>% 
+#   group_by(gen_id) %>% 
+#   mutate(leastloci = min(numloci))
+# 
+# # remove the rows that don't have the most loci
+# least_loci <- dups %>% 
+#   filter(numloci == maxloci)
+# 
+# # which are still duplicated?
+# still_dup <- most_loci %>% 
+#   group_by(gen_id) %>% 
+#   count() %>% 
+#   filter(n>1) 
+# 
+# mostest_loci <- most_loci %>%
+#   filter(gen_id %in% still_dup)
+#   mutate(max_lig = max(ligation_id))
 
 
 ```
+2019-04-16 - The first time I tried to run this today, it assigned more than one gen_id to the same sample id. Fixing below:
+```{r eval=FALSE}
+dup_samp <- gen_ids %>% 
+  group_by(sample_id) %>% 
+  count() %>% 
+  filter(n > 1)
+
+dup_gens <- gen_ids %>% 
+  filter(sample_id %in% dup_samp$sample_id)
+
+# double check which gen_ids are recaptures
+gen_db <- get_fish() %>% 
+  filter(gen_id %in% dup_gens$gen_id, 
+         !is.na(gen_id))
+
+```
+Duplicate gen_ids were fixed in the database (leyteBuildDB) 2019-04-16
+APCL17_375 has 4 different anem_table_ids and fish_table_ids - fixing this over in the database code.
+```{r eval=FALSE}
+too_many_rows <- fish_anem_dive() %>% 
+  filter(sample_id == "APCL17_375")
+```
+
+
+
 ** Not sure how to remove fish from the genepop without losing valuable data, have started a github issue #19 to ask Katrina what she wants me to do**
 
 
