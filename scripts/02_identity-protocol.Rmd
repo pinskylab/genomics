@@ -252,6 +252,34 @@ new_gen_ids <- new_gen_ids %>%
 
 saveRDS(new_gen_ids, "~/Documents/leyteBuildDB/data/new-gen-ids_2019-04-15.RData")
 ```
-# Next change the db with these new gen_ids
+# Next change the db with these new gen_ids in the db_corrections.Rmd
 
-# Then run the recaptured-fish.Rmd protocol to make sure the gen_ids are all matched up.
+# Write new genepop with only one representative of each gen_id
+```{r}
+# Read in genepop
+gen_file <- here("data", "seq33-03_noregeno.gen")
+genedf <- read_genepop(gen_file) %>% 
+  rename(ligation_id = names)
+
+# pull sample_ids from db
+sample_ids <- samp_from_lig(genedf) 
+
+# get gen_ids for the sample_ids
+gen_ids <- get_fish() %>% 
+  filter(sample_id %in% sample_ids$sample_id) %>% 
+  select(sample_id, gen_id) %>% 
+  left_join(sample_ids, by = "sample_id")
+
+# which gen_ids are duplicated?
+dups <- gen_ids %>% 
+  group_by(gen_id) %>% 
+  count() %>% 
+  filter(n > 1)
+
+
+```
+** Not sure how to remove fish from the genepop without losing valuable data, have started a github issue #19 to ask Katrina what she wants me to do**
+
+
+
+# Then run the recaptured-fish.Rmd protocol to make sure the gen_ids and tag_ids are all matched up.
