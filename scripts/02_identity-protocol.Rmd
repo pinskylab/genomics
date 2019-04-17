@@ -214,7 +214,7 @@ old_pairs <- idcsv %>%
 
 # Examine new matches
 ```{r}
-new_pairs <- anti_join(idcsv, old_pairs, by = c("first_sample_id", "first_tag_id", "first_gen_id", "second_sample_id", "second_tag_id", "second_gen_id", "matching_loci", "mismatching_loci", "first_lat", "first_lon", "second_lat", "second_lon", "first_sex", "second_sex")) %>% 
+new_pairs <- anti_join(idcsv, old_pairs) %>% 
   # reduce number of columns
   select(first_sample_id, second_sample_id, first_gen_id, second_gen_id, first_tag_id, second_tag_id, mismatching_loci, matching_loci, contains("lat"), contains("lon"), contains("sex")) %>% 
   mutate(lat_diff = first_lat - second_lat, 
@@ -245,12 +245,18 @@ new_gen_ids <- new_pairs %>%
   mutate(first_gen_id = ifelse(first_gen_id == 0, NA, first_gen_id),
          second_gen_id = ifelse(second_gen_id == 0, NA, second_gen_id),
     second_gen_id = ifelse(!is.na(first_gen_id), first_gen_id, second_gen_id)) %>% 
-  select(contains("fish_table_id"), contains("gen_id"))
+  select(contains("sample_id"), contains("gen_id"))
 
 new_gen_ids <- new_gen_ids %>% 
   mutate(first_gen_id = ifelse(is.na(first_gen_id), second_gen_id, first_gen_id))
 
-saveRDS(new_gen_ids, "~/Documents/leyteBuildDB/data/new-gen-ids_2019-04-16.RData")
+
+# is anyone still missing a gen_id
+need_gen_id <- new_gen_ids %>% 
+  filter(first_gen_id != second_gen_id)
+# should be 0 rows
+
+saveRDS(new_gen_ids, "~/Documents/leyteBuildDB/data/new-gen-ids.RData")
 ```
 # Next change the db with these new gen_ids in the db_corrections.Rmd
 
@@ -283,59 +289,62 @@ numloci <- non_zero %>%
 # add numloci as a column
 numgen <- cbind(gen_ids, numloci)
 
-##### stopping for the night########
-# # which gen_ids are duplicated and which have the most loci?
-# dups <- gen_ids %>% 
-#   group_by(gen_id) %>% 
-#   count() %>% 
-#   filter(n > 1) %>% 
-#   left_join(numgen, by = "gen_id") %>% 
-#   group_by(gen_id) %>% 
-#   mutate(leastloci = min(numloci))
-# 
-# # remove the rows that don't have the most loci
-# least_loci <- dups %>% 
-#   filter(numloci == maxloci)
-# 
-# # which are still duplicated?
-# still_dup <- most_loci %>% 
-#   group_by(gen_id) %>% 
-#   count() %>% 
-#   filter(n>1) 
-# 
-# mostest_loci <- most_loci %>%
-#   filter(gen_id %in% still_dup)
-#   mutate(max_lig = max(ligation_id))
+# create a data frame of sample ids to keep or drop based on the number of loci present
+keep_drop <- numgen %>% 
+  # select only the columns to identify which to keep
+  select(gen_id, ligation_id, numloci) %>%
+  group_by(gen_id) %>% 
+  # create a maxloci column that holds the most loci each sample id carries
+  mutate(maxloci = max(numloci), 
+         # create a drop column that holds the decision to keep or drop that row
+         drop = ifelse(numloci == maxloci, "KEEP", "DROP")) %>% 
+  # keep only the columns that hold the maxloci and say "KEEP"
+  filter(drop == "KEEP") %>% 
+  ungroup() %>% 
+  # keep only the columns needed to identify these "keeper rows"
+  select(ligation_id)
+
+# keep only the version of the sample id that has the most loci
+no_recap <- numgen %>% 
+  filter(ligation_id %in% keep_drop$ligation_id)
 
 
-```
-2019-04-16 - The first time I tried to run this today, it assigned more than one gen_id to the same sample id. Fixing below:
-```{r eval=FALSE}
-dup_samp <- gen_ids %>% 
-  group_by(sample_id) %>% 
-  count() %>% 
-  filter(n > 1)
+# Some samples were not dropped because both regenotypes have the same number of loci. This is just one line out of multiple, so keeping just the one line 
+recaps <- no_recap %>%
+  filter(duplicated(no_recap$gen_id)) %>%
+  select(gen_id, ligation_id)
 
-dup_gens <- gen_ids %>% 
-  filter(sample_id %in% dup_samp$sample_id)
+# drop the ligation_ids for these duplicated samples
+no_recap1 <- no_recap %>% 
+  filter(!ligation_id %in% recaps$ligation_id)
 
-# double check which gen_ids are recaptures
-gen_db <- get_fish() %>% 
-  filter(gen_id %in% dup_gens$gen_id, 
-         !is.na(gen_id))
+# rerun the above line to make sure no recaps remain
+
+# filter the genedf according to this list
+norecaps <- genedf %>% 
+  filter(ligation_id %in% no_recap1$ligation_id)
 
 ```
-Duplicate gen_ids were fixed in the database (leyteBuildDB) 2019-04-16
-APCL17_375 has 4 different anem_table_ids and fish_table_ids - fixing this over in the database code.
-```{r eval=FALSE}
-too_many_rows <- fish_anem_dive() %>% 
-  filter(sample_id == "APCL17_375")
+# Write the genepop
+```{r}
+# Build the genepop components
+msg <- c("This genepop file was generated using a script called process_genepop.Rmd written by Michelle Stuart ")
+write_lines(msg, path = str_c(here("data", "seq33-03_norecap.gen"), sep = ""), append = F)
+
+# find all of the column names that contain contig and collapse them into a comma separated string
+loci <-  str_c(names(select(norecaps, contains("contig"))), collapse = ",")
+write_lines(loci, path = str_c(here("data", "seq33-03_norecap.gen"), sep = ""), append = T)
+
+pop <- "pop"
+write_lines(pop, path = str_c(here("data", "seq33-03_norecap.gen"), sep = ""), append = T)
+
+gene <- vector()
+sample <- vector()
+for (i in 1:nrow(norecaps)){
+  gene[i] <- str_c(select(norecaps[i,], contains("contig")), collapse = " ")
+  sample[i] <- str_c(norecaps$ligation_id[i], gene[i], sep = ", ")
+  write_lines(sample[i], path = str_c(here("data", "seq33-03_norecap.gen"), sep = ""), append = T)
+}
 ```
-
-
-
-** Not sure how to remove fish from the genepop without losing valuable data, have started a github issue #19 to ask Katrina what she wants me to do**
-
-
 
 # Then run the recaptured-fish.Rmd protocol to make sure the gen_ids and tag_ids are all matched up.
