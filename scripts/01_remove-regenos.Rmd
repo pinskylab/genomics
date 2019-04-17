@@ -2,6 +2,8 @@
 title: "Remove regenotyped samples"
 output: html_notebook
 ---
+**Before running this script, assign gen_ids in leyteBuildDB**
+Because the gen_id is assigned to the sample_id and a regenotyped sample has the same sample id, gen_ids are not an issue for this portion of the analysis.
 
 This script is written to take the filtered genepop file from dDocent and
 1) read the genepop file into R as a data frame
