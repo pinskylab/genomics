@@ -48,66 +48,17 @@ fish_recaps <- fish_recaps %>%
 multi_caps <- fish_recaps %>% 
   filter(is.na(recap_id)) %>% 
   select(tag_id, gen_id, recap_id) %>% 
-  distinct()
+  distinct() %>% 
+  mutate(new_recap_id = gen_id)
 
-# create a blank table to hold results
-results <- tibble()
 
-for (i in seq(nrow(multi_caps))){
-  x <- fish_recaps %>% 
-    filter(gen_id == multi_caps$gen_id[i] | tag_id == multi_caps$tag_id[i]) %>% 
-    distinct() %>% 
-    arrange(recap_id) %>% 
-    mutate(new_recap_id = recap_id[1])
-  
-  if (is.na(x$new_recap_id[1])){
-  x <- x %>% 
-    mutate(new_recap_id = gen_id[1])
-  }
-  
-  stopifnot(!is.na(x$new_recap_id))
-  
-  
-  results <- rbind(results, x)
-}
-
-results <- results %>% 
-  select(fish_table_id, new_recap_id) %>% 
-  distinct() 
-
-dup_recap_ids <- results %>% 
-  group_by(fish_table_id) %>% 
-  count() %>% 
-  filter(n > 1)
-
-keep <- tibble()
-for (i in seq(dup_recap_ids$fish_table_id)){
-  x <- results %>% 
-    filter(fish_table_id == dup_recap_ids$fish_table_id[i]) %>% 
-    arrange(new_recap_id) %>% 
-    slice(1:1)
-  
-  keep <- rbind(keep, x)
-}
-
-toss <- results %>% 
-  filter(!new_recap_id %in% keep$new_recap_id)
-
-results <- results %>% 
-  filter(!new_recap_id %in% toss$new_recap_id)
-
-new_fish_recaps <- left_join(fish_recaps, results, by = "fish_table_id")
-
-new_fish_recaps <- new_fish_recaps %>% 
-  mutate(recap_id = ifelse(!is.na(new_recap_id), new_recap_id, recap_id))
-
-# %>% 
-#   select(-new_recap_id)
-
-need_recap_id <- 
+# join this data to the original table
+fish_recaps_plus <- left_join(fish_recaps, tags, by = "tag_id") %>% 
+  mutate(recap_id = ifelse(!is.na(new_recap_id), new_recap_id, recap_id)) %>% 
+  select(-new_recap_id)
 
 save_loc <-  here("data", "recaptured-fish.Rdata")
-saveRDS(fish_recaps, file = save_loc)
+saveRDS(fish_recaps_plus, file = save_loc)
 ```
 
 
