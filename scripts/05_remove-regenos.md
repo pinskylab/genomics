@@ -1,20 +1,14 @@
----
-title: "Remove regenotyped samples"
-output: 
-  html_notebook: default
-  github_document: default
----
+Remove regenotyped samples
+================
 
-Because the gen_id is assigned to the sample_id and a regenotyped sample has the same sample id, gen_ids are not an issue for this portion of the analysis.
+Because the gen\_id is assigned to the sample\_id and a regenotyped sample has the same sample id, gen\_ids are not an issue for this portion of the analysis.
 
-This script is written to take the filtered genepop file from dDocent and
-1) read the genepop file into R as a data frame
-2) strip any named samples down to pure ligation number,
-3) identify and remove re-genotyped samples based on number of loci (SNPs),
-4) generate a new genepop file to be fed to cervus for identification of recaptures.
+This script is written to take the filtered genepop file from dDocent and 1) read the genepop file into R as a data frame 2) strip any named samples down to pure ligation number, 3) identify and remove re-genotyped samples based on number of loci (SNPs), 4) generate a new genepop file to be fed to cervus for identification of recaptures.
 
-# Set up workspace ---------------------------------------------
-```{r setup}
+Set up workspace ---------------------------------------------
+==============================================================
+
+``` r
 pacman::p_load(tidyr, dplyr, stringr, readr, clownfish, here, install = FALSE)
 # library(dplyr) 
 # library(stringr)
@@ -27,9 +21,14 @@ source("~/Documents/clownfish-pkg/R/db_connections.R")
 leyte <- read_db("Leyte")
 lab <- read_db("Laboratory")
 ```
-# 1) Read the genepop  - double check genepop to make sure the word
-# pop separates the header from the data on line 3 - no quotes
-```{r}
+
+1) Read the genepop - double check genepop to make sure the word
+================================================================
+
+pop separates the header from the data on line 3 - no quotes
+============================================================
+
+``` r
 # locate the genepop file and read as data frame
 genfile <- "seq33_03_baits_only_SNPs.gen"
 genedf <- read_genepop(here("filtering", genfile))%>% 
@@ -37,9 +36,14 @@ genedf <- read_genepop(here("filtering", genfile))%>%
   # 2) strip any named samples down to pure ligation number ---- 
   mutate(ligation_id = str_extract(ligation_id, "L\\d+"))
 ```
-# 3) Remove samples with known issues -------------------------------------
-# pull in the known issues table
-```{r}
+
+3) Remove samples with known issues -------------------------------------
+=========================================================================
+
+pull in the known issues table
+==============================
+
+``` r
 iss <- lab %>% tbl("known_issues") %>% collect()
 
 # remove issues from largedf
@@ -47,10 +51,10 @@ genedf <- genedf %>%
   filter(!ligation_id %in% iss$ligation_id)
 ```
 
+Add sample IDs ----------------------------------------------------------
+=========================================================================
 
-# Add sample IDs ----------------------------------------------------------
-
-```{r}
+``` r
 samples <- samp_from_lig(genedf)
 
 # Merge the two dataframes so that lig IDs match up -----------------------
@@ -77,22 +81,27 @@ largedf <- left_join(genedf, samples, by = "ligation_id") %>%
 rm(genedf, genfile, samples, iss)
 ```
 
+Remove regenotyped samples ----------------------------------------------
+=========================================================================
 
+convert 0000 to NA in the genepop data
+======================================
 
-# Remove regenotyped samples ----------------------------------------------
-
-# convert 0000 to NA in the genepop data
-```{r}
+``` r
 largedf <- largedf %>% 
   na_if(., "0000")
 ```
 
+\# TEST - make sure there are no "0000" left
+============================================
 
-# # TEST - make sure there are no "0000" left
-# which(largedf == "0000") # should return integer(0)
+which(largedf == "0000") \# should return integer(0)
+====================================================
 
-# count the number of loci per individual (have to use for loop)
-```{r}
+count the number of loci per individual (have to use for loop)
+==============================================================
+
+``` r
 # create an object that is the total number of cells that are not NA for each row in the largedf
 numloci <- largedf %>% 
   is.na %>% 
@@ -107,10 +116,7 @@ largedf <- cbind(largedf, numloci)
 # which(is.na(largedf$numloci)) # should return integer(0)
 ```
 
-
-
-```{r}
-
+``` r
 #run through all of the SampleIDs that are found more than once and keep the one with the most loci
 
 # create a data frame of sample ids to keep or drop based on the number of loci present
@@ -132,8 +138,11 @@ regeno_drop <- largedf %>%
 noregeno1 <- largedf %>% 
   filter(ligation_id %in% regeno_drop$ligation_id)
 ```
-# Some samples were not dropped because both regenotypes have the same number of loci.
-```{r}
+
+Some samples were not dropped because both regenotypes have the same number of loci.
+====================================================================================
+
+``` r
 regenod <- noregeno1 %>%
   filter(duplicated(noregeno1$sample_id)) %>%
   select(sample_id, ligation_id) %>% 
@@ -150,15 +159,18 @@ test <- noregeno %>%
 # should be same number of rows as regenod
 ```
 
-
 Prep for writing genepop
-```{r}
 
+``` r
 # convert all the NA genotypes to 0000
 noregeno[is.na(noregeno)] = "0000"
 # TEST - make sure there are no NA's left
 which(is.na(noregeno)) # should return integer(0)
+```
 
+    ## integer(0)
+
+``` r
 # # remove genotyped recaptures - only do this if you are ablsolutely sure you do not want to find new recapture events with this data
 # leyte <- read_db("Leyte")
 # recap <- leyte %>% tbl("clownfish") %>% 
@@ -170,14 +182,12 @@ which(is.na(noregeno)) # should return integer(0)
 # # # TEST - make sure a list was generated
 # k <- nrow(recap)
 # k # 277
-
 ```
 
+4) Output genepop file --------------------------------------------------
+=========================================================================
 
-
-# 4) Output genepop file --------------------------------------------------
-
-```{r}
+``` r
 # Build the genepop components
 msg <- c("This genepop file was generated using a script called process_genepop.Rmd written by Michelle Stuart ")
 write_lines(msg, path = str_c(here("data", "seq33-03_noregeno.gen"), sep = ""), append = F)
@@ -197,6 +207,3 @@ for (i in 1:nrow(noregeno)){
   write_lines(sample[i], path = str_c(here("data", "seq33-03_noregeno.gen"), sep = ""), append = T)
 }
 ```
-
-
-
