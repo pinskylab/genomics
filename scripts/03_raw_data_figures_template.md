@@ -1,43 +1,46 @@
----
-title: "SNP FILTERING"
-output:
-  html_notebook:
-    code_folding: hide
-    df_print: paged
-    highlight: kate
-    theme: yeti
-    toc: no
-  html_document:
-    toc: no
----
+SNP FILTERING
+================
 
 To use this script, find and replace 20181125 with the current project date
 
-```{r load libraries}
+``` r
+knitr::opts_chunk$set(eval=FALSE)
 
-# knitr::opts_chunk$set(warning = FALSE, message = FALSE)
 library(readr)
 library(ggplot2)
 library(dplyr)
+```
+
+    ## 
+    ## Attaching package: 'dplyr'
+
+    ## The following objects are masked from 'package:stats':
+    ## 
+    ##     filter, lag
+
+    ## The following objects are masked from 'package:base':
+    ## 
+    ##     intersect, setdiff, setequal, union
+
+``` r
 # source("~/02-apcl-ddocent/APCL_analysis/scr/libraries.R")
 source("~/02-apcl-ddocent/APCL_analysis/scr/ggplot.R")
 source("~/02-apcl-ddocent/APCL_analysis/scr/VCFfilterstats.R")
 source("~/02-apcl-ddocent/APCL_analysis/scr/xtrafunctions.R")
 ```
 
- 
-```{bash}
+``` bash
 mkdir /local/home/michelles/02-apcl-ddocent/APCL_analysis/20181125/results
 ```
 
-
-## Raw data stats
+Raw data stats
+--------------
 
 ### Query stats
 
 Query raw stats using vcftools.
 
-```{bash}
+``` bash
 cd /local/home/michelles/02-apcl-ddocent/APCL_analysis/20181125
 # depth indv/locus
 vcftools --vcf /data/apcl/all_samples/20181125/TotalRawSNPs.vcf --out results/raw --depth
@@ -56,8 +59,7 @@ vcftools --vcf /data/apcl/all_samples/20181125/TotalRawSNPs.vcf --out results/ra
 
 ### Visualize
 
-```{r fig.height=20, fig.width=10}
-
+``` r
 # load stats files ----
 ind_stats_raw <- read.ind.stats(dir = "results", vcf = "raw")
 loc_stats_raw <- read.loc.stats(dir = "results", vcf = "raw")
@@ -209,29 +211,13 @@ p12 <- ggplot(temp, aes(x = depth, y = qual)) +
 
 m1 <- multiplot(p1, p3, p4, p7, p8, p9, p10, p11, p12, cols=2)
 # m1 <- multiplot(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, cols=2)
-
 ```
 
-Data set contains `r nrow(ind_stats_raw)` individuals and `r nrow(loc_stats_raw)` loci.
-
-
-## Run SNP counting script
-
-```{bash, eval=FALSE, include=FALSE}
-
-echo "FILTER SNP CONTIG INDV" > Filter.count
-
-  SNP=$(grep -cv '#' results/raw.recode.vcf)
-  CONTIG=$(grep -v '#' results/raw.recode.vcf | cut -f 1 | sort | uniq | wc -l)
-  INDV=$(vcfsamplenames results/raw.recode.vcf | wc -l)
-  echo "raw.recode.vcf $SNP $CONTIG $INDV" >> Filter.count
-
-
-```
+Run SNP counting script
+-----------------------
 
 Compare SNPs/contigs/indv at each filtering step and between filtering schemes.
 
-```{r}
-
+``` r
 count <- read.table("/local/home/michelles/02-apcl-ddocent/APCL_analysis/20181125/Filter.count", header = TRUE, stringsAsFactors = FALSE)
 ```
