@@ -4,8 +4,21 @@ ReadMe
 \# This repository is under construction to become more organized and have a clearer workflow
 ---------------------------------------------------------------------------------------------
 
-This repository contains code and data for analysing genomic data for the clownfish project in the Pinsky lab.
-Open this Rproject on the RStudio Server on amphiprion to use for calling snps or filtering.
+From fish to SNP, many steps are involved in obtaining and processing our data.
+===============================================================================
+
+-   Sample collection can be found in the [field](https://github.com/pinskylab/field) repository.
+-   Sample processing through sequence submission can be found in the [laboratory](https://github.com/pinskylab/pinskylab_methods/tree/master/genomics/laboratory) repository.
+-   Sequence processing through identity analysis (mark recapture) can be found here in the genomics repository.
+
+    1.  [Receive and preapare sequences for SNP calling](https://github.com/pinskylab/pinskylab_methods/blob/master/genomics/analysis/00_hiseq_workflow.md)
+    2.  [Call SNPs](https://github.com/pinskylab/pinskylab_methods/blob/master/genomics/analysis/01_callSNPs_template.md)
+    3.  [Filter SNPs](https://github.com/pinskylab/genomics/blob/master/filtering/filtering_scheme-6-with-70-35.Rmd)
+    4.  [Remove regenotyped individuals](https://github.com/pinskylab/genomics/blob/master/scripts/01_remove-regenos.Rmd)
+    5.  [Identify recaptured individuals](https://github.com/pinskylab/genomics/blob/master/scripts/02_identity-protocol.Rmd)
+    6.  [Update recaptured RData file](https://github.com/pinskylab/genomics/blob/master/scripts/03_recaptured-fish.Rmd)
+
+Open this Rproject on the RStudio Server on amphiprion to use for steps 1-3 (i-iii).
 
 Navigation
 ==========
