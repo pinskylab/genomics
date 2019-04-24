@@ -8,14 +8,15 @@ From fish to SNPs, many steps are involved in obtaining and processing our data.
 -   Sample processing through sequence submission can be found in the [laboratory](https://github.com/pinskylab/pinskylab_methods/tree/master/genomics/laboratory) repository.
 -   Sequence processing through identity analysis (mark recapture) can be found here in the genomics repository.
 
-    1.  [Receive and preapare sequences for SNP calling](https://github.com/pinskylab/genomics/blob/master/scripts/01_hiseq_workflow.Rmd)
-    2.  [Call SNPs](https://github.com/pinskylab/genomics/blob/master/scripts/02_callSNPs_template.Rmd)
-    3.  [Filter SNPs](https://github.com/pinskylab/genomics/blob/master/scripts/03_filtering_scheme-6-with-70-35.Rmd)
-    4.  [Remove regenotyped individuals](https://github.com/pinskylab/genomics/blob/master/scripts/04_remove-regenos.Rmd)
-    5.  [Identify recaptured individuals](https://github.com/pinskylab/genomics/blob/master/scripts/05_identity-protocol.Rmd)
-    6.  [Update recaptured RData file](https://github.com/pinskylab/genomics/blob/master/scripts/06_recaptured-fish.Rmd)
+    1.  [Receive and preapare sequences for SNP calling](https://github.com/pinskylab/genomics/blob/master/scripts/01_hiseq_workflow.md)
+    2.  [Call SNPs](https://github.com/pinskylab/genomics/blob/master/scripts/02_callSNPs_template.md)
+    3.  [Plot the raw SNPs to visualize the data](https://github.com/pinskylab/genomics/blob/master/scripts/03_raw_data_figures_template.md)
+    4.  [Filter SNPs](https://github.com/pinskylab/genomics/blob/master/scripts/03_filtering_scheme-6-with-70-35.md)
+    5.  [Remove regenotyped individuals](https://github.com/pinskylab/genomics/blob/master/scripts/04_remove-regenos.Rmd)
+    6.  [Identify recaptured individuals](https://github.com/pinskylab/genomics/blob/master/scripts/05_identity-protocol.Rmd)
+    7.  [Update recaptured RData file](https://github.com/pinskylab/genomics/blob/master/scripts/06_recaptured-fish.Rmd)
 
-Open this Rproject on the RStudio Server on amphiprion to use for steps 1-3 (i-iii).
+Open this Rproject on the RStudio Server on amphiprion to use for steps 1-4 (i-iv).
 
 ### Navigation
 
