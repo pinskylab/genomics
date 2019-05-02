@@ -23,8 +23,9 @@ genotyped_ligs <- read_genepop(here("data", "seq03-33_identity", "seq33_03_baits
   select(ligation_id)
 
 genotyped_samples <- samp_from_lig(genotyped_ligs) %>% 
-  arrange(sample_id) %>% 
+  select(sample_id) %>%  
   filter(grepl("APCL", sample_id)) %>% 
+  distinct() %>% 
   mutate(gen_id = 1:nrow(.))
 
 saveRDS(genotyped_samples, here("data", "genotyped-samples.RData"))
