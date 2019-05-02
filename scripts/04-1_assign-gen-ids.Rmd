@@ -26,6 +26,7 @@ genotyped_samples <- samp_from_lig(genotyped_ligs) %>%
   select(sample_id) %>%  
   filter(grepl("APCL", sample_id)) %>% 
   distinct() %>% 
+  arrange(sample_id) %>% 
   mutate(gen_id = 1:nrow(.))
 
 saveRDS(genotyped_samples, here("data", "genotyped-samples.RData"))
