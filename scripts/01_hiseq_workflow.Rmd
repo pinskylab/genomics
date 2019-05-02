@@ -234,7 +234,7 @@ nohup ~/14_programs/paired_sequence_utils/barcode_splitter.py --bcfile ../../log
 - [2] 37341 - job number for 10/25/2016  
 
 
-The nohup.out should be saved as a .tsv in the logs directory and can be used to gather useful information about the number of reads that were assigned to each pool.  
+The nohup.out should be saved as a .tsv in the logs directory and can be used to get useful information about the number of reads that were assigned to each pool.  
 ```{bash eval=FALSE}
 cd /local/home/michelles/02-apcl-ddocent/17seq/bcsplit/lane1
 
