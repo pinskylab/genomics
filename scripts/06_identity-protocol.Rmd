@@ -55,7 +55,7 @@ The genepop should be stored either on github and downloaded onto the windows ma
 ### Import the data into R
  
 ```{r}
-idcsv_raw <- read_csv(here("data","seq03-33_identity", "33-03_seq_identity_ID.csv"), col_types = cols(
+idcsv_raw <- read_csv(here::here("data","seq03-33_identity", "33-03_seq_identity_ID.csv"), col_types = cols(
   `First ID` = col_character(),
   `Loci typed` = col_integer(),
   `Second ID` = col_character(),
@@ -242,13 +242,20 @@ change_sex <- new_pairs %>%
 # Assign gen_ids
 ```{r}
 new_gen_ids <- new_pairs %>% 
-  mutate(first_gen_id = ifelse(first_gen_id == 0, NA, first_gen_id),
-         second_gen_id = ifelse(second_gen_id == 0, NA, second_gen_id),
-    second_gen_id = ifelse(!is.na(first_gen_id), first_gen_id, second_gen_id)) %>% 
+ # make the second gen_id the same as the first gen-id
+   mutate(second_gen_id = ifelse(!is.na(first_gen_id), first_gen_id, second_gen_id)
+    # the commented out lines are because these conditions don't exist
+    # if the first gen_id == 0, make it NA
+    # first_gen_id = ifelse(first_gen_id == 0, NA, first_gen_id),
+    # if the second gen_id == 0, make it NA
+         # second_gen_id = ifelse(second_gen_id == 0, NA, second_gen_id),
+    
+    ) %>% 
   select(contains("sample_id"), contains("gen_id"))
 
-new_gen_ids <- new_gen_ids %>% 
-  mutate(first_gen_id = ifelse(is.na(first_gen_id), second_gen_id, first_gen_id))
+# if the first gen_id is NA
+# new_gen_ids <- new_gen_ids %>% 
+  # mutate(first_gen_id = ifelse(is.na(first_gen_id), second_gen_id, first_gen_id))
 
 
 # is anyone still missing a gen_id
@@ -256,7 +263,7 @@ need_gen_id <- new_gen_ids %>%
   filter(first_gen_id != second_gen_id)
 # should be 0 rows
 
-saveRDS(new_gen_ids, "~/Documents/leyteBuildDB/data/new-gen-ids.RData")
+saveRDS(new_gen_ids, "~/Documents/leyteBuildDB/data/recap-gen-ids.RData")
 ```
 # Next change the db with these new gen_ids in the db_corrections.Rmd
 
