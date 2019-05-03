@@ -241,29 +241,86 @@ change_sex <- new_pairs %>%
 ```
 # Assign gen_ids
 ```{r}
+max_gen_id <- get_fish() %>% 
+  filter(!is.na(gen_id)) %>% 
+  summarise(max = max(gen_id))
+
 new_gen_ids <- new_pairs %>% 
  # make the second gen_id the same as the first gen-id
-   mutate(second_gen_id = ifelse(!is.na(first_gen_id), first_gen_id, second_gen_id)
-    # the commented out lines are because these conditions don't exist
-    # if the first gen_id == 0, make it NA
-    # first_gen_id = ifelse(first_gen_id == 0, NA, first_gen_id),
-    # if the second gen_id == 0, make it NA
-         # second_gen_id = ifelse(second_gen_id == 0, NA, second_gen_id),
-    
-    ) %>% 
+   mutate(second_gen_id = ifelse(!is.na(first_gen_id), first_gen_id, second_gen_id)) %>% 
   select(contains("sample_id"), contains("gen_id"))
-
-# if the first gen_id is NA
-# new_gen_ids <- new_gen_ids %>% 
-  # mutate(first_gen_id = ifelse(is.na(first_gen_id), second_gen_id, first_gen_id))
-
 
 # is anyone still missing a gen_id
 need_gen_id <- new_gen_ids %>% 
   filter(first_gen_id != second_gen_id)
 # should be 0 rows
 
-saveRDS(new_gen_ids, "~/Documents/leyteBuildDB/data/recap-gen-ids.RData")
+new_gen_ids <- new_gen_ids %>% 
+  select(-second_gen_id) %>% 
+  rename(gen_id = first_gen_id)
+
+# combine into a list that can be imported in to the db
+first <- new_gen_ids %>% 
+  select(first_sample_id, gen_id) %>% 
+  rename(sample_id = first_sample_id)
+
+second <- new_gen_ids %>% 
+  select(second_sample_id, gen_id) %>% 
+  rename(sample_id = second_sample_id)
+
+recap_gen_ids <- rbind(first, second) %>% 
+  distinct()
+
+for_processing <- recap_gen_ids
+gens_to_keep <- tibble()
+while(nrow(for_processing) > 1){
+  # all samples that belong to this gen_id
+  groupA <- for_processing %>% 
+    filter(gen_id == for_processing$gen_id[1])
+  
+  # all gen_ids that belong to these samples 
+  groupB <- for_processing %>% 
+    filter(sample_id %in% groupA$sample_id)
+  
+  # all the samples that belong to these gen_ids
+  groupC <- for_processing %>% 
+    filter(gen_id %in% groupB$gen_id) %>% 
+    group_by(gen_id) %>% 
+    mutate(num_fish = n()) %>% 
+    ungroup() %>% 
+    mutate(max_num = max(num_fish))
+  
+  small_group <- groupC %>% 
+    filter(num_fish != max_num) %>% 
+    select(-gen_id)
+  
+  big_group <- groupC %>% 
+    filter(num_fish == max_num)
+  
+  big_group <- left_join(big_group, small_group, by  = "sample_id") %>% 
+    select(sample_id, gen_id)
+  
+  for_processing <- anti_join(for_processing, big_group, by = "sample_id")
+  
+  if(nrow(distinct(big_group, gen_id)) != 1){
+    big_group <- big_group %>% 
+      mutate(gen_id = max_gen_id$max + i)
+  }
+  
+  test <- big_group %>% 
+    distinct(gen_id)
+  
+  stopifnot(nrow(test)==1)
+  
+  gens_to_keep <- rbind(gens_to_keep, big_group) %>% 
+    distinct()
+
+}
+
+# all of the sample_ids in recap_gen_ids are  in gens to keep
+
+  
+saveRDS(gens_to_keep, "~/Documents/leyteBuildDB/data/recap-gen-ids.RData")
 ```
 # Next change the db with these new gen_ids in the db_corrections.Rmd
 

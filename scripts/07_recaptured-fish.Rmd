@@ -49,11 +49,12 @@ multi_caps <- fish_recaps %>%
   filter(is.na(recap_id)) %>% 
   select(tag_id, gen_id, recap_id) %>% 
   distinct() %>% 
-  mutate(new_recap_id = gen_id)
+  mutate(new_recap_id = gen_id) %>% 
+  select(-gen_id, -recap_id)
 
 
 # join this data to the original table
-fish_recaps_plus <- left_join(fish_recaps, tags, by = "tag_id") %>% 
+fish_recaps_plus <- left_join(fish_recaps, multi_caps, by = "tag_id") %>% 
   mutate(recap_id = ifelse(!is.na(new_recap_id), new_recap_id, recap_id)) %>% 
   select(-new_recap_id)
 
