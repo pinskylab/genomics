@@ -244,6 +244,7 @@ change_sex <- new_pairs %>%
 max_gen_id <- get_fish() %>% 
   filter(!is.na(gen_id)) %>% 
   summarise(max = max(gen_id))
+max_gen <- as.integer(max_gen_id$max[[1]])
 
 new_gen_ids <- new_pairs %>% 
  # make the second gen_id the same as the first gen-id
@@ -303,8 +304,10 @@ while(nrow(for_processing) > 1){
   for_processing <- anti_join(for_processing, big_group, by = "sample_id")
   
   if(nrow(distinct(big_group, gen_id)) != 1){
-    big_group <- big_group %>% 
-      mutate(gen_id = max_gen_id$max + i)
+   max_gen <- max_gen + 1
+     big_group <- big_group %>% 
+      mutate(gen_id = max_gen)
+    
   }
   
   test <- big_group %>% 
@@ -318,6 +321,11 @@ while(nrow(for_processing) > 1){
 }
 
 # all of the sample_ids in recap_gen_ids are  in gens to keep
+
+# test 
+num_gens <- gens_to_keep %>% 
+  group_by(gen_id) %>% 
+  count()
 
   
 saveRDS(gens_to_keep, "~/Documents/leyteBuildDB/data/recap-gen-ids.RData")
