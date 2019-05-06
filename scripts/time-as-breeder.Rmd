@@ -1,0 +1,43 @@
+---
+title: "How long is a breeder a breeder?"
+output: html_notebook
+---
+
+How long is a fish a breeder?
+
+```{r setup, include=FALSE}
+pacman::p_load(tidyverse, here, clownfish, ggplot2, install=FALSE)
+# while db connection using helper file isn't working 
+source("~/Documents/clownfish-pkg/R/db_connections.R")
+leyte <- read_db("Leyte")
+lab <- read_db("Laboratory")
+```
+Load recaptured fish, create a year column
+```{r}
+fish <- readRDS(here::here("data", "recaptured-fish.RData")) %>% 
+  mutate(year = lubridate::year(date))
+
+meta <- get_fish() %>% 
+  filter(fish_table_id %in% fish$fish_table_id) %>% 
+  select(-sample_id, -tag_id, -recap, -gen_id, -anem_table_id, -fish_obs_time)
+
+breeders <- left_join(fish, meta, by = "fish_table_id") %>% 
+  filter(sex != "J") %>% 
+  select(recap_id, year) %>% 
+  # get rid of any same year recaptures
+  distinct() %>% 
+  group_by(recap_id) %>% 
+  count()
+```
+
+Plot the time that fish are breeders
+```{r}
+f <- ggplot(breeders, aes(n))
+f + geom_bar() + 
+  theme_minimal() + 
+  xlab("number of years as breeder") + 
+  ggtitle("How long do clownfish spend as breeding fish?")
+
+ggsave(filename = here("plots", "time-as-breeder.png"))
+```
+
