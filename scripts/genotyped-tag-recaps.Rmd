@@ -9,6 +9,11 @@ output: html_notebook
 library(tidyverse)
 library(clownfish)
 library(here)
+
+# while db connection using helper file isn't working 
+source("~/Documents/clownfish-pkg/R/db_connections.R")
+leyte <- read_db("Leyte")
+lab <- read_db("Laboratory")
 ```
 Fish that are tag recaptures who also have been geneotyped more than once
 ```{r}
@@ -86,6 +91,7 @@ while(nrow(process >= 1)){
 
 fish_pairs %>% select(mismatch_prop, first_gen_id, second_gen_id, everything())
 
+write_csv(fish_pairs, here("data", "genotyped-tag-recaps.csv"))
 ```
 
 L3037 does not appear to be in the identity analysis.  It was removed because there is a potential lab error with the sample so it is in the known issues table.
