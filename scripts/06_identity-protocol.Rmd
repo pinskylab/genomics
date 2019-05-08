@@ -6,7 +6,7 @@ params:
 ---
 # Workspace setup
 ```{r setup}
-pacman::p_load(tidyverse, lubridate, here, clownfish, janitor, install=FALSE)
+pacman::p_load(tidyverse, lubridate, here, RMySQL, clownfish, janitor, install=TRUE)
  # library(tidyverse)
  # library(lubridate)
 

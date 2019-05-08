@@ -1,0 +1,106 @@
+---
+title: "Which tag recaptured fish have been genotyped"
+output: html_notebook
+---
+
+
+
+```{r setup, include = FALSE}
+library(tidyverse)
+library(clownfish)
+library(here)
+```
+Fish that are tag recaptures who also have been geneotyped more than once
+```{r}
+fish <- fish_anem_dive() %>% 
+  select(fish_table_id, sample_id, tag_id, recap, gen_id, anem_table_id, fish_obs_time, anem_obs_time, date, anem_id, anem_obs, gps) 
+
+# multiple observations of the same tag_id
+tag_recap <- fish %>% 
+  # only tagged fish that have been genotyped
+  filter(!is.na(gen_id) & !is.na(tag_id)) %>% 
+  group_by(tag_id) %>% 
+  count() %>% 
+  filter(n > 1) %>% 
+  ungroup() 
+
+tag_gen <- fish %>% 
+  filter(tag_id %in% tag_recap$tag_id, 
+         !is.na(gen_id)) %>% 
+  arrange(tag_id)
+
+
+# add ligation ids
+lig_tag_gen <- lig_from_samp(tag_gen$sample_id) %>% 
+  right_join(tag_gen, by = "sample_id") %>% 
+  filter(!is.na(ligation_id))
+
+lig_tag_gen %>% 
+  select(ligation_id, sample_id, tag_id, gen_id)
+```
+
+Genotyping matchups for these fish
+```{r}
+all_ids <- read_csv(here("data", "seq03-33_identity", "33-03_seq_identity_ID_all.csv")) %>% 
+  janitor::clean_names() %>% 
+  filter(first_id %in% lig_tag_gen$ligation_id | second_id %in% lig_tag_gen$ligation_id) %>% 
+  select(-p_id, -p_i_dsib, -status) %>% 
+  mutate(mismatch_prop = mismatching_loci/(mismatching_loci + matching_loci))
+
+fish_pairs <- tibble()
+process <- lig_tag_gen
+while(nrow(process >= 1)){
+  # which fish are tag matches?
+  x <- process %>% 
+    filter(tag_id == process$tag_id[1]) %>% 
+    select(ligation_id, sample_id, gen_id, tag_id)
+  
+  y <- all_ids %>% 
+    filter(first_id == x$ligation_id[1] & second_id == x$ligation_id[2])
+  if(nrow(y) == 0){
+    y <- all_ids %>% 
+    filter(first_id == x$ligation_id[2] & second_id == x$ligation_id[1])
+  }
+  
+  z <- y %>% 
+    left_join(x, by = c("first_id" = "ligation_id")) %>% 
+    rename(first_sample_id = sample_id, 
+           first_tag_id = tag_id, 
+           first_gen_id = gen_id, 
+           first_loci_typed = loci_typed) %>% 
+    left_join(x, by = c("second_id" = "ligation_id")) %>% 
+      rename(second_sample_id = sample_id, 
+           second_tag_id = tag_id, 
+           second_gen_id = gen_id, 
+           second_loci_typed = loci_typed_1) %>% 
+    select(contains("match"),contains("first"), contains("second"), everything())
+    
+  fish_pairs <- rbind(fish_pairs, z)
+  # remove those rows from samples to still be processed
+  process <- process %>% 
+    filter(!gen_id %in% x$gen_id)
+  
+  
+  
+}
+
+fish_pairs %>% select(mismatch_prop, first_gen_id, second_gen_id, everything())
+
+```
+
+L3037 does not appear to be in the identity analysis.  It was removed because there is a potential lab error with the sample so it is in the known issues table.
+
+Tag_id 985153000375244 is in 2 fish that have 25% mismatch proportion.  Check the scanner.  The observations of these fish are correct but I question the integrity of the lab sample.
+```{r}
+pitscan <- leyte %>% 
+  tbl("pitscan") %>% 
+  collect() %>% 
+  filter(tag == 153000375244)
+
+fish <- fish_anem_dive() %>% 
+  filter(tag_id == 985153000375244)
+
+fish
+```
+
+
