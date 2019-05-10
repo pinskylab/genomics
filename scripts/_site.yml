@@ -1,0 +1,9 @@
+name: "Sequence Processing Workflow"
+output_dir: "."
+navbar:
+  title: "Sequence Processing Workflow"
+  left:
+    - text: "Overview"
+      href: index.html
+    - text: "Processing HiSEQ data"
+      href: 01_hiseq_workflow.nb.html
