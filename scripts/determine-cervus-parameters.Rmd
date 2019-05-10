@@ -1,0 +1,112 @@
+---
+title: "Determine Cervus Parameters"
+date: 2019-05-09
+output: html_notebook
+---
+#### Cervus requires hard numbers instead of percentages for cutoffs in identity analysis.  We enter 80% of the total loci in the analysis for matching loci and 10% mismatch. However, some fish have missing data and so 80%/10% of *their* total loci is much less than the numbers that are hard coded into the analysis and potential recaptures are ignored.  
+
+#### Here we examine ever increasing parameters to determine how best to parameterize future identity analyses.
+
+```{r setup, include=FALSE, message=FALSE}
+# load libraries
+library(lubridate)
+library(tidyverse)
+library(here)
+library(clownfish)
+library(geosphere)
+
+# while db connection using helper file isn't working 
+source("~/Documents/clownfish-pkg/R/db_connections.R")
+leyte <- read_db("Leyte")
+lab <- read_db("Laboratory")
+```
+
+1. Create a dataset of 20 fish that combines known recaptures with known non-recaptures and see how low we can set the parameters before we get false positives.
+
+```{r}
+tag_recaps <- get_fish() %>% 
+  # for fish that have a gen_id
+  filter(!is.na(gen_id)) %>% 
+  group_by(gen_id) %>% 
+  # which gen_ids are seen more than once (recaptured fish)
+  filter(n() > 1) %>% 
+  ungroup() %>% 
+  # for fish with tag_ids
+  filter(!is.na(tag_id)) %>% 
+  group_by(tag_id) %>% 
+  # which tag_ids were seen more than once (recaptured fish)
+  filter(n() > 1)
+
+# get ligation ids for these fish
+ligs <- lig_from_samp(tag_recaps$sample_id) %>% 
+  select(sample_id, ligation_id)%>% 
+  filter(!is.na(ligation_id))
+
+tag_recaps <- left_join(tag_recaps, ligs, by = "sample_id") 
+```
+
+```{r}
+# need 11 non-recaptured fish
+non_recaps <- fish_anem_dive () %>% 
+  # for fish that have a gen_id
+  filter(!is.na(gen_id)) %>% 
+  group_by(gen_id) %>% 
+  # which gen_ids are seen only once 
+  filter(n() == 1) %>% 
+  ungroup()
+# %>% 
+#   dplyr::sample_n(22)
+
+by_site <- group_by(non_recaps, site)
+
+
+
+non_recaps <- dplyr::sample_n(by_site, 1)
+  
+# get ligation ids
+ligs_non <- lig_from_samp(non_recaps$sample_id) %>% 
+  select(sample_id, ligation_id) %>% 
+  filter(!is.na(ligation_id))
+
+
+# to test 
+to_test <- rbind(ligs, ligs_non)
+
+```
+
+
+2. Create a genepop of these samples
+```{r}
+# read in genepop of data
+genedf <-
+  read_genepop(here("data", "seq33_03_baits_only_SNPs.gen")) %>%
+  rename(ligation_id = names) %>%
+  # 2) strip any named samples down to pure ligation number ----
+mutate(ligation_id = str_extract(ligation_id, "L\\d+")) %>%
+  filter(ligation_id %in% to_test$ligation_id)
+
+# Build the genepop components
+msg <-
+  c("This genepop file was generated using a script written by Michelle Stuart ")
+write_lines(msg, path = str_c(here("data", "seq33-03_test_group.gen"), sep = ""), append = F)
+
+# find all of the column names that contain contig and collapse them into a comma separated string
+
+loci <-
+  str_c(names(select(noregeno, contains("contig"))), collapse = ",")
+write_lines(loci, path = str_c(here("data", "seq33-03_test_group.gen"), sep = ""), append = T)
+
+pop <- "pop"
+write_lines(pop, path = str_c(here("data", "seq33-03_test_group.gen"), sep = ""), append = T)
+
+gene <- vector()
+sample <- vector()
+for (i in 1:nrow(noregeno)) {
+  gene[i] <-
+    str_c(select(noregeno[i,], contains("contig")), collapse = " ")
+  sample[i] <- str_c(noregeno$ligation_id[i], gene[i], sep = ", ")
+  write_lines(sample[i], path = str_c(here("data", "seq33-03_test_group.gen"), sep = ""), append = T)
+}
+
+```
+
