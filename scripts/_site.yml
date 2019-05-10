@@ -7,3 +7,5 @@ navbar:
       href: index.html
     - text: "Processing HiSEQ data"
       href: 01_hiseq_workflow.nb.html
+    - text: "Determining Cervus Parameters"
+      href: determine-cervus-parameters.nb.html
