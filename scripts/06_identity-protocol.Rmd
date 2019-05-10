@@ -191,6 +191,13 @@ idcsv <- left_join(idcsv, second, by = "second_id")
 rm(lat, second)  
 
 ```
+#### Make a histogram of mismatch proportion
+```{r}
+idcsv %>% 
+  ggplot(aes(mismatch_prop)) +
+  geom_histogram(binwidth = 0.001)
+```
+
 
 
 # Write big table into a file -----------------------
