@@ -27,21 +27,30 @@ source("~/Documents/clownfish-pkg/R/db_connections.R")
 leyte <- read_db("Leyte")
 lab <- read_db("Laboratory")
 ```
+
+
+```{r}
+# load data
+genfile <- "seq33_03_baits_only_SNPs.gen"
+genedf_raw <- read_genepop(here("filtering", genfile))
+
+# pull in the known issues table
+iss <- lab %>% tbl("known_issues") %>% collect()
+```
+
+
 # 1) Read the genepop  - double check genepop to make sure the word
 # pop separates the header from the data on line 3 - no quotes
 ```{r}
 # locate the genepop file and read as data frame
-genfile <- "seq33_03_baits_only_SNPs.gen"
-genedf <- read_genepop(here("filtering", genfile))%>% 
+genedf <- genedf_raw %>% 
   rename(ligation_id = names) %>% 
   # 2) strip any named samples down to pure ligation number ---- 
   mutate(ligation_id = str_extract(ligation_id, "L\\d+"))
 ```
 # 3) Remove samples with known issues -------------------------------------
-# pull in the known issues table
-```{r}
-iss <- lab %>% tbl("known_issues") %>% collect()
 
+```{r}
 # remove issues from largedf
 genedf <- genedf %>%
   filter(!ligation_id %in% iss$ligation_id)
@@ -197,6 +206,4 @@ for (i in 1:nrow(noregeno)){
   write_lines(sample[i], path = str_c(here("data", "seq33-03_noregeno.gen"), sep = ""), append = T)
 }
 ```
-
-
 
