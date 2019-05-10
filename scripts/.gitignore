@@ -11,3 +11,6 @@ Filter.count
 03_filtering_scheme-6-with-70-35_cache
 05_remove-regenos.nb.html
 genotyped-tag-recaps.nb.html
+index.Rmd
+index.nb.html
+site_libs
