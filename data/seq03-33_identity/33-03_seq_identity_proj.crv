@@ -11,7 +11,7 @@ Code=
 [FileInfo]
 FileName=C:\Users\Pinsky\Desktop\Michelle\seq03-33_identity\33-03_seq_identity_proj.crv
 FileType=.crv
-CreationDate=4/15/2019 11:32:21 AM
+CreationDate=5/15/2019 4:26:08 PM
 
 [GenotypeFile]
 FileName=C:\Users\Pinsky\Desktop\Michelle\seq03-33_identity\33-03_seq_identity_convert.csv
@@ -40,7 +40,7 @@ UseBonferroniCorrection=1
 DoNullAllele=1
 
 [AlleleFrequencyDataFile]
-FileName=C:\Users\Pinsky\Desktop\Michelle\seq03-33_identity\33-03_seq_identity_AF.alf
+FileName=33-03_seq_identity_AF.alf
 HeaderRow=1
 
 [SimulationParameters]
@@ -132,7 +132,7 @@ IncludeNonExclusionProbabilities=0
 
 [IdentityParameters]
 TestSexesSeparately=0
-MinMatchingLoci=804
+MinMatchingLoci=102
 AllowFuzzyMatching=1
 MaxMismatchingLoci=101
 ShowAllComparisons=0
