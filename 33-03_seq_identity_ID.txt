@@ -2,7 +2,7 @@ Cervus 3.0.7 - (c) Copyright Tristan Marshall 1998-2014
 Distributed by Field Genetics Ltd - www.fieldgenetics.com
 Licensed for non-commercial use only
 
-Identity analysis completed 5/16/2019 5:03:52 PM
+Identity analysis completed 5/16/2019 5:30:35 PM
 
 
 **** Summary statistics ****
@@ -10,7 +10,7 @@ Identity analysis completed 5/16/2019 5:03:52 PM
 Number of individuals compared:                             2774
 Number of pairwise comparisons:                          3846151
 Number of matching IDs found:                                  0
-Number of matching genotypes found:                          422
+Number of matching genotypes found:                          428
   (allowing up to 145 mismatching loci)
 
 
@@ -1479,7 +1479,7 @@ Output
 **** Identity analysis parameters ****
 
 Number of loci:                                             1447
-Minimum number of loci needed for match:                    1013
+Minimum number of loci needed for match:                     146
 Number of mismatching loci allowed:                          145
 
 
