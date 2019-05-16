@@ -9,9 +9,14 @@ output:
 ---
 #### Cervus requires hard numbers instead of percentages for cutoffs in identity analysis.  We enter 80% of the total loci in the analysis for matching loci and 10% mismatch. However, some fish have missing data and so 80%/10% of *their* total loci is much less than the numbers that are hard coded into the analysis and potential recaptures are ignored.  
 
-#### Here we examine ever increasing parameters to determine how best to parameterize future identity analyses.
 
 ```{r setup, include=FALSE, message=FALSE}
+knitr::opts_chunk$set(
+	eval = FALSE,
+	message = FALSE,
+	warning = FALSE,
+	include = FALSE
+)
 # load libraries
 library(lubridate)
 library(tidyverse)
@@ -26,209 +31,57 @@ leyte <- read_db("Leyte")
 lab <- read_db("Laboratory")
 ```
 
-1. Create a dataset of 20 fish that combines known recaptures with known non-recaptures and see how low we can set the parameters before we get false positives.
+Our dataset is made up of 2774 individuals and a total of 1447 loci.  We allowed individuals with 30% missing data during SNP filtering.
+
+# Test 1 
+- 80% matching loci (1157), 10% mismatching allowed (145) resulted in 403 proposed recapture events.
+
+This test potentially misses some recaptures because individuals are missing more data than the 20% cutoff (80% data must be present to be considered for a recapture event).
+
+
+# Test 2 
+- 70% matching loci (1013), 10% mismatching allowed (145) resulted in 422 proposed recapture events.  This increase in individuals makes sense because we are now including individuals that had more missing data.
+
+
+# Test 3 
+- 60% matching loci (868), 10% mismatching allowed (145) resulted in 427 proposed recapture events. This slight jump might represent individuals who were on the border of the 30% missing data cutoff (for example they might've had 69% matching loci).
+
+
+# Test 4 
+- 50% matching loci (724), 10% mismatching allowed (145) resulted in 428 proposed recapture events. Not a big increase because we got most of the samples that are missing data at the 70% mark (where the missing data cutoff was for filtering)
+
+# Test 5
+- 10% matching loci (146), 10% mismatching allowed (145) resulted in 428 proposed recapture events. No change because the 50% matching loci captured all of the events.
+
+# Test 6
+- 50% matching loci (724), 10% mismatching of the lowest number of loci allowed (108, equivalent to 7% of the total number of loci, still higher than genotyping error) resulted in 423 proposed recapture events. Fewer recapture events makes sense because the mismatch is more conservative.
+
+# Test 7
+- 50% matching loci (724), 5% mismatching allowed (72), which is lower than the genotype error rate resulted in  proposed recapture events. This resulted in 377 recapture events.  Because this number is lower than the genotype error, it is expected that this is missing some true recaptures.
 
 ```{r}
-tag_recaps <- get_fish() %>% 
-  # for fish that have a gen_id
-  filter(!is.na(gen_id)) %>% 
-  group_by(gen_id) %>% 
-  # which gen_ids are seen more than once (recaptured fish)
-  filter(n() > 1) %>% 
-  ungroup() %>% 
-  # for fish with tag_ids
-  filter(!is.na(tag_id)) %>% 
-  group_by(tag_id) %>% 
-  # which tag_ids were seen more than once (recaptured fish)
-  filter(n() > 1)
+idcsv_raw <- read_csv("https://raw.githubusercontent.com/pinskylab/genomics/master/data/seq03-33_identity/33-03_seq_identity_ID.csv", col_types = cols(
+  `First ID` = col_character(),
+  `Loci typed` = col_integer(),
+  `Second ID` = col_character(),
+  `Loci typed_1` = col_integer(),
+  `Matching loci` = col_integer(),
+  `Mismatching loci` = col_integer(),
+  pID = col_double(),
+  pIDsib = col_double(),
+  Status = col_character()
+)) 
 
-# get ligation ids for these fish
-ligs <- lig_from_samp(tag_recaps$sample_id) %>% 
-  select(sample_id, ligation_id)%>% 
-  filter(!is.na(ligation_id))
+names(idcsv_raw) <- c("first_id",  "first_loci_typed",  "second_id",  "second_loci_typed",  "matching_loci",  "mismatching_loci",  "p_id",  "p_id_sib",  "status")
 
-tag_recaps <- left_join(tag_recaps, ligs, by = "sample_id") 
+# add mismatch rate
+idcsv <- idcsv_raw %>%
+  mutate(loci_compared = mismatching_loci + matching_loci,
+    mismatch_prop = mismatching_loci/loci_compared) %>% 
+  # order by number of matching loci
+  arrange(matching_loci) 
+
+ggplot(idcsv, aes(x = loci_compared, y = mismatch_prop)) +
+  geom_point() +
+  theme_bw()
 ```
-
-```{r}
-# need 11 non-recaptured fish
-non_recaps <- fish_anem_dive () %>% 
-  # for fish that have a gen_id
-  filter(!is.na(gen_id)) %>% 
-  group_by(gen_id) %>% 
-  # which gen_ids are seen only once 
-  filter(n() == 1) %>% 
-  ungroup()
-# %>% 
-#   dplyr::sample_n(22)
-
-by_site <- group_by(non_recaps, site)
-
-
-
-non_recaps <- dplyr::sample_n(by_site, 1)
-  
-# get ligation ids
-ligs_non <- lig_from_samp(non_recaps$sample_id) %>% 
-  select(sample_id, ligation_id) %>% 
-  filter(!is.na(ligation_id))
-
-non_recaps <- left_join(non_recaps, ligs_non, by = "sample_id")
-
-# to test 
-to_test <- rbind(ligs, ligs_non)
-
-```
-
-
-2. Create a genepop of these samples
-```{r}
-# read in genepop of data
-genedf <-
-  read_genepop(here("data", "seq33_03_baits_only_SNPs.gen")) %>%
-  rename(ligation_id = names) %>%
-  # 2) strip any named samples down to pure ligation number ----
-mutate(ligation_id = str_extract(ligation_id, "L\\d+")) %>%
-  filter(ligation_id %in% to_test$ligation_id)
-
-# Build the genepop components
-msg <-
-  c("This genepop file was generated using a script written by Michelle Stuart ")
-write_lines(msg, path = str_c(here("data", "seq33-03_test_group.gen"), sep = ""), append = F)
-
-# find all of the column names that contain contig and collapse them into a comma separated string
-
-loci <-
-  str_c(names(select(genedf, contains("contig"))), collapse = ",")
-write_lines(loci, path = str_c(here("data", "seq33-03_test_group.gen"), sep = ""), append = T)
-
-pop <- "pop"
-write_lines(pop, path = str_c(here("data", "seq33-03_test_group.gen"), sep = ""), append = T)
-
-gene <- vector()
-sample <- vector()
-for (i in 1:nrow(genedf)) {
-  gene[i] <-
-    str_c(select(genedf[i,], contains("contig")), collapse = " ")
-  sample[i] <- str_c(genedf$ligation_id[i], gene[i], sep = ", ")
-  write_lines(sample[i], path = str_c(here("data", "seq33-03_test_group.gen"), sep = ""), append = T)
-}
-
-```
-
-3. Send the new genepop to Cervus and test different parameters
-  
-    - Test 1: 75% matching loci and 10% fuzzy mismatch using all other seq33 files in the cervus project.  1447 loci in the genepop, 29 individuals, 1005 loci in the frequency analysis, 754 matching required, 101 mismatch allowed.
-
-```{r}
-results <- read_csv(here("data", "seq03-33_identity", "33-03_test_identity_ID.csv")) %>% 
-  clean_names()
-
-```
-True Positives
-```{r}
-(true_pos <- left_join(results, ligs, by = c("first_id" = "ligation_id")) %>% 
-  rename(first_sample_id = sample_id) %>% 
-  left_join(ligs, by = c("second_id" = "ligation_id")) %>% 
-  rename(second_sample_id = sample_id))
-```
-False Positives  
-
-- actually turned out to be true   
-
-- regenotype of same tissue sample  
-
-```{r}
-(false_pos <- true_pos %>% 
-  filter(is.na(first_sample_id) | is.na(second_sample_id)))
-```
-```{r}
-# test - are false_positives in the non-matching samples
-(test <- non_recaps %>% 
-  filter(ligation_id %in% false_pos$first_id | ligation_id %in% false_pos$second_id))
-# this is a regnotype of the same sample
-```
-True negatives - should be 22
-```{r}
-
-(true_neg <- anti_join(ligs_non, results, by = c("ligation_id" = "first_id")) %>% 
-  anti_join(results, by = c("ligation_id" = "second_id")))
-```
-False Negatives
-```{r}
-(false_neg <- anti_join(ligs, results, by = c("ligation_id" = "first_id")) %>% 
-  anti_join(results, by = c("ligation_id" = "second_id")))
-```
-
-### Test 2: 
-70% matching loci and 10% fuzzy mismatch. No change in results, no change at 65%, 60%, 50%, 25%, 10%.  This group might be too small to test this effectively.  
-    
-#### Increasing the number of fish in the ligs_non group.
-```{r}
-# need more non-recaptured fish
-non_recaps <- fish_anem_dive () %>% 
-  # for fish that have a gen_id
-  filter(!is.na(gen_id)) %>% 
-  group_by(gen_id) %>% 
-  # which gen_ids are seen only once 
-  filter(n() == 1) %>% 
-  ungroup()
-# %>% 
-#   dplyr::sample_n(22)
-
-by_site <- group_by(non_recaps, site)
-
-
-
-non_recaps <- dplyr::sample_n(by_site, 3)
-  
-# get ligation ids
-ligs_non <- lig_from_samp(non_recaps$sample_id) %>% 
-  select(sample_id, ligation_id) %>% 
-  filter(!is.na(ligation_id))
-
-non_recaps <- left_join(non_recaps, ligs_non, by = "sample_id")
-
-# to test 
-to_test <- rbind(ligs, ligs_non)
-
-```
-
-#### Write the new genepop
-```{r}
-# read in genepop of data
-genedf <-
-  read_genepop(here("data", "seq33_03_baits_only_SNPs.gen")) %>%
-  rename(ligation_id = names) %>%
-  # 2) strip any named samples down to pure ligation number ----
-mutate(ligation_id = str_extract(ligation_id, "L\\d+")) %>%
-  filter(ligation_id %in% to_test$ligation_id)
-
-# Build the genepop components
-msg <-
-  c("This genepop file was generated using a script written by Michelle Stuart ")
-write_lines(msg, path = str_c(here("data", "seq33-03_test_group.gen"), sep = ""), append = F)
-
-# find all of the column names that contain contig and collapse them into a comma separated string
-
-loci <-
-  str_c(names(select(genedf, contains("contig"))), collapse = ",")
-write_lines(loci, path = str_c(here("data", "seq33-03_test_group.gen"), sep = ""), append = T)
-
-pop <- "pop"
-write_lines(pop, path = str_c(here("data", "seq33-03_test_group.gen"), sep = ""), append = T)
-
-gene <- vector()
-sample <- vector()
-for (i in 1:nrow(genedf)) {
-  gene[i] <-
-    str_c(select(genedf[i,], contains("contig")), collapse = " ")
-  sample[i] <- str_c(genedf$ligation_id[i], gene[i], sep = ", ")
-  write_lines(sample[i], path = str_c(here("data", "seq33-03_test_group.gen"), sep = ""), append = T)
-}
-
-```
-Send the new genepop to github so it can be imported on the Cervus machine
-
-#### With 10% matching loci, still only got the 7 tagged recaptures as results.
-
