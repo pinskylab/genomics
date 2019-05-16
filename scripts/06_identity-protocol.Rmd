@@ -1,12 +1,15 @@
 ---
 title: "Identity Protocol for APCL project"
-params:
- data_dir:  "seq03-33_identity"
- data_name:  "33-03_seq_identity"
+output: html_notebook 
 ---
 # Workspace setup
-```{r setup}
-pacman::p_load(tidyverse, lubridate, here, RMySQL, clownfish, janitor, install=TRUE)
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+pacman::p_load(tidyverse, lubridate, here, RMySQL, clownfish, janitor, geosphere, install=TRUE)
  # library(tidyverse)
  # library(lubridate)
 
@@ -19,7 +22,9 @@ lab <- read_db("Laboratory")
 This notebook continues where filtering and removing regenos left off, moving the genepop into cervus and processing identity results.
  
 ## Import the genepop to cervus
-The genepop should be stored either on github and downloaded onto the windows machine.
+The no regenos genepop should be stored on github and downloaded onto the windows machine.  
+- On the github website, click on the genepop (noregeno.gen).  
+- Right click on "view raw" and save link as...  
 
 ###Open Cervus and convert the genepop to ceruvs:
  - Tools > Convert genotype file > Genepop to Cervus
@@ -34,7 +39,7 @@ The genepop should be stored either on github and downloaded onto the windows ma
  * Yes Read Locus Names
  * ID in column 2
  * First allele in column 3
- * Type in number of loci from conversion (1447)
+ * Type in number of loci from conversion (1005)
  * Save as “….._AF"
  * Leave all the output option boxes checked
   
@@ -46,7 +51,7 @@ The genepop should be stored either on github and downloaded onto the windows ma
  * Do not test sexes separately
  * Allele freq data should be autofilled with the AF file created above
  * Save as “…._ID"
- * Fill in minimum number of matching loci (80% of total = 804)
+ * Fill in minimum number of matching loci ~~(80% of total = 804)~~ (10% of total = 102)
  * allow fuzzy matching with 10% mismatch (10% of total = 101)
  * don’t show all comparisons - this generates a HUGE csv of every single pairwise comparison.
  
@@ -54,8 +59,8 @@ The genepop should be stored either on github and downloaded onto the windows ma
  
 ### Import the data into R
  
-```{r}
-idcsv_raw <- read_csv(here::here("data","seq03-33_identity", "33-03_seq_identity_ID.csv"), col_types = cols(
+```{r message=FALSE}
+idcsv_raw <- read_csv("https://raw.githubusercontent.com/pinskylab/genomics/master/data/seq03-33_identity/33-03_seq_identity_ID.csv", col_types = cols(
   `First ID` = col_character(),
   `Loci typed` = col_integer(),
   `Second ID` = col_character(),
@@ -78,15 +83,21 @@ idcsv <- idcsv_raw %>%
 
 
 Plot proportion mismatch, pay attention to axis limits
-```{r}
+```{r eval=FALSE}
 
 ggplot(idcsv, aes(x = matching_loci, y = mismatch_prop)) +
   geom_point() +
   theme_bw()
  
 ```
+#### Make a histogram of mismatch proportion
+```{r}
+idcsv %>% 
+  ggplot(aes(mismatch_prop)) +
+  geom_histogram(binwidth = 0.001)
+```
 
-  ### Add sample_ids
+### Add sample_ids
 ```{r}
  # for first_sample_id
  temp <- idcsv %>% 
@@ -191,20 +202,12 @@ idcsv <- left_join(idcsv, second, by = "second_id")
 rm(lat, second)  
 
 ```
-#### Make a histogram of mismatch proportion
+
+# Write big table into a file 
 ```{r}
-idcsv %>% 
-  ggplot(aes(mismatch_prop)) +
-  geom_histogram(binwidth = 0.001)
-```
+# saveRDS(idcsv, here("data", "identity_big-table.RData"))
 
-
-
-# Write big table into a file -----------------------
-```{r}
-# write_csv(idcsv, here("data", params$data_dir, paste0(params$data_name, "_big_table.csv")))
-
-# idcsv <- read_csv(here("data", params$data_dir, paste0(params$data_name, "_big_table.csv")))
+# idcsv <- readRDS(here("data", "identity_big-table.RData"))
 
 # cleanup
 # rm(alldists)
@@ -220,24 +223,84 @@ old_pairs <- idcsv %>%
 
 
 # Examine new matches
-```{r}
+```{r message=FALSE}
 new_pairs <- anti_join(idcsv, old_pairs) %>% 
   # reduce number of columns
-  select(first_sample_id, second_sample_id, first_gen_id, second_gen_id, first_tag_id, second_tag_id, mismatching_loci, matching_loci, contains("lat"), contains("lon"), contains("sex")) %>% 
-  mutate(lat_diff = first_lat - second_lat, 
-         lon_diff = first_lon - second_lon)
+  select(first_sample_id, second_sample_id, first_gen_id, second_gen_id, first_tag_id, second_tag_id, mismatching_loci, matching_loci, contains("lat"), contains("lon"), contains("sex"), contains("date"), contains("site"))
+
+new_pairs$dist <- distGeo(new_pairs[, c("first_lon", "first_lat")], new_pairs[, c("second_lon", "second_lat")])
+
+(new_pairs %>% select(first_sample_id, second_sample_id, dist, first_date, second_date, first_site, second_site, everything(), -contains("corr"), -contains("lat"), -contains("lon")))
+
+# what plates were the new pairs on?
+first <- new_pairs %>% 
+  rename(sample_id = first_sample_id)
+first <- work_history(first, "sample_id") %>% 
+  filter(!is.na(lig_well))
+
+names(first) <- paste("first", names(first), sep = "_")
+
+new_pairs_first <- left_join(new_pairs, first, by = "first_sample_id")
+
+second <- new_pairs_first %>% 
+  rename(sample_id = second_sample_id)
+
+second <- work_history(second, "sample_id") %>% 
+  filter(!is.na(lig_well))
+
+names(second) <- paste("second", names(second), sep = "_")
+
+new_pairs <- left_join(new_pairs_first, second, by = "second_sample_id")
 ```
 
-# Which fish are too far away to be obvious matches?  None.
+# Which pairs are on the same ligation plate?
 ```{r}
-far_fish <- new_pairs %>% 
-  filter(lon_diff > 50, lat_diff > 50)
+same_lig_plate <- new_pairs %>% 
+  filter(first_lig_plate == second_lig_plate) %>% 
+  select(first_sample_id, second_sample_id, first_site, second_site, dist, everything())
 ```
 
-# Which fish are tag recaptures? None
+
+
+
+# Which fish are at different sites and captured far away from each other?
 ```{r}
-tag_fish <- new_pairs %>% 
-  filter(first_tag_id == second_tag_id)
+(far_fish <- new_pairs %>% 
+  filter(dist > 50 & first_site != second_site) %>% 
+   select(first_sample_id, second_sample_id, dist, contains("lig"), contains("dig"), contains("extr"), everything()) %>% 
+   arrange(desc(dist)))
+
+# investigate far fish to determine if they are true recaptures
+photos <- read_csv("https://raw.githubusercontent.com/pinskylab/Clown_Fish_Tail_Color_Darrow/master/Data/fish-by-photo.csv?token=AG664YORQYQZKCBS3ZMQSGK4422VY", col_types = cols(
+  image = col_character(),
+  fish_table_id = col_double(),
+  best_image = col_character(),
+  num_images = col_double(),
+  sample_id = col_character(),
+  tag_id = col_double()
+))
+
+far_fish_photos <- left_join(far_fish, photos, by = c("first_sample_id" = "sample_id")) %>% 
+  rename(first_image = image) %>% 
+  select(-fish_table_id, -best_image, -num_images, -tag_id) %>% 
+  left_join(photos, by = c("second_sample_id" = "sample_id")) %>% 
+  rename(second_image = image) %>% 
+  select(-fish_table_id, -best_image, -num_images, -tag_id, -contains("corr")) %>% 
+  select(first_sample_id, first_image, second_sample_id, second_image, dist, first_date, second_date, first_site, second_site, everything()) %>% 
+  filter(!is.na(first_image) & !is.na(second_image))
+
+
+
+
+
+```
+
+# Which fish are tag recaptures?
+```{r}
+(tag_fish <- new_pairs %>% 
+  filter(first_tag_id == second_tag_id))
+
+
 ```
 
 # Which fish change sex?
