@@ -9,3 +9,5 @@ navbar:
       href: 01_hiseq_workflow.nb.html
     - text: "Determining Cervus Parameters"
       href: determine-cervus-parameters.nb.html
+    - text: "Many Parameters"
+      href: many-parameters-test.html
