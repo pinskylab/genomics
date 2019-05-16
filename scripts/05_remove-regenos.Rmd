@@ -31,8 +31,9 @@ lab <- read_db("Laboratory")
 
 ```{r}
 # load data
-genfile <- "seq33_03_baits_only_SNPs.gen"
-genedf_raw <- read_genepop(here("filtering", genfile))
+download.file("https://github.com/pinskylab/genomics/raw/master/data/seq33_03_baits_only_SNPs.gen", destfile = "baits-only-snps.gen")
+genedf_raw <- read_genepop("baits-only-snps.gen")
+file.remove("baits-only-snps.gen")
 
 # pull in the known issues table
 iss <- lab %>% tbl("known_issues") %>% collect()
