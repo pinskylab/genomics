@@ -9,9 +9,10 @@
 <meta name="generator" content="pandoc" />
 
 
+<meta name="author" content="Julie Lowndes at NCEAS, 12/14/16" />
 
 
-<title>Index</title>
+<title>Making free websites with RStudio’s R Markdown</title>
 
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -96,6 +97,9 @@ img {
 button.code-folding-btn:focus {
   outline: none;
 }
+summary {
+  display: list-item;
+}
 </style>
 
 
@@ -110,7 +114,6 @@ body {
   padding-top: 56px;
   margin-top: -56px;
 }
-
 .section h2 {
   padding-top: 56px;
   margin-top: -56px;
@@ -130,6 +133,43 @@ body {
 .section h6 {
   padding-top: 56px;
   margin-top: -56px;
+}
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #ffffff;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
 }
 </style>
 
@@ -151,18 +191,77 @@ $(document).ready(function () {
 });
 </script>
 
-
 <div class="container-fluid main-container">
 
 <!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
 <script>
 $(document).ready(function () {
   window.buildTabsets("TOC");
 });
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
 </script>
 
 <!-- code folding -->
-
 
 
 
@@ -186,6 +285,12 @@ $(document).ready(function () {
 <li>
   <a href="01_hiseq_workflow.nb.html">Processing HiSEQ data</a>
 </li>
+<li>
+  <a href="determine-cervus-parameters.nb.html">Determining Cervus Parameters</a>
+</li>
+<li>
+  <a href="many-parameters-test.html">Many Parameters</a>
+</li>
       </ul>
       <ul class="nav navbar-nav navbar-right">
         
@@ -198,12 +303,30 @@ $(document).ready(function () {
 
 
 
-<h1 class="title toc-ignore">Index</h1>
+<h1 class="title toc-ignore">Making free websites with RStudio’s R Markdown</h1>
+<h4 class="author"><em><a href="https://github.com/jules32">Julie Lowndes</a> at <a href="https://www.nceas.ucsb.edu/">NCEAS</a>, 12/14/16</em></h4>
 
 </div>
 
 
-<p>Sequence Processing workflow</p>
+<hr />
+<p>It’s possible to create well-designed websites for free using <a href="http://rmarkdown.rstudio.com/">RStudio’s R Markdown</a> and hosting them on <a href="http://github.com">Github</a>. This is very new and incredibly cool. It is a really powerful way to communicate science using the same reproducible workflow you use for your analyses and collaborations.</p>
+<p><strong><em>Creating websites with R Markdown can be done without knowing R or HTML, CSS, etc,</em></strong> and that’s where we’ll start. However, R Markdown integrates with these tools so the more you know the more complex and beautiful your website can be. This tutorial borrows heavily from a lot of great tutorials and resources you should check out too – there are links throughout.</p>
+<p>The best way to learn is to follow along with your own laptop, but all are welcome. We’ll spend half the time with the tutorial and half the time for you to work on your own website and get help. If you bring your laptop please do this beforehand:</p>
+<ol style="list-style-type: decimal">
+<li>install <a href="https://www.rstudio.com/products/rstudio/download/">RStudio</a></li>
+<li>create a <a href="(http://github.com)">GitHub</a> account (<a href="http://happygitwithr.com/github-acct.html">advice</a>)</li>
+<li>set up your computer to talk to GitHub
+<ul>
+<li>have RStudio linked directly (preferred) (<a href="http://happygitwithr.com/hello-git.html">instructions sections 8-14</a>)</li>
+<li>or install the <a href="https://desktop.github.com/">Desktop App</a></li>
+<li>or be familiar with git commands for the command line (<a href="https://try.github.io/levels/1/challenges/1">tutorial</a>)</li>
+</ul></li>
+</ol>
+<hr />
+<p><strong>Examples:</strong></p>
+<p>We have been using R Markdown for the Ocean Health Index: <a href="http://ohi-science.org/ohi-global"><strong>ohi-science.org/ohi-global</strong></a>.<br />
+And R Markdown is much more than just websites – here’s a <a href="http://rmarkdown.rstudio.com/lesson-1.html"><strong>one-minute video about R Markdown</strong></a> to get you excited.</p>
 
 
 
