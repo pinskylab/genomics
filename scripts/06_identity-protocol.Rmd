@@ -1,6 +1,10 @@
 ---
 title: "Identity Protocol for APCL project"
-output: html_notebook 
+output: 
+  html_notebook:
+    code_folding: hide
+    df_print: paged
+    highlight: kate
 ---
 # Workspace setup
 ```{r setup, include=FALSE}
@@ -51,7 +55,7 @@ The no regenos genepop should be stored on github and downloaded onto the window
  * Do not test sexes separately
  * Allele freq data should be autofilled with the AF file created above
  * Save as “…._ID"
- * Fill in minimum number of matching loci ~~(80% of total = 804)~~ (10% of total = 102)
+ * Fill in minimum number of matching loci, this should be comparable to the amount of missing data allowed in the filtering step.  For example, if we allow 30% missing data for individuals during filtering, we should not require more than 70% matching loci.  Because the 70-30 line is the cutoff, 65% or 60% would include fish who are on the borderline.
  * allow fuzzy matching with 10% mismatch (10% of total = 101)
  * don’t show all comparisons - this generates a HUGE csv of every single pairwise comparison.
  
