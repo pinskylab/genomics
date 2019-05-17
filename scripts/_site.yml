@@ -1,7 +1,7 @@
-name: "Sequence Processing Workflow"
+name: "Genomics Repo reports"
 output_dir: "."
 navbar:
-  title: "Sequence Processing Workflow"
+  title: "Home"
   left:
     - text: "Overview"
       href: index.html
@@ -11,3 +11,9 @@ navbar:
       href: determine-cervus-parameters.nb.html
     - text: "Many Parameters"
       href: many-parameters-test.html
+output:
+  html_document:
+    theme: yeti
+    highlight: textmate
+#    include:
+#      after_body: _footer.html
