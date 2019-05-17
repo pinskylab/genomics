@@ -1,4 +1,4 @@
-name: "Genomics Repo reports"
+name: "Genomics Protocols"
 output_dir: "."
 navbar:
   title: "Home"
@@ -9,8 +9,8 @@ navbar:
       href: 01_hiseq_workflow.nb.html
     - text: "Determining Cervus Parameters"
       href: determine-cervus-parameters.nb.html
-    - text: "Many Parameters"
-      href: many-parameters-test.html
+    - text: "Step 6 - Identity Analysis"
+      href: 06_identity-protocol.nb.html
 output:
   html_document:
     theme: yeti
