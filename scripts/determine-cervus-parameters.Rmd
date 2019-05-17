@@ -11,19 +11,12 @@ output:
 
 
 ```{r setup, include=FALSE, message=FALSE}
-knitr::opts_chunk$set(
-	eval = FALSE,
-	message = FALSE,
-	warning = FALSE,
-	include = FALSE
-)
 # load libraries
-library(lubridate)
 library(tidyverse)
 library(here)
 library(clownfish)
-library(geosphere)
-library(janitor)
+library(kableExtra)
+library(knitr)
 
 # while db connection using helper file isn't working 
 source("~/Documents/clownfish-pkg/R/db_connections.R")
@@ -32,6 +25,49 @@ lab <- read_db("Laboratory")
 ```
 
 Our dataset is made up of 2774 individuals and a total of 1447 loci.  We allowed individuals with 30% missing data during SNP filtering.
+
+
+```{r message=FALSE, warning=FALSE}
+idcsv_raw <- read_csv("https://raw.githubusercontent.com/pinskylab/genomics/master/data/seq03-33_identity/33-03_seq_identity_ID.csv", col_types = cols(
+  `First ID` = col_character(),
+  `Loci typed` = col_integer(),
+  `Second ID` = col_character(),
+  `Loci typed_1` = col_integer(),
+  `Matching loci` = col_integer(),
+  `Mismatching loci` = col_integer(),
+  pID = col_double(),
+  pIDsib = col_double(),
+  Status = col_character()
+)) 
+
+names(idcsv_raw) <- c("first_id",  "first_loci_typed",  "second_id",  "second_loci_typed",  "matching_loci",  "mismatching_loci",  "p_id",  "p_id_sib",  "status")
+
+# add mismatch rate
+idcsv <- idcsv_raw %>%
+  mutate(loci_compared = mismatching_loci + matching_loci,
+    mismatch_prop = mismatching_loci/loci_compared) %>% 
+  # order by number of matching loci
+  arrange(matching_loci) 
+
+# ggplot(idcsv, aes(x = loci_compared, y = mismatch_prop)) +
+  # geom_point() +
+  # theme_bw()
+```
+
+```{r eval=TRUE}
+# construct table of tests
+(test_table <- read_csv("test, perc_matching_loci, num_matching_loci, perc_mismatching_loci, num_mismatching_loci, num_recaptures, notes
+                       1, 80, 1157, 10, 145, 403, some individuals have less than 80% of the data and so are eliminated from the analysis by this 80% cutoff
+                       2, 70, 1013, 10, 145, 422, this increase in individuals makes sense because we are now including individuals who have less than 80% data
+                       3, 60, 868, 10, 145, 427, this small increase could be individuals who are close to but not quite 70%
+                       4, 50, 724, 10, 145, 428,
+                       5, 10, 146, 10, 145, 428, 
+                       6, 50, 724, 7, 108, 423, 10% of the lowest number of loci present which is still higher than the 6% genotyping error
+                       7, 50, 724, 5, 72, 377, because the mismatch allowance is lower than the genotype error rate it is missing some true recaptures"))
+
+# kable(test_table) %>% 
+#   kable_styling()
+```
 
 # Test 1 
 - 80% matching loci (1157), 10% mismatching allowed (145) resulted in 403 proposed recapture events.
@@ -58,30 +94,3 @@ This test potentially misses some recaptures because individuals are missing mor
 
 # Test 7
 - 50% matching loci (724), 5% mismatching allowed (72), which is lower than the genotype error rate resulted in  proposed recapture events. This resulted in 377 recapture events.  Because this number is lower than the genotype error, it is expected that this is missing some true recaptures.
-
-```{r}
-idcsv_raw <- read_csv("https://raw.githubusercontent.com/pinskylab/genomics/master/data/seq03-33_identity/33-03_seq_identity_ID.csv", col_types = cols(
-  `First ID` = col_character(),
-  `Loci typed` = col_integer(),
-  `Second ID` = col_character(),
-  `Loci typed_1` = col_integer(),
-  `Matching loci` = col_integer(),
-  `Mismatching loci` = col_integer(),
-  pID = col_double(),
-  pIDsib = col_double(),
-  Status = col_character()
-)) 
-
-names(idcsv_raw) <- c("first_id",  "first_loci_typed",  "second_id",  "second_loci_typed",  "matching_loci",  "mismatching_loci",  "p_id",  "p_id_sib",  "status")
-
-# add mismatch rate
-idcsv <- idcsv_raw %>%
-  mutate(loci_compared = mismatching_loci + matching_loci,
-    mismatch_prop = mismatching_loci/loci_compared) %>% 
-  # order by number of matching loci
-  arrange(matching_loci) 
-
-ggplot(idcsv, aes(x = loci_compared, y = mismatch_prop)) +
-  geom_point() +
-  theme_bw()
-```
