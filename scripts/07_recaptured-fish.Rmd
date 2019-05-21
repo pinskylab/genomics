@@ -1,8 +1,8 @@
 ---
-title: "Find recaptured fish in the database"
+title: "Find individual fish in the database"
 output: html_notebook
 ---
-This notebook finds fish that were tag recaptured and genetically recaptured and connects all of the observations of those fish, assigning them a recapture id so all rows involving one fish can be found.
+This notebook finds fish that were tag recaptured and genetically recaptured and connects all of the observations of those fish, assigning them an individual id (fish_indiv) so all rows involving one fish can be found.
 
 ```{r setup, include=FALSE}
 pacman::p_load(tidyverse, here, clownfish, install=FALSE)
@@ -13,53 +13,75 @@ source("~/Documents/clownfish-pkg/R/db_connections.R")
 leyte <- read_db("Leyte")
 ```
 
-Find all fish that have been recaptured
+Find all fish that have been genetically or tag recaptured
 ```{r recaps}
-fish <- fish_anem_dive() %>% 
-  select(fish_table_id, sample_id, tag_id, recap, gen_id, anem_table_id, fish_obs_time, anem_obs_time, date, anem_id, anem_obs, gps) 
+# load the table of all fish with genids and tag ids
+fish_obs <- readRDS(here("data", "fish-obs.RData"))
 
-# multiple observations of the same tag_id
-tag_recap <- fish %>% 
-  group_by(tag_id) %>% 
-  count() %>% 
-  filter(n > 1 & !is.na(tag_id)) %>% 
-  ungroup() 
+# assign a fish_indiv to each fish
+fish_inds <- fish_obs %>% 
+  # if a row has a gen_id but not a tag_id
+  mutate(fish_indiv = ifelse(is.na(tag_id), gen_id, NA)) %>% 
+  # if a row has a tag_id but not a gen_id
+  mutate(fish_indiv = ifelse(is.na(gen_id), tag_id, fish_indiv)) %>% 
+# for fish that have both a tag_id and gen_id, use gen_id
+  mutate(fish_indiv = ifelse(!is.na(gen_id) & !is.na(tag_id), gen_id, fish_indiv))
 
-# multiple observations of the same genetically identified fish
-gen_recap <- fish %>% 
-  group_by(gen_id) %>% 
-  count() %>% 
-  filter(n > 1 & !is.na(gen_id)) %>% 
-  ungroup()
+# loop to make sure all recaptures of a fish get the same gen_id
+for_processing <- fish_inds
+new_fish_indv <- tibble()
+while(nrow(for_processing) > 1){
+  # all rows that belong to this fish_table_id
+  fti <- for_processing %>% 
+    filter(!is.na(fish_table_id), 
+      fish_table_id == for_processing$fish_table_id[1])
+  
+ # all rows that belong to the fish_indiv in the above table (and then join the above table)
+  f_indiv <- for_processing %>% 
+    filter(!is.na(fish_indiv), 
+      fish_indiv == fti$fish_indiv) %>% 
+    rbind(fti) %>% 
+    distinct
+  
+  # all rows that contain these tag ids in the above table (and then join the above table)
+  ti <- for_processing %>% 
+    filter(!is.na(tag_id),
+      tag_id %in% f_indiv$tag_id) %>% 
+    rbind(f_indiv) %>% 
+    distinct
+  
+  # all rows that contain these gen_ids in the above table (and then join the above table)
+  gi <- for_processing %>% 
+    filter(!is.na(gen_id), 
+      gen_id %in% ti$gen_id) %>% 
+    rbind(ti) %>% 
+    distinct
+  
+  # what is the lowest indiv id in the table?
+  min_indv <- min(gi$fish_indiv)
+  
+  # make all indv ids the same (the lowest)
+  one_indiv <- gi %>% 
+    mutate(fish_indiv = min_indv)
+  
+  # remove these rows from the for_processing table
+  for_processing <- anti_join(for_processing, one_indiv, by = "fish_table_id")
+  
+  new_fish_indv <- rbind(new_fish_indv, one_indiv) %>% 
+    distinct()
 
-# join these back to fish for complete info
-fish_recaps <- fish %>% 
-  filter(gen_id %in% gen_recap$gen_id | tag_id %in% tag_recap$tag_id)
+}
 
+# test - are there repeat fish_table_ids - should return 0 rows
+test <- new_fish_indv %>% 
+  group_by(fish_table_id) %>% 
+  filter(n()> 1)
+rm(test)
 
-fish_recaps <- fish_recaps %>% 
-  # if tag_id is NA and gen_id isn't
-  mutate(recap_id = ifelse(is.na(tag_id), gen_id, NA)) %>% 
-  # if tag_id isn't and gen_id is NA
-  mutate(recap_id = ifelse(is.na(gen_id), tag_id, recap_id))
-# this does nothing for fish that have both a tag_id and gen_id
+save_loc <- here::here("data", "fish-obs.Rdata")
+saveRDS(new_fish_indv, file = save_loc)
 
-# if there is a value in both columns, need to get all of them
-multi_caps <- fish_recaps %>% 
-  filter(is.na(recap_id)) %>% 
-  select(tag_id, gen_id, recap_id) %>% 
-  distinct() %>% 
-  mutate(new_recap_id = gen_id) %>% 
-  select(-gen_id, -recap_id)
-
-
-# join this data to the original table
-fish_recaps_plus <- left_join(fish_recaps, multi_caps, by = "tag_id") %>% 
-  mutate(recap_id = ifelse(!is.na(new_recap_id), new_recap_id, recap_id)) %>% 
-  select(-new_recap_id)
-
-save_loc <- here::here("data", "recaptured-fish.Rdata")
-saveRDS(fish_recaps_plus, file = save_loc)
+new_fish_indv
 ```
 
 

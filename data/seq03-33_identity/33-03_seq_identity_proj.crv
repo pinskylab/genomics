@@ -11,10 +11,10 @@ Code=
 [FileInfo]
 FileName=C:\Users\Pinsky\Desktop\Michelle\seq03-33_identity\33-03_seq_identity_proj.crv
 FileType=.crv
-CreationDate=5/20/2019 2:15:05 PM
+CreationDate=5/16/2019 5:06:53 PM
 
 [GenotypeFile]
-FileName=C:\Users\Pinsky\Desktop\Michelle\seq03-33_identity\33-03_seq-with-regeno_identity_convert.csv
+FileName=C:\Users\Pinsky\Desktop\Michelle\seq03-33_identity\33-03_seq_identity_convert.csv
 HeaderRow=1
 ReadLocusNames=1
 FirstAlleleColumnNumber=3
@@ -29,7 +29,7 @@ UnknownSexLabel=
 FileName=
 HeaderRow=1
 UseSameCodingForAllLoci=1
-GenotypeFileName=C:\Users\Pinsky\Desktop\Michelle\seq03-33_identity\33-03_seq-with-regeno_identity_convert.csv
+GenotypeFileName=C:\Users\Pinsky\Desktop\Michelle\seq03-33_identity\33-03_seq_identity_convert.csv
 
 [AlleleFrequencySummaryFile]
 FileName=C:\Users\Pinsky\Desktop\Michelle\seq03-33_identity\33-03_seq_identity_AF.csv
@@ -132,19 +132,19 @@ IncludeNonExclusionProbabilities=0
 
 [IdentityParameters]
 TestSexesSeparately=0
-MinMatchingLoci=724
+MinMatchingLoci=1013
 AllowFuzzyMatching=1
 MaxMismatchingLoci=145
 ShowAllComparisons=0
 
 [IdentitySummaryFile]
-FileName=C:\Users\Pinsky\Desktop\Michelle\seq03-33_identity\33-03_seq-with-regeno_identity_ID.txt
+FileName=C:\Users\Pinsky\Desktop\Michelle\seq03-33_identity\33-03_seq_identity_ID.txt
 
 [IdentityDataFile]
-FileName=C:\Users\Pinsky\Desktop\Michelle\seq03-33_identity\33-03_seq-with-regeno_identity_ID.csv
+FileName=C:\Users\Pinsky\Desktop\Michelle\seq03-33_identity\33-03_seq_identity_ID.csv
 
 [ConversionSourceFile]
-FileName=C:\Users\Pinsky\Downloads\seq33_03_baits_only_SNPs.gen
+FileName=C:\Users\Pinsky\Downloads\seq33-03_noregeno.gen
 HeaderRow=0
 AlleleIDLength=2
 UseFirstIDAsPopulationName=0
@@ -161,7 +161,7 @@ FileName=
 HeaderRow=0
 
 [ConversionDestinationFile]
-FileName=C:\Users\Pinsky\Desktop\Michelle\seq03-33_identity\33-03_seq-with-regeno_identity_convert.csv
+FileName=C:\Users\Pinsky\Desktop\Michelle\seq03-33_identity\33-03_seq_identity_convert.csv
 WriteAlleleFrequencyData=0
 AlleleIDLength=2
 WritePopulationNames=0

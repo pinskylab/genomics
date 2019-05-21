@@ -5,8 +5,6 @@ output:
   github_document: default
 ---
 
-Because the gen_id is assigned to the sample_id and a regenotyped sample has the same sample id, gen_ids are not an issue for this portion of the analysis.
-
 This script is written to take the filtered genepop file from dDocent and
 1) read the genepop file into R as a data frame
 2) strip any named samples down to pure ligation number,
@@ -31,17 +29,13 @@ lab <- read_db("Laboratory")
 
 ```{r}
 # load data
-download.file("https://github.com/pinskylab/genomics/raw/master/data/seq33_03_baits_only_SNPs.gen", destfile = "baits-only-snps.gen")
-genedf_raw <- read_genepop("baits-only-snps.gen")
-file.remove("baits-only-snps.gen")
+genedf_raw <- read_genepop(here("data", "seq33_03_baits_only_SNPs.gen"))
 
 # pull in the known issues table
 iss <- lab %>% tbl("known_issues") %>% collect()
 ```
 
-
-# 1) Read the genepop  - double check genepop to make sure the word
-# pop separates the header from the data on line 3 - no quotes
+# 1) Read the genepop  - double check genepop to make sure the word pop separates the header from the data on line 3 - no quotes
 ```{r}
 # locate the genepop file and read as data frame
 genedf <- genedf_raw %>% 
@@ -49,6 +43,7 @@ genedf <- genedf_raw %>%
   # 2) strip any named samples down to pure ligation number ---- 
   mutate(ligation_id = str_extract(ligation_id, "L\\d+"))
 ```
+
 # 3) Remove samples with known issues -------------------------------------
 
 ```{r}
@@ -58,7 +53,7 @@ genedf <- genedf %>%
 ```
 
 
-# Add sample IDs ----------------------------------------------------------
+# Add sample IDs and fish_table_ids
 
 ```{r}
 samples <- samp_from_lig(genedf)
@@ -84,9 +79,23 @@ largedf <- left_join(genedf, samples, by = "ligation_id") %>%
 #   filter(ligation_id %in% iss$ligation_id)
 # nrow(j) # should return 0
 # rm(j)
-rm(genedf, genfile, samples, iss)
+rm(genedf, samples, iss)
 ```
 
+# Create the fish-obs table
+```{r}
+# create
+fish_obs <- get_fish() %>% 
+  # keep any fish successfully genotyped (in the largedf)
+  filter(sample_id %in% largedf$sample_id | 
+           # keep any fish that have been tagged
+           !is.na(tag_id)) %>% 
+  select(fish_table_id, sample_id, tag_id) %>% 
+  # assign a gen_id to every sample_id in the genepop which has been successfully genotyped
+  mutate(gen_id = ifelse(!is.na(sample_id), 1:nrow(.), NA))
+
+saveRDS(fish_obs, here("data", "fish-obs.RData"))
+```
 
 
 # Remove regenotyped samples ----------------------------------------------
