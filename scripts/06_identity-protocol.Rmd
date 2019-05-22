@@ -14,8 +14,7 @@ knitr::opts_chunk$set(
 	warning = FALSE
 )
 pacman::p_load(tidyverse, lubridate, here, RMySQL, clownfish, janitor, geosphere, install=TRUE)
- # library(tidyverse)
- # library(lubridate)
+library(here)
 
 # while db connection using helper file isn't working 
 source("~/Documents/clownfish-pkg/R/db_connections.R")
@@ -88,7 +87,6 @@ idcsv <- idcsv_raw %>%
 
 Plot proportion mismatch, pay attention to axis limits
 ```{r eval=FALSE}
-
 ggplot(idcsv, aes(x = mismatch_prop, y = matching_loci)) +
   geom_point() +
   theme_bw()
@@ -284,7 +282,8 @@ new_pairs <- left_join(new_pairs_first, second, by = "second_sample_id")
 
 same_lig_plate <- new_pairs %>% 
   filter(first_lig_plate == second_lig_plate) %>% 
-  select(first_sample_id, second_sample_id, first_site, second_site, dist, everything())
+  select(first_sample_id, second_sample_id, first_site, second_site, dist, everything()) %>% 
+  distinct()
 ```
 
 
@@ -337,10 +336,7 @@ same_year <- new_pairs %>%
 ```
 # Assign gen_ids
 ```{r}
-max_gen_id <- gen_ids %>% 
-  filter(!is.na(gen_id)) %>% 
-  summarise(max = max(gen_id))
-max_gen <- as.integer(max_gen_id$max[[1]])
+max_gen <- max(gen_ids$gen_id, na.rm = T)
 
 new_gen_ids <- new_pairs %>% 
  # make the second gen_id the same as the first gen-id
@@ -356,7 +352,7 @@ new_gen_ids <- new_gen_ids %>%
   select(-second_gen_id) %>% 
   rename(gen_id = first_gen_id)
 
-# combine into a list that can be imported in to the db
+# combine into a list that can be imported in to the fish-obs table
 first <- new_gen_ids %>% 
   select(first_sample_id, gen_id) %>% 
   rename(sample_id = first_sample_id)
@@ -373,46 +369,35 @@ for_processing <- recap_gen_ids
 gens_to_keep <- tibble()
 while(nrow(for_processing) > 1){
   # all samples that belong to this gen_id
-  groupA <- for_processing %>% 
+  samps <- for_processing %>% 
     filter(gen_id == for_processing$gen_id[1])
   
   # all gen_ids that belong to these samples 
-  groupB <- for_processing %>% 
-    filter(sample_id %in% groupA$sample_id)
+  gens <- for_processing %>% 
+    filter(sample_id %in% samps$sample_id) %>% 
+    rbind(samps) %>% 
+    distinct()
   
-  # all the samples that belong to these gen_ids
-  groupC <- for_processing %>% 
-    filter(gen_id %in% groupB$gen_id) %>% 
-    group_by(gen_id) %>% 
-    mutate(num_fish = n()) %>% 
-    ungroup() %>% 
-    mutate(max_num = max(num_fish))
+  # all the samples that belong to these other gen_ids
+  more_samps <- for_processing %>% 
+    filter(gen_id %in% gens$gen_id) %>% 
+    rbind(gens) %>% 
+    distinct()
   
-  small_group <- groupC %>% 
-    filter(num_fish != max_num) %>% 
-    select(-gen_id)
+  min_gen <- min(more_samps$gen_id)
   
-  big_group <- groupC %>% 
-    filter(num_fish == max_num)
+  one_gen <- more_samps %>% 
+    mutate(gen_id = min_gen)
   
-  big_group <- left_join(big_group, small_group, by  = "sample_id") %>% 
-    select(sample_id, gen_id)
+  for_processing <- anti_join(for_processing, one_gen, by = "sample_id")
   
-  for_processing <- anti_join(for_processing, big_group, by = "sample_id")
   
-  if(nrow(distinct(big_group, gen_id)) != 1){
-   max_gen <- max_gen + 1
-     big_group <- big_group %>% 
-      mutate(gen_id = max_gen)
-    
-  }
-  
-  test <- big_group %>% 
+  test <- one_gen %>% 
     distinct(gen_id)
   
   stopifnot(nrow(test)==1)
   
-  gens_to_keep <- rbind(gens_to_keep, big_group) %>% 
+  gens_to_keep <- rbind(gens_to_keep, one_gen) %>% 
     distinct()
 
 }
@@ -421,10 +406,10 @@ while(nrow(for_processing) > 1){
 test <- anti_join(recap_gen_ids, gens_to_keep, by = "sample_id")
 
 
-# test 
-# num_gens <- gens_to_keep %>% 
-#   group_by(gen_id) %>% 
-#   count()
+# test - how many recapture events for each gen_id
+num_gens <- gens_to_keep %>%
+  group_by(gen_id) %>%
+  count()
 
 # change the gen_ids in the fish_obs file to reflect the recaptures
 fish_obs <- readRDS(here::here("data", "fish-obs.RData"))
@@ -444,7 +429,7 @@ saveRDS(fish_obs, here::here("data", "fish-obs.RData"))
 # Write new genepop with only one representative of each gen_id
 ```{r}
 # Read in genepop
-gen_file <- here("data", "seq33-03_noregeno.gen")
+gen_file <- here::here("data", "seq33-03_noregeno.gen")
 genedf <- read_genepop(gen_file) %>% 
   rename(ligation_id = names)
 
@@ -510,21 +495,21 @@ norecaps <- genedf %>%
 ```{r}
 # Build the genepop components
 msg <- c("This genepop file was generated using a script called process_genepop.Rmd written by Michelle Stuart ")
-write_lines(msg, path = str_c(here("data", "seq33-03_norecap.gen"), sep = ""), append = F)
+write_lines(msg, path = str_c(here::here("data", "seq33-03_norecap.gen"), sep = ""), append = F)
 
 # find all of the column names that contain contig and collapse them into a comma separated string
 loci <-  str_c(names(select(norecaps, contains("contig"))), collapse = ",")
-write_lines(loci, path = str_c(here("data", "seq33-03_norecap.gen"), sep = ""), append = T)
+write_lines(loci, path = str_c(here::here("data", "seq33-03_norecap.gen"), sep = ""), append = T)
 
 pop <- "pop"
-write_lines(pop, path = str_c(here("data", "seq33-03_norecap.gen"), sep = ""), append = T)
+write_lines(pop, path = str_c(here::here("data", "seq33-03_norecap.gen"), sep = ""), append = T)
 
 gene <- vector()
 sample <- vector()
 for (i in 1:nrow(norecaps)){
   gene[i] <- str_c(select(norecaps[i,], contains("contig")), collapse = " ")
   sample[i] <- str_c(norecaps$ligation_id[i], gene[i], sep = ", ")
-  write_lines(sample[i], path = str_c(here("data", "seq33-03_norecap.gen"), sep = ""), append = T)
+  write_lines(sample[i], path = str_c(here::here("data", "seq33-03_norecap.gen"), sep = ""), append = T)
 }
 ```
 
