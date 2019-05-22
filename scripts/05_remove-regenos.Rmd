@@ -79,20 +79,32 @@ largedf <- left_join(genedf, samples, by = "ligation_id") %>%
 #   filter(ligation_id %in% iss$ligation_id)
 # nrow(j) # should return 0
 # rm(j)
-rm(genedf, samples, iss)
+# rm(genedf, samples, iss)
 ```
 
 # Create the fish-obs table
 ```{r}
 # create
-fish_obs <- get_fish() %>% 
-  # keep any fish successfully genotyped (in the largedf)
-  filter(sample_id %in% largedf$sample_id | 
-           # keep any fish that have been tagged
-           !is.na(tag_id)) %>% 
+fish_gens <- get_fish() %>% 
+  filter(sample_id %in% largedf$sample_id) %>% 
+  select(fish_table_id, sample_id, tag_id) %>% 
+  mutate(gen_id = 1:nrow(.))
+
+fish_tags <- get_fish() %>% 
+  # keep any fish that have been tagged 
+  filter(!is.na(tag_id) & 
+           # but not fish rows that are in the above table
+           !fish_table_id %in% fish_gens$fish_table_id) %>% 
   select(fish_table_id, sample_id, tag_id) %>% 
   # assign a gen_id to every sample_id in the genepop which has been successfully genotyped
-  mutate(gen_id = ifelse(!is.na(sample_id), 1:nrow(.), NA))
+  mutate(gen_id = NA)
+
+fish_obs <- rbind(fish_gens, fish_tags)
+
+# test - are there duplicate rows of fish_table_ids
+fish_obs %>% 
+  group_by(fish_table_id) %>% 
+  filter(n() > 1)
 
 saveRDS(fish_obs, here("data", "fish-obs.RData"))
 ```
