@@ -1,0 +1,52 @@
+---
+title: "Compare Allison's fish-obs table to my fish-obs table"
+output: html_notebook
+---
+This document was created to make sure that Michelle's fish-obs table is not missing any recapture events.
+
+```{r setup, include=FALSE}
+# load libraries
+library(tidyverse)
+library(here)
+```
+
+```{r}
+# load data
+agd <- readRDS("~/Downloads/marked_fish.RData")
+
+mrs <- readRDS(here("data", "fish-obs.RData"))
+```
+
+Is there a fish table id in Allison's table that is not in Michelle's table
+```{r}
+(mrs_missing <- agd %>% 
+  filter(!fish_table_id %in% mrs$fish_table_id))
+```
+Is there a fish table id in Michelle's table that is not in Allison's table
+```{r}
+(agd_missing <- mrs %>% 
+   filter(!fish_table_id %in% agd$fish_table_id))
+```
+Do we have the same number of individuals
+```{r}
+agd_num <- agd %>% 
+  group_by(fish_id) %>% 
+  count()
+
+mrs_num <- mrs %>% 
+  group_by(fish_indiv) %>% 
+  count()
+
+(nrow(agd_num) == nrow(mrs_num))
+```
+
+Join tables by fish table id and see which rows are different between the 2 tables
+```{r}
+joined <- left_join(agd, select(mrs, fish_table_id, fish_indiv, gen_id, tag_id), by = c("fish_table_id", "gen_id", "tag_id"))
+
+# change Allison's fish_id to be comparable to fish_indiv
+(thing <- joined %>% 
+  mutate(other = substr(fish_id, 4, 20)) %>% 
+  filter(other != fish_indiv))
+```
+All of these fish are tag_recaptures that were assigned to multiple gen_ids.  In Michelle's table, the gen_id and fish_inidiv don't match because either cervus did not assign them as genetic recaptures or Michelle's script to re-assign gen_ids based on genetic recaptures missed them.  Michelle will invesitage and add notes to the fish-obs.RData table to document that the tag scanner has been checked and the identity analysis has been checked to verify that they are indeed tag recaptures but not genetic recaptures.
