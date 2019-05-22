@@ -11,7 +11,7 @@ Code=
 [FileInfo]
 FileName=C:\Users\Pinsky\Desktop\Michelle\seq03-33_identity\33-03_seq_identity_proj.crv
 FileType=.crv
-CreationDate=5/16/2019 5:06:53 PM
+CreationDate=5/22/2019 2:50:04 PM
 
 [GenotypeFile]
 FileName=C:\Users\Pinsky\Desktop\Michelle\seq03-33_identity\33-03_seq_identity_convert.csv
@@ -132,7 +132,7 @@ IncludeNonExclusionProbabilities=0
 
 [IdentityParameters]
 TestSexesSeparately=0
-MinMatchingLoci=1013
+MinMatchingLoci=724
 AllowFuzzyMatching=1
 MaxMismatchingLoci=145
 ShowAllComparisons=0
