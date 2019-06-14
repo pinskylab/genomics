@@ -1,8 +1,6 @@
 ---
 title: ""
-output: 
-  html_document:
-    theme: cosmo
+output: html_document
 ---
 # About Us
 

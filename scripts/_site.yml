@@ -13,7 +13,7 @@ navbar:
       href: 06_identity-protocol.nb.html
 output:
   html_document:
-    theme: yeti
+    theme: cosmo
     highlight: textmate
 #    include:
 #      after_body: _footer.html
