@@ -11,6 +11,8 @@ navbar:
       href: determine-cervus-parameters.nb.html
     - text: "Step 6 - Identity Analysis"
       href: 06_identity-protocol.nb.html
+    - text: "About"
+      href: about.html
 output:
   html_document:
     theme: cosmo
