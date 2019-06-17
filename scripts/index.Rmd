@@ -1,7 +1,10 @@
 ---
 title: "Pinsky Lab Genomics Protocols"
 author:  "[Michelle Stuart](https://github.com/mstuart1) at [Rutgers](http://pinsky.marine.rutgers.edu), 2019-05-17"
-output:   html_document
+output:
+  html_document:
+    theme: cosmo
+    highlight: textmate
 ---
 
 
