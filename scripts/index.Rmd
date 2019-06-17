@@ -1,0 +1,8 @@
+---
+title: "Pinsky Lab Genomics Protocols"
+author:  "[Michelle Stuart](https://github.com/mstuart1) at [Rutgers](http://pinsky.marine.rutgers.edu), 2019-05-17"
+output:   html_document
+---
+
+
+This is a space to view webpages related to genomics data
