@@ -30,7 +30,7 @@ fish_inds <- fish_obs %>%
 # loop to make sure all recaptures of a fish get the same gen_id
 for_processing <- fish_inds
 new_fish_indv <- tibble()
-while(nrow(for_processing) > 1){
+while(nrow(for_processing) >= 1){
   # all rows that belong to this fish_table_id
   fti <- for_processing %>% 
     filter(!is.na(fish_table_id), 

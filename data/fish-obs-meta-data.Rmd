@@ -5,8 +5,21 @@ date: "6/18/2019"
 output: github_document
 ---
 
+# Creation
 The fish_obs.Rdata file is created in the [remove-regenos](pinskylab/genomics/scripts/05_remove-regenos.Rmd) script by   
 1. filtering the database for any sample_id found in the current genepop file that contains all successfully sequenced individuals (no regenotypes or recaptures have been removed from this genepop).  Only the columns of sample_id, tag_id, and fish_table_id are kept.
 2. The database is queried again for any fish that has a tag_id that was not included in the table above. Again the columns of sample_id, tag_id and fish_table_id are kept.  
-3. These 2 tables are bound into one table of all fish that have been successfully genotyped and/or pit-tagged, saved as an RData file, [fish-obs.RData]((pinskylab/genomics/data/fish-obs.RData)
+3. These 2 tables are bound into one table of all fish that have been successfully genotyped and/or pit-tagged, saved as an RData file, [fish-obs.RData](pinskylab/genomics/data/fish-obs.RData)
 
+# Account for recaptures
+During the [identity-protocol](pinskylab/genomics/scripts/06_identity-protocol.Rmd), the fish-obs.RData file is read in and gen_ids are compared to determine if a pair of fish was previously determined to be a recapture.  The gen_id is changed so that recaptured fish share the same gen_id.  No fish are removed during this process.  
+
+# Connect all observations of a fish
+The [recaptured-fish](pinskylab/genomics/scripts/07_recaptured-fish.Rmd) script finds all capture events for all fish and assigns a fish_indiv_id to each fish.  For example, if a fish were captured for tissue samples 3 times and had 2 different pit tags, all of those rows would have the same fish_indiv number to connect them.  No fish are removed during this process.
+
+# Columns found in the table  
+- **fish_table_id** - *numeric* - the unique identifier of a fish observation event from the clownfish table of the Leyte database.  
+- **sample_id** - *character* - the unique identifier of the tissue sample collected from the fish.  Format is species year underscore fin_id, for example "APCL17_494" where the species is APCL, the year collected was 2017, and the fin_id was 494.  
+- **tag_id** - *character* - the pit tag assigned to this fish.  This must remain a character in order to prevent R from converting it to scientific notiation and losing the end digits.
+- **gen_id** - *numeric* - an identifier assigned when a fish has been genotyped successfully.  Fish lacking a gen_id may have a tissue sample but that tissue sample has not been successfully genotyped.  Fish that have the same gen_id are a genetic recapture, tissue samples have the same genotype.
+- **fish_indiv** - *numeric* - an identifier assigned to a fish that has been observed.  Repeat observations of the same fish will carry the same fish_indiv number, whether they are genetic or pit tag observations.
