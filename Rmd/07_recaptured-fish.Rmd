@@ -5,11 +5,13 @@ output: html_notebook
 This notebook finds fish that were tag recaptured and genetically recaptured and connects all of the observations of those fish, assigning them an individual id (fish_indiv) so all rows involving one fish can be found.
 
 ```{r setup, include=FALSE}
-pacman::p_load(tidyverse, here, clownfish, install=FALSE)
+library(tidyverse)
+library(here)
+library(clownfishr)
 # library(tidylog)
 
 # because the myconfig db connection is still not working
-source("~/Documents/clownfish-pkg/R/db_connections.R")
+source("~/db-connections.R")
 leyte <- read_db("Leyte")
 ```
 
@@ -78,8 +80,12 @@ test <- new_fish_indv %>%
   filter(n()> 1)
 rm(test)
 
-save_loc <- here::here("data", "fish-obs.Rdata")
+save_loc <- here::here("data", "fish-obs.rds")
 saveRDS(new_fish_indv, file = save_loc)
+
+# save Rdata files as csv
+new_fish_indv <- readRDS(save_loc)
+write_csv(new_fish_indv, here("data", "fish-obs.csv"))
 
 new_fish_indv
 ```

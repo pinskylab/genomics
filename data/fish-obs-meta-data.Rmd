@@ -6,16 +6,16 @@ output: github_document
 ---
 
 # Creation
-The fish_obs.Rdata file is created in the [remove-regenos](pinskylab/genomics/scripts/05_remove-regenos.Rmd) script by   
+The fish_obs.Rdata file is created in the [remove-regenos](pinskylab/genomics/Rmd/05_remove-regenos.Rmd) script by   
 1. filtering the database for any sample_id found in the current genepop file that contains all successfully sequenced individuals (no regenotypes or recaptures have been removed from this genepop).  Only the columns of sample_id, tag_id, and fish_table_id are kept.
 2. The database is queried again for any fish that has a tag_id that was not included in the table above. Again the columns of sample_id, tag_id and fish_table_id are kept.  
 3. These 2 tables are bound into one table of all fish that have been successfully genotyped and/or pit-tagged, saved as an RData file, [fish-obs.RData](pinskylab/genomics/data/fish-obs.RData)
 
 # Account for recaptures
-During the [identity-protocol](pinskylab/genomics/scripts/06_identity-protocol.Rmd), the fish-obs.RData file is read in and gen_ids are compared to determine if a pair of fish was previously determined to be a recapture.  The gen_id is changed so that recaptured fish share the same gen_id.  No fish are removed during this process.  
+During the [identity-protocol](pinskylab/genomics/Rmd/06_identity-protocol.Rmd), the fish-obs.RData file is read in and gen_ids are compared to determine if a pair of fish was previously determined to be a recapture.  The gen_id is changed so that recaptured fish share the same gen_id.  No fish are removed during this process.  
 
 # Connect all observations of a fish
-The [recaptured-fish](pinskylab/genomics/scripts/07_recaptured-fish.Rmd) script finds all capture events for all fish and assigns a fish_indiv_id to each fish.  For example, if a fish were captured for tissue samples 3 times and had 2 different pit tags, all of those rows would have the same fish_indiv number to connect them.  No fish are removed during this process.
+The [recaptured-fish](pinskylab/genomics/Rmd/07_recaptured-fish.Rmd) script finds all capture events for all fish and assigns a fish_indiv_id to each fish.  For example, if a fish was captured for tissue samples 3 times and had 2 different pit tags, all of those rows would have the same fish_indiv number to connect them.  No fish are removed during this process.
 
 # Columns found in the table  
 - **fish_table_id** - *numeric* - the unique identifier of a fish observation event from the clownfish table of the Leyte database.  
