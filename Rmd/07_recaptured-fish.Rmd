@@ -18,7 +18,13 @@ leyte <- read_db("Leyte")
 Find all fish that have been genetically or tag recaptured
 ```{r recaps}
 # load the table of all fish with genids and tag ids
-fish_obs <- readRDS(here("data", "fish-obs.RData"))
+fish_obs <- read_csv("https://github.com/pinskylab/genomics/raw/master/data/fish-obs.csv", col_types = cols(
+  fish_table_id = col_double(),
+  sample_id = col_character(),
+  tag_id = col_character(), # because numeric uses scientific notation and loses the end numbers
+  gen_id = col_double(),
+  fish_indiv = col_character() # because numeric uses scientific notation and loses the end numbers
+))
 
 # assign a fish_indiv to each fish
 fish_inds <- fish_obs %>% 
@@ -29,7 +35,7 @@ fish_inds <- fish_obs %>%
 # for fish that have both a tag_id and gen_id, use gen_id
   mutate(fish_indiv = ifelse(!is.na(gen_id) & !is.na(tag_id), gen_id, fish_indiv))
 
-# loop to make sure all recaptures of a fish get the same gen_id
+# loop to make sure all recaptures of a fish get the same fish_indiv 
 for_processing <- fish_inds
 new_fish_indv <- tibble()
 while(nrow(for_processing) >= 1){
