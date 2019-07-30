@@ -83,8 +83,8 @@ rm(test)
 save_loc <- here::here("data", "fish-obs.rds")
 saveRDS(new_fish_indv, file = save_loc)
 
-# save Rdata files as csv
-new_fish_indv <- readRDS(save_loc)
+# save Rdata files as csv for easy reading from github
+# new_fish_indv <- readRDS(save_loc)
 write_csv(new_fish_indv, here("data", "fish-obs.csv"))
 
 new_fish_indv

@@ -8,16 +8,29 @@ output:
 ---
 
 ```{r setup, include=FALSE}
+# set chunk defaults
 knitr::opts_chunk$set(
 	echo = FALSE,
 	message = FALSE,
 	warning = FALSE
 )
-pacman::p_load(tidyverse, lubridate, here, RMySQL, clownfish, janitor, geosphere, install=TRUE)
-library(here)
 
-# while db connection using helper file isn't working 
-source("~/Documents/clownfish-pkg/R/db_connections.R")
+# load libraries
+# pacman::p_load(tidyverse, lubridate, here, RMySQL, clownfish, janitor, geosphere, install=TRUE)
+library(tidyverse)
+library(lubridate)
+library(here)
+library(RMySQL)
+library(clownfishr)
+library(janitor)
+library(geosphere)
+
+# load functions
+source("~/Documents/clownfish-pkg/R/funs-lab-meta.R")
+source("~/Documents/clownfish-pkg/R/funs-sample-meta.R")
+
+# connect to databases
+source("~/db-connections.R")
 leyte <- read_db("Leyte")
 lab <- read_db("Laboratory")
 ```
@@ -63,7 +76,7 @@ The no regenos genepop should be stored on github and downloaded onto the window
 ### Import the data into R
  
 ```{r message=FALSE}
-idcsv_raw <- read_csv(here::here("data", "seq03-33_identity", "33-03_seq_identity_ID.csv"), col_types = cols(
+idcsv_raw <- read_csv("https://github.com/pinskylab/genomics/raw/master/data/seq03-33_identity/33-03_seq_identity_ID.csv", col_types = cols(
   `First ID` = col_character(),
   `Loci typed` = col_integer(),
   `Second ID` = col_character(),
@@ -167,7 +180,7 @@ first <- idcsv %>%
 lat <- leyte %>%
     tbl("GPX")  %>% 
     mutate(gpx_date = date(time)) %>%
-    filter(gpx_date %in% idcsv$first_date) %>% 
+    filter(gpx_date %in% !!idcsv$first_date) %>% 
     mutate(gpx_hour = hour(time)) %>%
     mutate(minute = minute(time)) %>%
     mutate(second = second(time)) %>%
@@ -196,7 +209,7 @@ second <- idcsv %>%
 lat <- leyte %>%
     tbl("GPX")  %>% 
     mutate(gpx_date = date(time)) %>%
-    filter(gpx_date %in% idcsv$second_date) %>% 
+    filter(gpx_date %in% !!idcsv$second_date) %>% 
     mutate(gpx_hour = hour(time)) %>%
     mutate(minute = minute(time)) %>%
     mutate(second = second(time)) %>%
@@ -220,6 +233,7 @@ rm(lat, second)
 # Write big table into a file 
 ```{r}
 # saveRDS(idcsv, here::here("data", "identity_big-table.RData"))
+# write_csv(idcsv, here::here("data", "identity_big-table.csv"))
 
 # idcsv <- readRDS(here::here("data", "identity_big-table.RData"))
 ```
@@ -367,7 +381,7 @@ recap_gen_ids <- rbind(first, second) %>%
 # loop to make sure all recaptures of a fish get the same gen_id
 for_processing <- recap_gen_ids
 gens_to_keep <- tibble()
-while(nrow(for_processing) > 1){
+while(nrow(for_processing) >= 1){
   # all samples that belong to this gen_id
   samps <- for_processing %>% 
     filter(gen_id == for_processing$gen_id[1])
