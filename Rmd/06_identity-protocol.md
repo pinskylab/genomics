@@ -1,83 +1,59 @@
----
-title: "Identity Protocol for APCL project"
-output: 
-  github_document: default
-  html_notebook:
-    code_folding: hide
-    df_print: paged
-    highlight: kate
----
+Identity Protocol for APCL project
+================
 
-```{r setup, include=FALSE}
-# set chunk defaults
-knitr::opts_chunk$set(
-	eval = FALSE,
-	message = FALSE,
-	warning = FALSE
-)
+This notebook continues where filtering and removing regenos left off,
+moving the genepop into cervus and processing identity results.
 
-# # load libraries
-# # pacman::p_load(tidyverse, lubridate, here, RMySQL, clownfish, janitor, geosphere, install=TRUE)
-# library(tidyverse)
-# library(lubridate)
-# library(here)
-# library(RMySQL)
-# library(clownfishr)
-# library(janitor)
-# library(geosphere)
-# 
-# # load functions
-# source("~/Documents/clownfish-pkg/R/funs-lab-meta.R")
-# source("~/Documents/clownfish-pkg/R/funs-sample-meta.R")
-# source("~/Documents/clownfish-pkg/R/funs-gen.R")
-# 
-# # connect to databases
-# source("~/db-connections.R")
-# leyte <- read_db("Leyte")
-# lab <- read_db("Laboratory")
-```
-
-This notebook continues where filtering and removing regenos left off, moving the genepop into cervus and processing identity results.
- 
 ## Import the genepop to cervus
-The no regenos genepop should be stored on github and downloaded onto the windows machine.  
-- On the github website, click on the genepop (noregeno.gen).  
-- Right click on "view raw" and save link as...  
 
-###Open Cervus and convert the genepop to ceruvs:
- - Tools > Convert genotype file > Genepop to Cervus
- - A window will open, navigate to the genepop file that has been downloaded to the windows machine
- - Choose 2 digit format, do not use the first id as a population name
- **(2790 individuals, 1005 loci)**
- 
+The no regenos genepop should be stored on github and downloaded onto
+the windows machine.  
+\- On the github website, click on the genepop (noregeno.gen).  
+\- Right click on “view raw” and save link as…
+
+\#\#\#Open Cervus and convert the genepop to ceruvs: - Tools \> Convert
+genotype file \> Genepop to Cervus - A window will open, navigate to the
+genepop file that has been downloaded to the windows machine - Choose 2
+digit format, do not use the first id as a population name **(2790
+individuals, 1005 loci)**
+
 ### Run an allele frequency analysis:
- - Analysis > Allele frequency analysis
- - make sure the converted file is in the genotype file field
- * Yes Header Row
- * Yes Read Locus Names
- * ID in column 2
- * First allele in column 3
- * Type in number of loci from conversion (1005)
- * Save as “….._AF"
- * Leave all the output option boxes checked
-  
+
+  - Analysis \> Allele frequency analysis
+  - make sure the converted file is in the genotype file field
+  - Yes Header Row
+  - Yes Read Locus Names
+  - ID in column 2
+  - First allele in column 3
+  - Type in number of loci from conversion (1005)
+  - Save as “…..\_AF”
+  - Leave all the output option boxes checked
+
 ### Run an identity analysis
- * Genotype file should be autofilled with the convert file created above
- * Yes Header Row
- * Id in column 2
- * First allele in column 3
- * Do not test sexes separately
- * Allele freq data should be autofilled with the AF file created above
- * Save as “…._ID"
- * Fill in minimum number of matching loci, this should be comparable to the amount of missing data allowed in the filtering step.  For example, if we allow 30% missing data for individuals during filtering, we should not require more than 70% matching loci.  Because the 70-30 line is the cutoff, 65% or 60% would include fish who are on the borderline. For this analysis 50% ()
- * allow fuzzy matching with 10% mismatch (10% of total = 145)
- * don’t show all comparisons - this generates a HUGE csv of every single pairwise comparison.
- 
+
+  - Genotype file should be autofilled with the convert file created
+    above
+  - Yes Header Row
+  - Id in column 2
+  - First allele in column 3
+  - Do not test sexes separately
+  - Allele freq data should be autofilled with the AF file created above
+  - Save as “….\_ID”
+  - Fill in minimum number of matching loci, this should be comparable
+    to the amount of missing data allowed in the filtering step. For
+    example, if we allow 30% missing data for individuals during
+    filtering, we should not require more than 70% matching loci.
+    Because the 70-30 line is the cutoff, 65% or 60% would include fish
+    who are on the borderline. For this analysis 50% ()
+  - allow fuzzy matching with 10% mismatch (10% of total = 145)
+  - don’t show all comparisons - this generates a HUGE csv of every
+    single pairwise comparison.
+
 ### Upload the output to github, pull to mac
- 
+
 ### Import the data into R
- 
-```{r message=FALSE}
+
+``` r
 idcsv_raw <- read_csv("https://github.com/pinskylab/genomics/raw/master/data/seq03-33_identity/33-03_seq_identity_ID.csv", col_types = cols(
   `First ID` = col_character(),
   `Loci typed` = col_integer(),
@@ -99,23 +75,25 @@ idcsv <- idcsv_raw %>%
   arrange(matching_loci)
 ```
 
-
 Plot proportion mismatch, pay attention to axis limits
-```{r eval=FALSE}
+
+``` r
 ggplot(idcsv, aes(x = mismatch_prop, y = matching_loci)) +
   geom_point() +
   theme_bw()
- 
 ```
+
 #### Make a histogram of mismatch proportion
-```{r}
+
+``` r
 idcsv %>% 
   ggplot(aes(mismatch_prop)) +
   geom_histogram(binwidth = 0.001)
 ```
 
-### Add sample_ids
-```{r}
+### Add sample\_ids
+
+``` r
  # for first_sample_id
  temp <- idcsv %>% 
    rename(ligation_id = first_id)
@@ -136,8 +114,10 @@ idcsv %>%
 
 rm(lab1, lab2, temp)
 ```
-### Add gen_ids
-```{r}
+
+### Add gen\_ids
+
+``` r
 gen_ids <- readRDS(here::here("data", "fish-obs.RData")) %>% 
   select(sample_id, gen_id)
 
@@ -146,11 +126,11 @@ idcsv <- idcsv %>%
   rename(first_gen_id = gen_id) %>% 
   left_join(gen_ids, by = c("second_sample_id" = "sample_id")) %>% 
   rename(second_gen_id = gen_id)
-
 ```
 
 ### Add field data
-```{r}
+
+``` r
 first <- fish_anem_dive() %>% 
   filter(sample_id %in% idcsv$first_sample_id)
 names(first) <- paste0("first_", names(first))
@@ -170,8 +150,8 @@ rm(first, sec)
 ```
 
 ## Get lat lons
-```{r}
 
+``` r
 #find the lat lon of the first anem
 first <- idcsv %>% 
   mutate(first_anem_obs_time = force_tz(ymd_hms(str_c(first_date, first_anem_obs_time, sep = " ")), tzone = "Asia/Manila")) %>% 
@@ -229,28 +209,29 @@ second <- second %>%
 
 idcsv <- left_join(idcsv, second, by = "second_id")
 rm(lat, second)  
-
 ```
 
-# Write big table into a file 
-```{r}
+# Write big table into a file
+
+``` r
 # saveRDS(idcsv, here::here("data", "identity_big-table.RData"))
 # write_csv(idcsv, here::here("data", "identity_big-table.csv"))
 
 # idcsv <- readRDS(here::here("data", "identity_big-table.RData"))
 ```
 
-# Does the first gen_id match the second gen id?
-```{r}
+# Does the first gen\_id match the second gen id?
+
+``` r
 old_pairs <- idcsv %>% 
   filter(first_gen_id == second_gen_id, 
          !is.na(first_gen_id)) %>% 
   select(first_sample_id, second_sample_id, first_gen_id, second_gen_id, first_tag_id, second_tag_id, mismatching_loci, matching_loci, contains("lat"), contains("lon"), contains("sex"))
 ```
 
-
 # Examine new matches
-```{r message=FALSE}
+
+``` r
 new_pairs <- idcsv %>% 
   filter(first_gen_id != second_gen_id) %>% 
   # reduce number of columns
@@ -269,11 +250,11 @@ new_pairs <- new_pairs %>%
 new_pairs$dist <- distGeo(new_pairs[, c("first_lon", "first_lat")], new_pairs[, c("second_lon", "second_lat")])
 
 (new_pairs %>% select(first_sample_id, second_sample_id, dist, first_date, second_date, first_site, second_site, everything(), -contains("corr"), -contains("lat"), -contains("lon")))
-
 ```
 
 # Which pairs are on the same ligation plate?
-```{r}
+
+``` r
 # what plates were the new pairs on?
 first <- new_pairs %>% 
   rename(sample_id = first_sample_id)
@@ -302,10 +283,13 @@ same_lig_plate <- new_pairs %>%
   distinct()
 ```
 
-
 # Which fish are at different sites and captured far away from each other?
-2019-05-20 - 4 rows of observations are flagged as "far fish".  2 rows involve 3 fish that all match to each other.  2 other rows are movements of smaller distance and are believable.  
-```{r}
+
+2019-05-20 - 4 rows of observations are flagged as “far fish”. 2 rows
+involve 3 fish that all match to each other. 2 other rows are movements
+of smaller distance and are believable.
+
+``` r
 (far_fish <- new_pairs %>% 
   filter(dist > 50 & first_site != second_site) %>% 
    select(first_sample_id, second_sample_id, dist, contains("lig"), contains("dig"), contains("extr"), everything()) %>% 
@@ -329,29 +313,26 @@ far_fish_photos <- left_join(far_fish, photos, by = c("first_sample_id" = "sampl
   select(-fish_table_id, -best_image, -num_images, -tag_id, -contains("corr")) %>% 
   select(first_sample_id, first_image, second_sample_id, second_image, dist, first_date, second_date, first_site, second_site, everything()) %>% 
   filter(!is.na(first_image) & !is.na(second_image))
-
-
-
-
-
 ```
 
 # Which fish are tag recaptures?
-```{r}
+
+``` r
 (tag_fish <- new_pairs %>% 
   filter(first_tag_id == second_tag_id))
 ```
 
+# Which fish were captured in the same year? The fish that were captured on the same day have a note that the tail was already cut so all of these look ok.
 
-
-# Which fish were captured in the same year?  The fish that were captured on the same day have a note that the tail was already cut so all of these look ok.
-```{r}
+``` r
 same_year <- new_pairs %>% 
   filter(year(first_date) == year(second_date)) %>% 
   select(first_sample_id, second_sample_id, first_date, second_date, first_fish_notes, second_fish_notes)
 ```
-# Assign gen_ids
-```{r}
+
+# Assign gen\_ids
+
+``` r
 max_gen <- max(gen_ids$gen_id, na.rm = T)
 
 new_gen_ids <- new_pairs %>% 
@@ -448,9 +429,9 @@ saveRDS(fish_obs, here::here("data", "fish-obs.RData"))
 write_csv(fish_obs, here::here("data", "fish-obs.csv"))
 ```
 
+# Write new genepop with only one representative of each gen\_id
 
-# Write new genepop with only one representative of each gen_id
-```{r}
+``` r
 # Read in genepop
 gen_file <- here::here("data", "seq33-03_noregeno.gen")
 genedf <- read_genepop(gen_file) %>% 
@@ -512,10 +493,11 @@ no_recap1 <- no_recap %>%
 # filter the genedf according to this list
 norecaps <- genedf %>% 
   filter(ligation_id %in% no_recap1$ligation_id)
-
 ```
+
 # Write the genepop
-```{r}
+
+``` r
 # Build the genepop components
 msg <- c("This genepop file was generated using a script called process_genepop.Rmd written by Michelle Stuart ")
 write_lines(msg, path = str_c(here::here("data", "seq33-03_norecap.gen"), sep = ""), append = F)
@@ -536,4 +518,4 @@ for (i in 1:nrow(norecaps)){
 }
 ```
 
-# Then run the recaptured-fish.Rmd protocol to make sure the gen_ids and tag_ids are all matched up in fish-obs.Rdata.
+# Then run the recaptured-fish.Rmd protocol to make sure the gen\_ids and tag\_ids are all matched up in fish-obs.Rdata.
