@@ -51,9 +51,18 @@ Data files required to run the scripts.
 - a pdf of a plot of the number of fish captured on the same anemone or
 different anemones from the original capture.
 
-## Scripts
+## Rmd
 
-The scripts listed in the steps above plus more specialized scripts in
-the [old
-scripts](https://github.com/pinskylab/genomics/tree/master/scripts/old_scripts)
-folder.
+The protocols listed in the steps above. If vieiwng on github, the .md
+files are the easiest way to view these files. If you want to run the
+scripts, open the .Rmd files through RStudio or render them with regular
+R by typing into the R command line:
+
+``` r
+rmarkdown::render("file_name.Rmd")
+```
+
+## R
+
+Old scripts that are no longer used but may be helpful for problem
+solving.
