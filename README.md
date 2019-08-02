@@ -24,7 +24,9 @@ Genomics in the Pinsky Lab
     7.  [Update recaptured RData file](Rmd/07_recaptured-fish.md)
 
 Open this Rproject on the RStudio Server on amphiprion to use for steps
-1-4 (i-iv).
+1-4 (i-iv).  
+Our reference.fasta file was assembled by Jon Puritz using dDocent and
+300 individuals from our APCL sample set.
 
 ### Navigation
 
