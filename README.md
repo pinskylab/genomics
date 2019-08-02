@@ -36,7 +36,10 @@ A manuscript in progress by Michelle.
 
 #### Data
 
-Data files required to run the scripts.
+Data files required to run the scripts. **Quick note**: Due to a type-o
+that was propogated through data file names, the data set is called
+seq03-33 but actually only contains SEQ03 through SEQ31, and only the
+sequencing runs that contain APCL data.
 
 ## Plots
 
