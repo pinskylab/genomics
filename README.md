@@ -14,17 +14,14 @@ Genomics in the Pinsky Lab
     be found here in the genomics repository.
     
     1.  [Receive and preapare sequences for SNP
-        calling](genomics/Rmd/01_hiseq_workflow.md)
-    2.  [Call SNPs](genomics/Rmd/01_hiseq_workflow.md)
+        calling](Rmd/01_hiseq_workflow.md)
+    2.  [Call SNPs](Rmd/01_hiseq_workflow.md)
     3.  [Plot the raw SNPs to visualize the
-        data](genomics/Rmd/03_raw_data_figures_template.md)
-    4.  [Filter SNPs](genomics/Rmd/04_filtering_scheme-6-with-70-35.md)
-    5.  [Remove regenotyped
-        individuals](genomics/Rmd/05_remove-regenos.md)
-    6.  [Identify recaptured
-        individuals](genomics/Rmd/06_identity-protocol.md)
-    7.  [Update recaptured RData
-        file](genomics/Rmd/07_recaptured-fish.md)
+        data](Rmd/03_raw_data_figures_template.md)
+    4.  [Filter SNPs](Rmd/04_filtering_scheme-6-with-70-35.md)
+    5.  [Remove regenotyped individuals](Rmd/05_remove-regenos.md)
+    6.  [Identify recaptured individuals](Rmd/06_identity-protocol.md)
+    7.  [Update recaptured RData file](Rmd/07_recaptured-fish.md)
 
 Open this Rproject on the RStudio Server on amphiprion to use for steps
 1-4 (i-iv).
