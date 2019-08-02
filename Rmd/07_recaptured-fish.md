@@ -1,26 +1,14 @@
----
-title: "Find individual fish in the database"
-output: 
-  github_document: default
-  html_notebook: default
----
-This notebook finds fish that were tag recaptured and genetically recaptured and connects all of the observations of those fish, assigning them an individual id (fish_indiv) so all rows involving one fish can be found.
+Find individual fish in the database
+================
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(eval = FALSE)
-
-# library(tidyverse)
-# library(here)
-# library(clownfishr)
-# # library(tidylog)
-# 
-# # because the myconfig db connection is still not working
-# source("~/db-connections.R")
-# leyte <- read_db("Leyte")
-```
+This notebook finds fish that were tag recaptured and genetically
+recaptured and connects all of the observations of those fish, assigning
+them an individual id (fish\_indiv) so all rows involving one fish can
+be found.
 
 Find all fish that have been genetically or tag recaptured
-```{r recaps}
+
+``` r
 # load the table of all fish with genids and tag ids
 fish_obs <- read_csv("https://github.com/pinskylab/genomics/raw/master/data/fish-obs.csv", col_types = cols(
   fish_table_id = col_double(),
@@ -99,5 +87,3 @@ write_csv(new_fish_indv, here("data", "fish-obs.csv"))
 
 new_fish_indv
 ```
-
-
