@@ -3,8 +3,10 @@ title: "Processing HiSEQ data"
 output:
   github_document: 
     toc: true
+    toc_depth: 3
 ---
 ```{r setup, include=FALSE, eval=FALSE}
+knitr::opts_chunk$set(eval = FALSE)
 library(tidyverse)
 # library(clownfish)
 source("../genomics/scripts/lab_helpers.R")
@@ -23,7 +25,8 @@ Jon Puritz has a great tutorial that explains the inner workings of the dDocent 
 
     - If this is a miseq run, you can skip barcode splitter and move on to process radtags.  If this data is from hiseq, run barcode splitter  
     
-1. Create a directory for the files (mkdir) in the pinsky_lab/sequencing folder, use the naming scheme type_of_sequencer_year_month_day_SEQ##: hiseq_2014_08_07_SEQ04  
+#### Create a directory for the files (mkdir) in the pinsky_lab/sequencing folder, use the naming scheme type_of_sequencer_year_month_day_SEQ##: hiseq_2014_08_07_SEQ04  
+
 
   - EXAMPLE:  
   
@@ -36,12 +39,12 @@ mkdir /local/shared/pinsky_lab/sequencing/hiseq_2016_10_25_SEQ17
 cd /local/shared/pinsky_lab/sequencing/hiseq_2016_10_25_SEQ17
 chgrp -R pinsky_lab hiseq_2016_10_25_SEQ17
 ```
-1. Enter the newly made directory  
+#### Enter the newly made directory  
 
 ```{bash eval=FALSE}
 cd /local/shared/pinsky_lab/sequencing/hiseq_2016_10_25_SEQ17
 ```
-1. Retrieve files from the sequencer  
+#### Retrieve files from the sequencer  
 
   - Princeton now emails a link to the data (you must sign in with credentials)  
   
@@ -83,10 +86,10 @@ zcat clownfish-ddradseq-seq08-for-231-cycles-h3mgvbcxx_1_read_1_passed_filter.fa
 #  alternative command line  
 zcat XXXXX.fastq.gz | grep -c "^AAACGA"
 ```
-1. Update where files are saved on amphiprion in the sequencing table of the sql database, enter data by hand  
+#### Update where files are saved on amphiprion in the sequencing table of the sql database, enter data by hand  
 
 
-1. Make a working directory  
+#### Make a working directory  
 
     - make separate pool directories to keep the process radtags output separate  
     - EXAMPLE - please don't make folders in my michelles folder
@@ -102,7 +105,7 @@ cd bcsplit
 mkdir lane1 lane2
 ```
 
-1. Create an index file in R  
+#### Create an index file in R  
 
 ```{r eval=FALSE}
 # read baits table
@@ -144,7 +147,7 @@ for(i in seq(seqs$seq)){
 }
 
 ```
-1. Create a names file in R  
+#### Create a names file in R  
 The names have to be species, underscore and then the sample identifier, so APCL_L5432 for ligation_id L5432  
 
 ```{r eval=FALSE}
@@ -190,7 +193,7 @@ for(i in seq(names$pool)){
 readr::write_tsv(x, path = paste0("names_", names$pool[i], ".tsv"), col_names = F)
 }
 ```
-1. Copy barcodes file in your logs directory from the logs directory of the last sequencing run only if you used the same barcodes, don't include barcodes you didn't use. 
+#### Copy barcodes file in your logs directory from the logs directory of the last sequencing run only if you used the same barcodes, don't include barcodes you didn't use. 
 
 ```{bash eval=FALSE}
 cp /local/home/michelles/02-apcl-ddocent/16seq/logs/barcodes /local/home/michelles/02-apcl-ddocent/17seq/logs/barcodes
