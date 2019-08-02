@@ -13,7 +13,7 @@ Genomics in the Pinsky Lab
   - Sequence processing through identity analysis (mark recapture) can
     be found here in the genomics repository.
     
-    1.  [Receive and preapare sequences for SNP
+    1.  [Receive and prepare sequences for SNP
         calling](Rmd/01_hiseq_workflow.md)
     2.  [Call SNPs](Rmd/01_hiseq_workflow.md)
     3.  [Plot the raw SNPs to visualize the
@@ -53,7 +53,7 @@ sequencing runs that contain APCL data.
 - a pdf of a plot of the number of fish captured on the same anemone or
 different anemones from the original capture.
 
-## Rmd
+## Protocols
 
 The protocols listed in the steps above. If vieiwng on github, the .md
 files are the easiest way to view these files. If you want to run the
@@ -68,3 +68,10 @@ rmarkdown::render("file_name.Rmd")
 
 Old scripts that are no longer used but may be helpful for problem
 solving.
+
+## lab-notebooks
+
+Records of how sample runs were processed. I save a copy of the protocol
+step into this folder and rename it to represent the samples that are
+being worked on. These are best viewed as html files
+[here](https://pinskylab.github.io/genomics/lab-notebooks)
