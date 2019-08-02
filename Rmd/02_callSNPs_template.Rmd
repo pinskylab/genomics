@@ -1,15 +1,17 @@
 ---
-title: "Calling SNPs on all APCL seqs as of 20181127"
+title: "Calling SNPs on all APCL seqs as of 2018-11-27"
 output:
   github_document:
     toc: yes
-  html_notebook: default
+    toc_depth: 1
 ---
-Starting from the very beginning of trim, map, SNP call to see if I can produce an error free data set.
+Starting from the very beginning of trim, map, SNP call to see if I can produce an error free data set.  
 
-# Find and replace each 20181127 with the current date and replace the "template" in this call_SNPs document filename with your analysis date.
+# Setup  
+**Find and replace each 20181127 with the current date and replace the "template" in this call_SNPs document filename with your analysis date.**
 
-## Make a folder to hold samples and intermediate files
+## Make a folder to hold samples and intermediate files  
+
 ```{bash eval=FALSE}
 mkdir /data/apcl/all_samples/20181127
 ```
@@ -210,21 +212,22 @@ paste namelist p > popmap
 rm p
 ```
 
-# Create the split.*.bam files - takes about 1/2 hour
+## Create the split.*.bam files - takes about 1/2 hour
 ```{bash eval=FALSE}
 cd /data/apcl/all_samples/20181127/
 
 seq 40 | parallel --joblog ./split.log --load 75% 'samtools view -b -1 -L mapped.{}.bed -o split.{}.bam cat-RRG.bam'
 ```
 
-# Index the splits - takes less than a minute
+## Index the splits - takes less than a minute
 ```{bash eval=FALSE}
 cd /data/apcl/all_samples/20181127
 
 seq 40 | parallel --joblog ./index.log --load 75% 'samtools index split.{}.bam'
 ```
 
-# Call SNPs with freebayes - this should take a little over a day for the last 2 to finish
+# Call SNPs with freebayes   
+- this should take a little over a day for the last 2 to finish
 ```{bash eval=FALSE}
 cd /data/apcl/all_samples/20181127
 
@@ -232,7 +235,7 @@ cd /data/apcl/all_samples/20181127
 seq 40 | parallel --joblog ./freebayes.log --load 75% --memfree 75G 'freebayes -b split.{}.bam -t mapped.{}.bed -v raw.{}.vcf -f reference.fasta -m 5 -q 5 -E 3 --min-repeat-entropy 1 -V --populations popmap -n 10'
 ```
 
-# Rename the single digit raw.vcf files
+## Rename the single digit raw.vcf files
 ```{bash eval=FALSE}
 # move to the working directory
 cd /data/apcl/all_samples/20181127
@@ -248,7 +251,7 @@ cd /data/apcl/all_samples/20181127
 	mv raw.9.vcf raw.09.vcf 
 ```
 
-# Combine all of the raw vcfs into a total raw snps file
+## Combine all of the raw vcfs into a total raw snps file
 ```{bash eval=FALSE}
 # move to the working directory
 cd /data/apcl/all_samples/20181127
@@ -256,7 +259,7 @@ cd /data/apcl/all_samples/20181127
 vcfcombine raw.*.vcf | sed -e 's/	\.\:/	\.\/\.\:/g' > TotalRawSNPs.vcf
 ```
 
-# Move all of the raw vcfs into their own folder
+## Move all of the raw vcfs into their own folder
 ```{bash eval=FALSE}
 # move to the working directory
 cd /data/apcl/all_samples/20181127
@@ -265,4 +268,4 @@ mkdir raw.vcf
 mv raw.*.vcf ./raw.vcf
 ```
 
-# TotalRawSNPs.vcf should be ready for filtering
+## TotalRawSNPs.vcf should be ready for filtering

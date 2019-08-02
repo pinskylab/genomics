@@ -1,41 +1,27 @@
-Calling SNPs on all APCL seqs as of 20181127
+Calling SNPs on all APCL seqs as of 2018-11-27
 ================
 
--   [Find and replace each 20181127 with the current date and replace the "template" in this call\_SNPs document filename with your analysis date.](#find-and-replace-each-20181127-with-the-current-date-and-replace-the-template-in-this-call_snps-document-filename-with-your-analysis-date.)
-    -   [Make a folder to hold samples and intermediate files](#make-a-folder-to-hold-samples-and-intermediate-files)
-    -   [Symlink the sample files into the folder](#symlink-the-sample-files-into-the-folder)
-    -   [Remove the \* file with fetch or an sftp program](#remove-the-file-with-fetch-or-an-sftp-program)
-        -   [Removing this is important, don't skip it](#removing-this-is-important-dont-skip-it)
-    -   [Make a directory at home to store this notebook and filtering files](#make-a-directory-at-home-to-store-this-notebook-and-filtering-files)
--   [Trim](#trim)
--   [Map](#map)
-    -   [Replace mapped bed with baits only mapped bed](#replace-mapped-bed-with-baits-only-mapped-bed)
-    -   [Replace full mapped.bed with baits only mapped.bed](#replace-full-mapped.bed-with-baits-only-mapped.bed)
-    -   [Create coverage stats](#create-coverage-stats)
-    -   [create instances](#create-instances)
-    -   [create a population file](#create-a-population-file)
--   [Create the split.\*.bam files - takes about 1/2 hour](#create-the-split..bam-files---takes-about-12-hour)
--   [Index the splits - takes less than a minute](#index-the-splits---takes-less-than-a-minute)
--   [Call SNPs with freebayes - this should take a little over a day for the last 2 to finish](#call-snps-with-freebayes---this-should-take-a-little-over-a-day-for-the-last-2-to-finish)
--   [Rename the single digit raw.vcf files](#rename-the-single-digit-raw.vcf-files)
--   [Combine all of the raw vcfs into a total raw snps file](#combine-all-of-the-raw-vcfs-into-a-total-raw-snps-file)
--   [Move all of the raw vcfs into their own folder](#move-all-of-the-raw-vcfs-into-their-own-folder)
--   [TotalRawSNPs.vcf should be ready for filtering](#totalrawsnps.vcf-should-be-ready-for-filtering)
+  - [Setup](#setup)
+  - [Trim](#trim)
+  - [Map](#map)
+  - [Call SNPs with freebayes](#call-snps-with-freebayes)
 
-Starting from the very beginning of trim, map, SNP call to see if I can produce an error free data set.
+Starting from the very beginning of trim, map, SNP call to see if I can
+produce an error free data set.
 
-Find and replace each 20181127 with the current date and replace the "template" in this call\_SNPs document filename with your analysis date.
-=============================================================================================================================================
+# Setup
 
-Make a folder to hold samples and intermediate files
-----------------------------------------------------
+**Find and replace each 20181127 with the current date and replace the
+“template” in this call\_SNPs document filename with your analysis
+date.**
+
+## Make a folder to hold samples and intermediate files
 
 ``` bash
 mkdir /data/apcl/all_samples/20181127
 ```
 
-Symlink the sample files into the folder
-----------------------------------------
+## Symlink the sample files into the folder
 
 ``` bash
 ln -s /data/apcl/03seq/samples/APCL_*.F.fq.gz /data/apcl/all_samples/20181127
@@ -59,13 +45,11 @@ ln -s /data/apcl/31seq/samples/APCL_*.F.fq.gz /data/apcl/all_samples/20181127
 ls /data/apcl/all_samples/20181127
 ```
 
-Remove the \* file with fetch or an sftp program
-------------------------------------------------
+## Remove the \* file with fetch or an sftp program
 
-##### Removing this is important, don't skip it
+##### Removing this is important, don’t skip it
 
-Make a directory at home to store this notebook and filtering files
--------------------------------------------------------------------
+## Make a directory at home to store this notebook and filtering files
 
 ``` bash
 mkdir ~/02-apcl-ddocent/APCL_analysis/20181127
@@ -81,10 +65,10 @@ ls *.F.fq.gz > namelist
 sed -i'' -e 's/.F.fq.gz//g' namelist
 ```
 
-Trim
-====
+# Trim
 
-STACKS adds a strange \_1 or \_2 character to the end of processed reads, this looks for checks for errant characters and replaces them.
+STACKS adds a strange \_1 or \_2 character to the end of processed
+reads, this looks for checks for errant characters and replaces them.
 
 ``` bash
 cd /data/apcl/all_samples/20181127
@@ -99,8 +83,7 @@ export -f trim_reads
 cat namelist | parallel --env trim_reads --load 75% --joblog ./trim_reports/trimreads.log trim_reads {}
 ```
 
-Map
-===
+# Map
 
 Need an indexed fasta reference
 
@@ -118,11 +101,16 @@ cd /data/apcl/all_samples/20181127/
 ls *.R1.*
 ```
 
-BWA for mapping for all samples. As of version 2.0 can handle SE or PE reads by checking for PE read files.
+BWA for mapping for all samples. As of version 2.0 can handle SE or PE
+reads by checking for PE read files.
 
--   To use the script version of the mapping command: <!-- ```{bash eval=FALSE} --> <!-- cd /data/apcl/all_samples/20181127/ --> <!-- cat namelist | parallel --load 75% --joblog ./map.log ~/02-apcl-ddocent/APCL_analysis/scr/map.sh --> <!-- ``` -->
+  - To use the script version of the mapping command:
+    <!-- ```{bash eval=FALSE} -->
+    <!-- cd /data/apcl/all_samples/20181127/ -->
+    <!-- cat namelist | parallel --load 75% --joblog ./map.log ~/02-apcl-ddocent/APCL_analysis/scr/map.sh -->
+    <!-- ``` -->
 
--   Instead of using an external script, turned it into a function.
+  - Instead of using an external script, turned it into a function.
 
 This should take about a day to run.
 
@@ -143,8 +131,7 @@ export -f map
 cat namelist | parallel --load 75% --joblog ./map.log map 
 ```
 
-Replace mapped bed with baits only mapped bed
----------------------------------------------
+## Replace mapped bed with baits only mapped bed
 
 ``` bash
 cd /data/apcl/all_samples/20181127/
@@ -152,7 +139,9 @@ cd /data/apcl/all_samples/20181127/
 mv /local/home/michelles/02-apcl-ddocent/APCL_analysis/20181127/mapped.bed ./
 ```
 
-Creating mapping intervals if needed, CreateIntervals function is defined later in script If mapping is being performed, intervals are created automatically
+Creating mapping intervals if needed, CreateIntervals function is
+defined later in script If mapping is being performed, intervals are
+created automatically
 
 Does mapped.bed exits?
 
@@ -162,7 +151,8 @@ ls mapped.bed
 ls bamlist.list
 ```
 
-If mapped.bed does not exist, run this chunk, otherwise move on to the next.
+If mapped.bed does not exist, run this chunk, otherwise move on to the
+next.
 
 ``` bash
 cd /data/apcl/all_samples/20181127/
@@ -176,10 +166,11 @@ parallel --load 75% --joblog ./interval.log "samtools index" ::: cat-RRG.bam
 bedtools merge -i cat-RRG.bam -bed >  mapped.bed
 ```
 
-Replace full mapped.bed with baits only mapped.bed
---------------------------------------------------
+## Replace full mapped.bed with baits only mapped.bed
 
-Filter out targeted SNPs *This chunk contains the same code as the script contig\_list.Rmd in the procedural notebook directory on the laptop.*
+Filter out targeted SNPs *This chunk contains the same code as the
+script contig\_list.Rmd in the procedural notebook directory on the
+laptop.*
 
 ``` r
 library(readr)
@@ -207,8 +198,7 @@ write_delim(yes_bed, path = "mapped.bed", delim = "\t", col_names = F)
 write_delim(no_bed, path = "exclude.bed", delim = "\t", col_names = F)
 ```
 
-Create coverage stats
----------------------
+## Create coverage stats
 
 ``` bash
 cd /data/apcl/all_samples/20181127/
@@ -217,8 +207,7 @@ cat namelist | parallel --load 75% --joblog ./coverage.log "coverageBed -abam {}
 cat *.cov.stats | sort -k1,1 -k2,2n | bedtools merge -i - -c 4 -o sum > cov.stats
 ```
 
-create instances
-----------------
+## create instances
 
 ``` bash
 cd /data/apcl/all_samples/20181127/
@@ -236,8 +225,7 @@ mawk -v x=$DP '$4 < x' cov.stats | sort -V -k1,1 -k2,2 | mawk -v cutoff=$CC 'BEG
     }'
 ```
 
-create a population file
-------------------------
+## create a population file
 
 ``` bash
 cd /data/apcl/all_samples/20181127/
@@ -247,8 +235,7 @@ paste namelist p > popmap
 rm p
 ```
 
-Create the split.\*.bam files - takes about 1/2 hour
-====================================================
+## Create the split.\*.bam files - takes about 1/2 hour
 
 ``` bash
 cd /data/apcl/all_samples/20181127/
@@ -256,8 +243,7 @@ cd /data/apcl/all_samples/20181127/
 seq 40 | parallel --joblog ./split.log --load 75% 'samtools view -b -1 -L mapped.{}.bed -o split.{}.bam cat-RRG.bam'
 ```
 
-Index the splits - takes less than a minute
-===========================================
+## Index the splits - takes less than a minute
 
 ``` bash
 cd /data/apcl/all_samples/20181127
@@ -265,8 +251,11 @@ cd /data/apcl/all_samples/20181127
 seq 40 | parallel --joblog ./index.log --load 75% 'samtools index split.{}.bam'
 ```
 
-Call SNPs with freebayes - this should take a little over a day for the last 2 to finish
-========================================================================================
+# Call SNPs with freebayes
+
+  - this should take a little over a day for the last 2 to finish
+
+<!-- end list -->
 
 ``` bash
 cd /data/apcl/all_samples/20181127
@@ -275,8 +264,7 @@ cd /data/apcl/all_samples/20181127
 seq 40 | parallel --joblog ./freebayes.log --load 75% --memfree 75G 'freebayes -b split.{}.bam -t mapped.{}.bed -v raw.{}.vcf -f reference.fasta -m 5 -q 5 -E 3 --min-repeat-entropy 1 -V --populations popmap -n 10'
 ```
 
-Rename the single digit raw.vcf files
-=====================================
+## Rename the single digit raw.vcf files
 
 ``` bash
 # move to the working directory
@@ -293,8 +281,7 @@ cd /data/apcl/all_samples/20181127
     mv raw.9.vcf raw.09.vcf 
 ```
 
-Combine all of the raw vcfs into a total raw snps file
-======================================================
+## Combine all of the raw vcfs into a total raw snps file
 
 ``` bash
 # move to the working directory
@@ -303,8 +290,7 @@ cd /data/apcl/all_samples/20181127
 vcfcombine raw.*.vcf | sed -e 's/   \.\:/   \.\/\.\:/g' > TotalRawSNPs.vcf
 ```
 
-Move all of the raw vcfs into their own folder
-==============================================
+## Move all of the raw vcfs into their own folder
 
 ``` bash
 # move to the working directory
@@ -314,5 +300,4 @@ mkdir raw.vcf
 mv raw.*.vcf ./raw.vcf
 ```
 
-TotalRawSNPs.vcf should be ready for filtering
-==============================================
+## TotalRawSNPs.vcf should be ready for filtering
