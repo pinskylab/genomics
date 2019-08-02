@@ -1,40 +1,14 @@
 SNP FILTERING
 ================
 
-To use this script, find and replace 20181125 with the current project date
-
-``` r
-knitr::opts_chunk$set(eval=FALSE)
-
-library(readr)
-library(ggplot2)
-library(dplyr)
-```
-
-    ## 
-    ## Attaching package: 'dplyr'
-
-    ## The following objects are masked from 'package:stats':
-    ## 
-    ##     filter, lag
-
-    ## The following objects are masked from 'package:base':
-    ## 
-    ##     intersect, setdiff, setequal, union
-
-``` r
-# source("~/02-apcl-ddocent/APCL_analysis/scr/libraries.R")
-source("~/02-apcl-ddocent/APCL_analysis/scr/ggplot.R")
-source("~/02-apcl-ddocent/APCL_analysis/scr/VCFfilterstats.R")
-source("~/02-apcl-ddocent/APCL_analysis/scr/xtrafunctions.R")
-```
+To use this script, find and replace 20181125 with the current project
+date
 
 ``` bash
 mkdir /local/home/michelles/02-apcl-ddocent/APCL_analysis/20181125/results
 ```
 
-Raw data stats
---------------
+## Raw data stats
 
 ### Query stats
 
@@ -213,10 +187,10 @@ m1 <- multiplot(p1, p3, p4, p7, p8, p9, p10, p11, p12, cols=2)
 # m1 <- multiplot(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, cols=2)
 ```
 
-Run SNP counting script
------------------------
+## Run SNP counting script
 
-Compare SNPs/contigs/indv at each filtering step and between filtering schemes.
+Compare SNPs/contigs/indv at each filtering step and between filtering
+schemes.
 
 ``` r
 count <- read.table("/local/home/michelles/02-apcl-ddocent/APCL_analysis/20181125/Filter.count", header = TRUE, stringsAsFactors = FALSE)

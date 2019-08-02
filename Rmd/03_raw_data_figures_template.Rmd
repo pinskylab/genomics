@@ -14,10 +14,8 @@ output:
 
 To use this script, find and replace 20181125 with the current project date
 
-```{r load libraries}
-
-knitr::opts_chunk$set(eval=FALSE)
-
+```{r setup, include=FALSE, eval=FALSE}
+knitr::opts_chunk$set(eval = FALSE)
 library(readr)
 library(ggplot2)
 library(dplyr)
@@ -28,7 +26,7 @@ source("~/02-apcl-ddocent/APCL_analysis/scr/xtrafunctions.R")
 ```
 
  
-```{bash}
+```{bash eval=FALSE}
 mkdir /local/home/michelles/02-apcl-ddocent/APCL_analysis/20181125/results
 ```
 
@@ -39,7 +37,7 @@ mkdir /local/home/michelles/02-apcl-ddocent/APCL_analysis/20181125/results
 
 Query raw stats using vcftools.
 
-```{bash}
+```{bash eval=FALSE}
 cd /local/home/michelles/02-apcl-ddocent/APCL_analysis/20181125
 # depth indv/locus
 vcftools --vcf /data/apcl/all_samples/20181125/TotalRawSNPs.vcf --out results/raw --depth
@@ -58,7 +56,7 @@ vcftools --vcf /data/apcl/all_samples/20181125/TotalRawSNPs.vcf --out results/ra
 
 ### Visualize
 
-```{r fig.height=20, fig.width=10}
+```{r eval=FALSE, fig.height=20, fig.width=10}
 
 # load stats files ----
 ind_stats_raw <- read.ind.stats(dir = "results", vcf = "raw")
@@ -217,7 +215,7 @@ m1 <- multiplot(p1, p3, p4, p7, p8, p9, p10, p11, p12, cols=2)
 
 ## Run SNP counting script
 
-```{bash, eval=FALSE, include=FALSE}
+```{bash eval=FALSE, include=FALSE}
 
 echo "FILTER SNP CONTIG INDV" > Filter.count
 
@@ -231,7 +229,7 @@ echo "FILTER SNP CONTIG INDV" > Filter.count
 
 Compare SNPs/contigs/indv at each filtering step and between filtering schemes.
 
-```{r}
+```{r eval=FALSE}
 
 count <- read.table("/local/home/michelles/02-apcl-ddocent/APCL_analysis/20181125/Filter.count", header = TRUE, stringsAsFactors = FALSE)
 ```
