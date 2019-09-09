@@ -7,16 +7,20 @@ output:
 This notebook finds fish that were tag recaptured and genetically recaptured and connects all of the observations of those fish, assigning them an individual id (fish_indiv) so all rows involving one fish can be found.
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(eval = FALSE)
+# knitr::opts_chunk$set(eval = FALSE)
 
-# library(tidyverse)
-# library(here)
-# library(clownfishr)
-# # library(tidylog)
-# 
+# load libraries
+library(tidyverse)
+library(here)
+library(clownfishr)
+# library(tidylog)
+ 
+# load functions
 # # because the myconfig db connection is still not working
-# source("~/db-connections.R")
-# leyte <- read_db("Leyte")
+source("~/db-connections.R")
+
+# connect to database
+leyte <- read_db("Leyte")
 ```
 
 Find all fish that have been genetically or tag recaptured

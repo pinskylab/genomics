@@ -9,32 +9,25 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-# set chunk defaults
-knitr::opts_chunk$set(
-	eval = FALSE,
-	message = FALSE,
-	warning = FALSE
-)
+# load libraries
+library(tidyverse)
+library(lubridate)
+library(here)
+library(RMySQL)
+library(clownfishr)
+library(janitor)
+library(geosphere)
 
-# # load libraries
-# # pacman::p_load(tidyverse, lubridate, here, RMySQL, clownfish, janitor, geosphere, install=TRUE)
-# library(tidyverse)
-# library(lubridate)
-# library(here)
-# library(RMySQL)
-# library(clownfishr)
-# library(janitor)
-# library(geosphere)
-# 
-# # load functions
-# source("~/Documents/clownfish-pkg/R/funs-lab-meta.R")
-# source("~/Documents/clownfish-pkg/R/funs-sample-meta.R")
-# source("~/Documents/clownfish-pkg/R/funs-gen.R")
-# 
-# # connect to databases
-# source("~/db-connections.R")
-# leyte <- read_db("Leyte")
-# lab <- read_db("Laboratory")
+# load functions
+source("~/Documents/clownfish-pkg/R/db_connections.R")
+source("~/Documents/clownfishr/R/gen-data-funs.R")
+source("~/Documents/clownfishr/R/lab-data-funs.R")
+source("~/Documents/clownfish-pkg/R/funs-lab-meta.R")
+source("~/Documents/clownfishr/R/field-data-funs.R")
+
+# connect to databases
+leyte <- read_db("Leyte")
+lab <- read_db("Laboratory")
 ```
 
 This notebook continues where filtering and removing regenos left off, moving the genepop into cervus and processing identity results.
@@ -273,7 +266,7 @@ new_pairs$dist <- distGeo(new_pairs[, c("first_lon", "first_lat")], new_pairs[, 
 ```
 
 # Which pairs are on the same ligation plate?
-```{r}
+```{r eval=FALSE}
 # what plates were the new pairs on?
 first <- new_pairs %>% 
   rename(sample_id = first_sample_id)
@@ -305,7 +298,7 @@ same_lig_plate <- new_pairs %>%
 
 # Which fish are at different sites and captured far away from each other?
 2019-05-20 - 4 rows of observations are flagged as "far fish".  2 rows involve 3 fish that all match to each other.  2 other rows are movements of smaller distance and are believable.  
-```{r}
+```{r eval=FALSE}
 (far_fish <- new_pairs %>% 
   filter(dist > 50 & first_site != second_site) %>% 
    select(first_sample_id, second_sample_id, dist, contains("lig"), contains("dig"), contains("extr"), everything()) %>% 
@@ -337,7 +330,7 @@ far_fish_photos <- left_join(far_fish, photos, by = c("first_sample_id" = "sampl
 ```
 
 # Which fish are tag recaptures?
-```{r}
+```{r eval=FALSE}
 (tag_fish <- new_pairs %>% 
   filter(first_tag_id == second_tag_id))
 ```
@@ -345,7 +338,7 @@ far_fish_photos <- left_join(far_fish, photos, by = c("first_sample_id" = "sampl
 
 
 # Which fish were captured in the same year?  The fish that were captured on the same day have a note that the tail was already cut so all of these look ok.
-```{r}
+```{r eval=FALSE}
 same_year <- new_pairs %>% 
   filter(year(first_date) == year(second_date)) %>% 
   select(first_sample_id, second_sample_id, first_date, second_date, first_fish_notes, second_fish_notes)
@@ -417,16 +410,19 @@ while(nrow(for_processing) >= 1){
     distinct()
 
 }
+if(nrow(gens_to_keep) != 0){
 gens_to_keep <- gens_to_keep %>% 
-  rename(new_gen_id = gen_id))
+  rename(new_gen_id = gen_id)  
+}
+
 
 # all of the sample_ids in recap_gen_ids are  in gens to keep
-test <- anti_join(recap_gen_ids, gens_to_keep, by = "sample_id")
+# test <- anti_join(recap_gen_ids, gens_to_keep, by = "sample_id")
 
 
 # test - how many recapture events for each gen_id
 num_gens <- gens_to_keep %>%
-  group_by(gen_id) %>%
+  group_by(new_gen_id) %>%
   count()
 
 # change the gen_ids in the fish_obs file to reflect the recaptures
@@ -452,9 +448,9 @@ write_csv(fish_obs, here::here("data", "fish-obs.csv"))
 # Write new genepop with only one representative of each gen_id
 ```{r}
 # Read in genepop
-gen_file <- here::here("data", "seq33-03_noregeno.gen")
+gen_file <- here::here("data", "seq31-03_noregeno.gen")
 genedf <- read_genepop(gen_file) %>% 
-  rename(ligation_id = names)
+  rename(ligation_id = sample)
 
 # pull sample_ids from db
 sample_ids <- samp_from_lig(genedf) 
@@ -518,21 +514,21 @@ norecaps <- genedf %>%
 ```{r}
 # Build the genepop components
 msg <- c("This genepop file was generated using a script called process_genepop.Rmd written by Michelle Stuart ")
-write_lines(msg, path = str_c(here::here("data", "seq33-03_norecap.gen"), sep = ""), append = F)
+write_lines(msg, path = str_c(here::here("data", "seq31-03_norecap.gen"), sep = ""), append = F)
 
 # find all of the column names that contain contig and collapse them into a comma separated string
 loci <-  str_c(names(select(norecaps, contains("contig"))), collapse = ",")
-write_lines(loci, path = str_c(here::here("data", "seq33-03_norecap.gen"), sep = ""), append = T)
+write_lines(loci, path = str_c(here::here("data", "seq31-03_norecap.gen"), sep = ""), append = T)
 
 pop <- "pop"
-write_lines(pop, path = str_c(here::here("data", "seq33-03_norecap.gen"), sep = ""), append = T)
+write_lines(pop, path = str_c(here::here("data", "seq31-03_norecap.gen"), sep = ""), append = T)
 
 gene <- vector()
 sample <- vector()
 for (i in 1:nrow(norecaps)){
   gene[i] <- str_c(select(norecaps[i,], contains("contig")), collapse = " ")
   sample[i] <- str_c(norecaps$ligation_id[i], gene[i], sep = ", ")
-  write_lines(sample[i], path = str_c(here::here("data", "seq33-03_norecap.gen"), sep = ""), append = T)
+  write_lines(sample[i], path = str_c(here::here("data", "seq31-03_norecap.gen"), sep = ""), append = T)
 }
 ```
 
