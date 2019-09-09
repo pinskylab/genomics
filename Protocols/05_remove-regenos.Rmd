@@ -112,6 +112,7 @@ fish_obs %>%
   filter(n() > 1)
 
 saveRDS(fish_obs, here("data", "fish-obs.RData"))
+write_csv(fish_obs, here("data", "fish-obs.csv"))
 ```
 
 
@@ -212,7 +213,7 @@ which(is.na(noregeno)) # should return integer(0)
 
 
 # 4) Output genepop file --------------------------------------------------
-
+This takes a few minutes
 ```{r}
 # Build the genepop components
 msg <- c("This genepop file was generated using a script called process_genepop.Rmd written by Michelle Stuart ")
