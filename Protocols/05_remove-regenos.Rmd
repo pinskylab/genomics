@@ -14,23 +14,24 @@ This script is written to take the filtered genepop file from dDocent and
 
 # Set up workspace ---------------------------------------------
 ```{r setup}
-knitr::opts_chunk$set(eval = FALSE)
+# load libraries
+library(dplyr)
+library(stringr)
+library(readr)
+library(here)
 
-# pacman::p_load(tidyr, dplyr, stringr, readr, clownfish, here, install = FALSE)
-# # library(dplyr) 
-# # library(stringr)
-# # library(readr)
-# # library(clownfish)
-# # library(here)
-# 
-# # while db connection using helper file isn't working 
-# source("~/Documents/clownfish-pkg/R/db_connections.R")
-# leyte <- read_db("Leyte")
-# lab <- read_db("Laboratory")
-```
+# load functions
+# while db connection using helper file isn't working
+source("~/Documents/clownfish-pkg/R/db_connections.R")
+source("~/Documents/clownfishr/R/gen-data-funs.R")
+source("~/Documents/clownfishr/R/lab-data-funs.R")
+source("~/Documents/clownfish-pkg/R/funs-lab-meta.R")
+source("~/Documents/clownfishr/R/field-data-funs.R")
 
+# connect to database
+leyte <- read_db("Leyte")
+lab <- read_db("Laboratory")
 
-```{r}
 # load data
 genedf_raw <- read_genepop(here("data", "seq33_03_baits_only_SNPs.gen"))
 
@@ -38,16 +39,17 @@ genedf_raw <- read_genepop(here("data", "seq33_03_baits_only_SNPs.gen"))
 iss <- lab %>% tbl("known_issues") %>% collect()
 ```
 
+
 # 1) Read the genepop  - double check genepop to make sure the word pop separates the header from the data on line 3 - no quotes
 ```{r}
 # locate the genepop file and read as data frame
 genedf <- genedf_raw %>% 
-  rename(ligation_id = names) %>% 
+  rename(ligation_id = sample) %>% 
   # 2) strip any named samples down to pure ligation number ---- 
   mutate(ligation_id = str_extract(ligation_id, "L\\d+"))
 ```
 
-# 3) Remove samples with known issues -------------------------------------
+# 2) Remove samples with known issues -------------------------------------
 
 ```{r}
 # remove issues from largedf
@@ -214,21 +216,22 @@ which(is.na(noregeno)) # should return integer(0)
 ```{r}
 # Build the genepop components
 msg <- c("This genepop file was generated using a script called process_genepop.Rmd written by Michelle Stuart ")
-write_lines(msg, path = str_c(here("data", "seq33-03_noregeno.gen"), sep = ""), append = F)
+write_lines(msg, path = str_c(here("data", "seq31-03_noregeno.gen"), sep = ""), append = F)
 
 # find all of the column names that contain contig and collapse them into a comma separated string
 loci <-  str_c(names(select(noregeno, contains("contig"))), collapse = ",")
-write_lines(loci, path = str_c(here("data", "seq33-03_noregeno.gen"), sep = ""), append = T)
+write_lines(loci, path = str_c(here("data", "seq31-03_noregeno.gen"), sep = ""), append = T)
 
 pop <- "pop"
-write_lines(pop, path = str_c(here("data", "seq33-03_noregeno.gen"), sep = ""), append = T)
+write_lines(pop, path = str_c(here("data", "seq31-03_noregeno.gen"), sep = ""), append = T)
 
 gene <- vector()
 sample <- vector()
+# this takes a few minutes, look at the file size, it should be increasing slowly.
 for (i in 1:nrow(noregeno)){
   gene[i] <- str_c(select(noregeno[i,], contains("contig")), collapse = " ")
   sample[i] <- str_c(noregeno$ligation_id[i], gene[i], sep = ", ")
-  write_lines(sample[i], path = str_c(here("data", "seq33-03_noregeno.gen"), sep = ""), append = T)
+  write_lines(sample[i], path = str_c(here("data", "seq31-03_noregeno.gen"), sep = ""), append = T)
 }
 ```
 

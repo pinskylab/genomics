@@ -7,6 +7,7 @@
 <meta charset="utf-8" />
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
 
@@ -1483,7 +1484,7 @@ window.initializeCodeFolding = function(show) {
 
     // create a collapsable div to wrap the code in
     var div = $('<div class="collapse r-code-collapse"></div>');
-    if (show)
+    if (show || $(this)[0].classList.contains('fold-show'))
       div.addClass('in');
     var id = 'rcode-643E0F36' + currentIndex++;
     div.attr('id', id);
@@ -1613,7 +1614,6 @@ code {
 }
 img {
   max-width:100%;
-  height: auto;
 }
 .tabbed-pane {
   padding-top: 12px;
@@ -1711,28 +1711,10 @@ summary {
 }
 </style>
 
-<script>
-$(document).ready(function () {
-  window.buildTabsets("TOC");
-});
-
-$(document).ready(function () {
-  $('.tabset-dropdown > .nav-tabs > li').click(function () {
-    $(this).parent().toggleClass('nav-tabs-open')
-  });
-});
-</script>
-
 <!-- code folding -->
 <style type="text/css">
 .code-folding-btn { margin-bottom: 4px; }
 </style>
-<script>
-$(document).ready(function () {
-  window.initializeSourceEmbed("05_remove-regenos.Rmd");
-  window.initializeCodeFolding("show" === "show");
-});
-</script>
 
 
 
@@ -1772,14 +1754,40 @@ $(document).ready(function () {
 <h1>Set up workspace ———————————————</h1>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
-<!-- rnb-chunk-begin -->
-<!-- rnb-output-begin eyJkYXRhIjoiQXV0by1kaXNjb25uZWN0aW5nIE15U1FMQ29ubmVjdGlvblxuQXV0by1kaXNjb25uZWN0aW5nIE15U1FMQ29ubmVjdGlvblxuIn0= -->
-<pre><code>Auto-disconnecting MySQLConnection
-Auto-disconnecting MySQLConnection</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBsb2FkIGxpYnJhcmllc1xubGlicmFyeShkcGx5cilcbmxpYnJhcnkoc3RyaW5ncilcbmxpYnJhcnkocmVhZHIpXG5saWJyYXJ5KGhlcmUpXG5cbiMgbG9hZCBmdW5jdGlvbnNcbiMgd2hpbGUgZGIgY29ubmVjdGlvbiB1c2luZyBoZWxwZXIgZmlsZSBpc24ndCB3b3JraW5nXG5zb3VyY2UoXCJ+L0RvY3VtZW50cy9jbG93bmZpc2gtcGtnL1IvZGJfY29ubmVjdGlvbnMuUlwiKVxuc291cmNlKFwifi9Eb2N1bWVudHMvY2xvd25maXNoci9SL2dlbi1kYXRhLWZ1bnMuUlwiKVxuc291cmNlKFwifi9Eb2N1bWVudHMvY2xvd25maXNoci9SL2xhYi1kYXRhLWZ1bnMuUlwiKVxuc291cmNlKFwifi9Eb2N1bWVudHMvY2xvd25maXNoLXBrZy9SL2Z1bnMtbGFiLW1ldGEuUlwiKVxuc291cmNlKFwifi9Eb2N1bWVudHMvY2xvd25maXNoci9SL2ZpZWxkLWRhdGEtZnVucy5SXCIpXG5cbiMgY29ubmVjdCB0byBkYXRhYmFzZVxubGV5dGUgPC0gcmVhZF9kYihcIkxleXRlXCIpXG5gYGAifQ== -->
+<pre class="r"><code># load libraries
+library(dplyr)
+library(stringr)
+library(readr)
+library(here)
+
+# load functions
+# while db connection using helper file isn&#39;t working
+source(&quot;~/Documents/clownfish-pkg/R/db_connections.R&quot;)
+source(&quot;~/Documents/clownfishr/R/gen-data-funs.R&quot;)
+source(&quot;~/Documents/clownfishr/R/lab-data-funs.R&quot;)
+source(&quot;~/Documents/clownfish-pkg/R/funs-lab-meta.R&quot;)
+source(&quot;~/Documents/clownfishr/R/field-data-funs.R&quot;)
+
+# connect to database
+leyte &lt;- read_db(&quot;Leyte&quot;)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoicGFydGlhbCBhcmd1bWVudCBtYXRjaCBvZiAndXNlcicgdG8gJ3VzZXJuYW1lJ1xuIn0= -->
+<pre><code>partial argument match of &#39;user&#39; to &#39;username&#39;</code></pre>
 <!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGFiIDwtIHJlYWRfZGIoXCJMYWJvcmF0b3J5XCIpXG5gYGAifQ== -->
+<pre class="r"><code>lab &lt;- read_db(&quot;Laboratory&quot;)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoicGFydGlhbCBhcmd1bWVudCBtYXRjaCBvZiAndXNlcicgdG8gJ3VzZXJuYW1lJ3BhcnRpYWwgYXJndW1lbnQgbWF0Y2ggb2YgJ3VzZXInIHRvICd1c2VybmFtZSdcbiJ9 -->
+<pre><code>partial argument match of &#39;user&#39; to &#39;username&#39;partial argument match of &#39;user&#39; to &#39;username&#39;</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBsb2FkIGRhdGFcbmdlbmVkZl9yYXcgPC0gcmVhZF9nZW5lcG9wKGhlcmUoXCJkYXRhXCIsIFwic2VxMzNfMDNfYmFpdHNfb25seV9TTlBzLmdlblwiKSlcblxuIyBwdWxsIGluIHRoZSBrbm93biBpc3N1ZXMgdGFibGVcbmlzcyA8LSBsYWIgJT4lIHRibChcImtub3duX2lzc3Vlc1wiKSAlPiUgY29sbGVjdCgpXG5gYGAifQ== -->
+<pre class="r"><code># load data
+genedf_raw &lt;- read_genepop(here(&quot;data&quot;, &quot;seq33_03_baits_only_SNPs.gen&quot;))
+
+# pull in the known issues table
+iss &lt;- lab %&gt;% tbl(&quot;known_issues&quot;) %&gt;% collect()</code></pre>
+<!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 </div>
@@ -1787,13 +1795,25 @@ Auto-disconnecting MySQLConnection</code></pre>
 <h1>1) Read the genepop - double check genepop to make sure the word pop separates the header from the data on line 3 - no quotes</h1>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBsb2NhdGUgdGhlIGdlbmVwb3AgZmlsZSBhbmQgcmVhZCBhcyBkYXRhIGZyYW1lXG5nZW5lZGYgPC0gZ2VuZWRmX3JhdyAlPiUgXG4gIHJlbmFtZShsaWdhdGlvbl9pZCA9IHNhbXBsZSkgJT4lIFxuICAjIDIpIHN0cmlwIGFueSBuYW1lZCBzYW1wbGVzIGRvd24gdG8gcHVyZSBsaWdhdGlvbiBudW1iZXIgLS0tLSBcbiAgbXV0YXRlKGxpZ2F0aW9uX2lkID0gc3RyX2V4dHJhY3QobGlnYXRpb25faWQsIFwiTFxcXFxkK1wiKSlcbmBgYCJ9 -->
+<pre class="r"><code># locate the genepop file and read as data frame
+genedf &lt;- genedf_raw %&gt;% 
+  rename(ligation_id = sample) %&gt;% 
+  # 2) strip any named samples down to pure ligation number ---- 
+  mutate(ligation_id = str_extract(ligation_id, &quot;L\\d+&quot;))</code></pre>
+<!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 </div>
 <div id="remove-samples-with-known-issues--" class="section level1">
-<h1>3) Remove samples with known issues ————————————-</h1>
+<h1>2) Remove samples with known issues ————————————-</h1>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyByZW1vdmUgaXNzdWVzIGZyb20gbGFyZ2VkZlxuZ2VuZWRmIDwtIGdlbmVkZiAlPiVcbiAgZmlsdGVyKCFsaWdhdGlvbl9pZCAlaW4lIGlzcyRsaWdhdGlvbl9pZClcbmBgYCJ9 -->
+<pre class="r"><code># remove issues from largedf
+genedf &lt;- genedf %&gt;%
+  filter(!ligation_id %in% iss$ligation_id)</code></pre>
+<!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 </div>
@@ -1801,6 +1821,32 @@ Auto-disconnecting MySQLConnection</code></pre>
 <h1>Add sample IDs and fish_table_ids</h1>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc2FtcGxlcyA8LSBzYW1wX2Zyb21fbGlnKGdlbmVkZilcblxuIyBNZXJnZSB0aGUgdHdvIGRhdGFmcmFtZXMgc28gdGhhdCBsaWcgSURzIG1hdGNoIHVwIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tXG5sYXJnZWRmIDwtIGxlZnRfam9pbihnZW5lZGYsIHNhbXBsZXMsIGJ5ID0gXCJsaWdhdGlvbl9pZFwiKSAlPiUgXG4gIHNlbGVjdChzYW1wbGVfaWQsIGxpZ2F0aW9uX2lkLCBldmVyeXRoaW5nKCkpICMgbW92ZSB0aGUgc2FtcGxlX2lkIGNvbHVtbiB0byB0aGUgYmVnaW5uaW5nXG5cbiMgdGVzdHMgLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tXG4jICMgbWFrZSBzdXJlIGFsbCBvZiB0aGUgTGlnYXRpb24gaWRzIGhhdmUgc2FtcGxlIGlkc1xuIyBmaWx0ZXIobGFyZ2VkZiwgaXMubmEoc2FtcGxlX2lkKSlcbiMgIyByZXR1cm5zIDAgcm93c1xuIyBucm93KGdlbmVkZikgPT0gbnJvdyhsYXJnZWRmKSAjIHNob3VsZCBiZSBUUlVFXG4jICMgIyBsb29rIGZvciBtaXNzaW5nIG5hbWVzXG4jIHNldGRpZmYoZ2VuZWRmJGxpZ2F0aW9uX2lkLCBsYXJnZWRmJGxpZ2F0aW9uX2lkKSAjIHNob3VsZCBiZSBjaGFyYWN0ZXIoMClcblxuIyBzaG91bGQgcmV0dXJuIGludGVnZXIoMClcbiMgZWxzZSB0cm91YmxlIDwtIGxhcmdlZGYgJT4lIGZpbHRlcihpcy5uYShsYXJnZWRmJHNhbXBsZV9pZCkpIC0gXG4jIHNob3VsZCBiZSBvbiB0aGUga25vd24gaXNzdWVzIHRhYmxlXG5cbiMgVEVTVCAtIG1ha2Ugc3VyZSBubyBtb3JlIG1hdGNoIHRoZSBsaXN0XG4jIGogPC0gbGFyZ2VkZiAlPiVcbiMgICBmaWx0ZXIobGlnYXRpb25faWQgJWluJSBpc3MkbGlnYXRpb25faWQpXG4jIG5yb3coaikgIyBzaG91bGQgcmV0dXJuIDBcbiMgcm0oailcbiMgcm0oZ2VuZWRmLCBzYW1wbGVzLCBpc3MpXG5gYGAifQ== -->
+<pre class="r"><code>samples &lt;- samp_from_lig(genedf)
+
+# Merge the two dataframes so that lig IDs match up -----------------------
+largedf &lt;- left_join(genedf, samples, by = &quot;ligation_id&quot;) %&gt;% 
+  select(sample_id, ligation_id, everything()) # move the sample_id column to the beginning
+
+# tests ------------------------------------------------------------------
+# # make sure all of the Ligation ids have sample ids
+# filter(largedf, is.na(sample_id))
+# # returns 0 rows
+# nrow(genedf) == nrow(largedf) # should be TRUE
+# # # look for missing names
+# setdiff(genedf$ligation_id, largedf$ligation_id) # should be character(0)
+
+# should return integer(0)
+# else trouble &lt;- largedf %&gt;% filter(is.na(largedf$sample_id)) - 
+# should be on the known issues table
+
+# TEST - make sure no more match the list
+# j &lt;- largedf %&gt;%
+#   filter(ligation_id %in% iss$ligation_id)
+# nrow(j) # should return 0
+# rm(j)
+# rm(genedf, samples, iss)</code></pre>
+<!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 </div>
@@ -1808,13 +1854,31 @@ Auto-disconnecting MySQLConnection</code></pre>
 <h1>Create the fish-obs table</h1>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-frame-begin eyJtZXRhZGF0YSI6eyJjbGFzc2VzIjpbImdyb3VwZWRfZGYiLCJ0YmxfZGYiLCJ0YmwiLCJkYXRhLmZyYW1lIl0sIm5jb2wiOjQsIm5yb3ciOjB9LCJyZGYiOiJINHNJQUFBQUFBQUFBM1ZRMGE3Q0lBeXRiTTY0WkdweXY4TTltUGdIZm9GUHZwbTY0U1FpTElEUnIxZGhXNk1TTHdtMFBaeTJwOTF1ZHF0OGx3TUFnMlRNZ0NYZVRabC9ScERDTk5nN1FQSVhVSDluMEo5RlpJdmVmQ1ZPamI2VkNpL2Mva01ZVnhLdEhhb1FtTmZvc0R3YW54ZlRxZGFpRTlPRHhWSFkwOTdoUWZLOXFLbXp4VXY3Q1dRT200K280U3BFQUkrb3hVUzNUbWpsbTdBd2NSWnBHNWtnc0FQZTQ5UG4vS3FDd0hwWm5hN3F2RnhIMU9LSG4vYnQwK2RRS2lPQlhEVkNjWnFiRzZNTkJSSVBYQTdCekcrNFcwclpHcUVjYmRDanRuVGFJZkh5U2t0Q3VxSGg4UUxRZk1BWCtBRUFBQT09In0= -->
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["fish_table_id"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["sample_id"],"name":[2],"type":["chr"],"align":["left"]},{"label":["tag_id"],"name":[3],"type":["chr"],"align":["left"]},{"label":["gen_id"],"name":[4],"type":["int"],"align":["right"]}],"data":[],"options":{"columns":{"min":{},"max":[10],"total":[4]},"rows":{"min":[10],"max":[10],"total":[0]},"pages":{}}}
-  </script>
-</div>
-<!-- rnb-frame-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBjcmVhdGVcbmZpc2hfZ2VucyA8LSBnZXRfZmlzaCgpICU+JSBcbiAgZmlsdGVyKHNhbXBsZV9pZCAlaW4lIGxhcmdlZGYkc2FtcGxlX2lkKSAlPiUgXG4gIHNlbGVjdChmaXNoX3RhYmxlX2lkLCBzYW1wbGVfaWQsIHRhZ19pZCkgJT4lIFxuICBtdXRhdGUoZ2VuX2lkID0gMTpucm93KC4pKVxuXG5maXNoX3RhZ3MgPC0gZ2V0X2Zpc2goKSAlPiUgXG4gICMga2VlcCBhbnkgZmlzaCB0aGF0IGhhdmUgYmVlbiB0YWdnZWQgXG4gIGZpbHRlcighaXMubmEodGFnX2lkKSAmIFxuICAgICAgICAgICAjIGJ1dCBub3QgZmlzaCByb3dzIHRoYXQgYXJlIGluIHRoZSBhYm92ZSB0YWJsZVxuICAgICAgICAgICAhZmlzaF90YWJsZV9pZCAlaW4lIGZpc2hfZ2VucyRmaXNoX3RhYmxlX2lkKSAlPiUgXG4gIHNlbGVjdChmaXNoX3RhYmxlX2lkLCBzYW1wbGVfaWQsIHRhZ19pZCkgJT4lIFxuICAjIGFzc2lnbiBhIGdlbl9pZCB0byBldmVyeSBzYW1wbGVfaWQgaW4gdGhlIGdlbmVwb3Agd2hpY2ggaGFzIGJlZW4gc3VjY2Vzc2Z1bGx5IGdlbm90eXBlZFxuICBtdXRhdGUoZ2VuX2lkID0gTkEpXG5cbmZpc2hfb2JzIDwtIHJiaW5kKGZpc2hfZ2VucywgZmlzaF90YWdzKVxuXG4jIHRlc3QgLSBhcmUgdGhlcmUgZHVwbGljYXRlIHJvd3Mgb2YgZmlzaF90YWJsZV9pZHNcbmZpc2hfb2JzICU+JSBcbiAgZ3JvdXBfYnkoZmlzaF90YWJsZV9pZCkgJT4lIFxuICBmaWx0ZXIobigpID4gMSlcblxuc2F2ZVJEUyhmaXNoX29icywgaGVyZShcImRhdGFcIiwgXCJmaXNoLW9icy5SRGF0YVwiKSlcbmBgYCJ9 -->
+<pre class="r"><code># create
+fish_gens &lt;- get_fish() %&gt;% 
+  filter(sample_id %in% largedf$sample_id) %&gt;% 
+  select(fish_table_id, sample_id, tag_id) %&gt;% 
+  mutate(gen_id = 1:nrow(.))
+
+fish_tags &lt;- get_fish() %&gt;% 
+  # keep any fish that have been tagged 
+  filter(!is.na(tag_id) &amp; 
+           # but not fish rows that are in the above table
+           !fish_table_id %in% fish_gens$fish_table_id) %&gt;% 
+  select(fish_table_id, sample_id, tag_id) %&gt;% 
+  # assign a gen_id to every sample_id in the genepop which has been successfully genotyped
+  mutate(gen_id = NA)
+
+fish_obs &lt;- rbind(fish_gens, fish_tags)
+
+# test - are there duplicate rows of fish_table_ids
+fish_obs %&gt;% 
+  group_by(fish_table_id) %&gt;% 
+  filter(n() &gt; 1)
+
+saveRDS(fish_obs, here(&quot;data&quot;, &quot;fish-obs.RData&quot;))</code></pre>
+<!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 </div>
@@ -1825,6 +1889,10 @@ Auto-disconnecting MySQLConnection</code></pre>
 <h1>convert 0000 to NA in the genepop data</h1>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGFyZ2VkZiA8LSBsYXJnZWRmICU+JSBcbiAgbmFfaWYoLiwgXCIwMDAwXCIpXG5gYGAifQ== -->
+<pre class="r"><code>largedf &lt;- largedf %&gt;% 
+  na_if(., &quot;0000&quot;)</code></pre>
+<!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 </div>
@@ -1838,10 +1906,47 @@ Auto-disconnecting MySQLConnection</code></pre>
 <h1>count the number of loci per individual (have to use for loop)</h1>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBjcmVhdGUgYW4gb2JqZWN0IHRoYXQgaXMgdGhlIHRvdGFsIG51bWJlciBvZiBjZWxscyB0aGF0IGFyZSBub3QgTkEgZm9yIGVhY2ggcm93IGluIHRoZSBsYXJnZWRmXG5udW1sb2NpIDwtIGxhcmdlZGYgJT4lIFxuICBpcy5uYSAlPiUgXG4gIGAhYCAlPiUgXG4gIHJvd1N1bXNcblxuIyBhZGQgbnVtbG9jaSBhcyBhIGNvbHVtblxubGFyZ2VkZiA8LSBjYmluZChsYXJnZWRmLCBudW1sb2NpKVxuXG5cbiMgIyBURVNUIC0gbWFrZSBzdXJlIGFsbCBvZiB0aGUgbnVtbG9jaSB3ZXJlIHBvcHVsYXRlZCAtLS0tLS0tLS0tLS0tLS0tLS0tLS0tXG4jIHdoaWNoKGlzLm5hKGxhcmdlZGYkbnVtbG9jaSkpICMgc2hvdWxkIHJldHVybiBpbnRlZ2VyKDApXG5gYGAifQ== -->
+<pre class="r"><code># create an object that is the total number of cells that are not NA for each row in the largedf
+numloci &lt;- largedf %&gt;% 
+  is.na %&gt;% 
+  `!` %&gt;% 
+  rowSums
+
+# add numloci as a column
+largedf &lt;- cbind(largedf, numloci)
+
+
+# # TEST - make sure all of the numloci were populated ----------------------
+# which(is.na(largedf$numloci)) # should return integer(0)</code></pre>
+<!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuXG4jcnVuIHRocm91Z2ggYWxsIG9mIHRoZSBTYW1wbGVJRHMgdGhhdCBhcmUgZm91bmQgbW9yZSB0aGFuIG9uY2UgYW5kIGtlZXAgdGhlIG9uZSB3aXRoIHRoZSBtb3N0IGxvY2lcblxuIyBjcmVhdGUgYSBkYXRhIGZyYW1lIG9mIHNhbXBsZSBpZHMgdG8ga2VlcCBvciBkcm9wIGJhc2VkIG9uIHRoZSBudW1iZXIgb2YgbG9jaSBwcmVzZW50XG5yZWdlbm9fZHJvcCA8LSBsYXJnZWRmICU+JSBcbiAgIyBzZWxlY3Qgb25seSB0aGUgY29sdW1ucyB0byBpZGVudGlmeSB3aGljaCB0byBrZWVwXG4gIHNlbGVjdChzYW1wbGVfaWQsIGxpZ2F0aW9uX2lkLCBudW1sb2NpKSAlPiVcbiAgZ3JvdXBfYnkoc2FtcGxlX2lkKSAlPiUgXG4gICMgY3JlYXRlIGEgbWF4bG9jaSBjb2x1bW4gdGhhdCBob2xkcyB0aGUgbW9zdCBsb2NpIGVhY2ggc2FtcGxlIGlkIGNhcnJpZXNcbiAgbXV0YXRlKG1heGxvY2kgPSBtYXgobnVtbG9jaSksIFxuICAgIyBjcmVhdGUgYSBkcm9wIGNvbHVtbiB0aGF0IGhvbGRzIHRoZSBkZWNpc2lvbiB0byBrZWVwIG9yIGRyb3AgdGhhdCByb3dcbiAgICAgICAgIGRyb3AgPSBpZmVsc2UobnVtbG9jaSA9PSBtYXhsb2NpLCBcIktFRVBcIiwgXCJEUk9QXCIpKSAlPiUgXG4gICMga2VlcCBvbmx5IHRoZSBjb2x1bW5zIHRoYXQgaG9sZCB0aGUgbWF4bG9jaSBhbmQgc2F5IFwiS0VFUFwiXG4gIGZpbHRlcihkcm9wID09IFwiS0VFUFwiKSAlPiUgXG4gIHVuZ3JvdXAoKSAlPiUgXG4gICMga2VlcCBvbmx5IHRoZSBjb2x1bW5zIG5lZWRlZCB0byBpZGVudGlmeSB0aGVzZSBcImtlZXBlciByb3dzXCJcbiAgc2VsZWN0KGxpZ2F0aW9uX2lkKVxuXG4jIGtlZXAgb25seSB0aGUgdmVyc2lvbiBvZiB0aGUgc2FtcGxlIGlkIHRoYXQgaGFzIHRoZSBtb3N0IGxvY2lcbm5vcmVnZW5vMSA8LSBsYXJnZWRmICU+JSBcbiAgZmlsdGVyKGxpZ2F0aW9uX2lkICVpbiUgcmVnZW5vX2Ryb3AkbGlnYXRpb25faWQpXG5gYGAifQ== -->
+<pre class="r"><code>
+#run through all of the SampleIDs that are found more than once and keep the one with the most loci
+
+# create a data frame of sample ids to keep or drop based on the number of loci present
+regeno_drop &lt;- largedf %&gt;% 
+  # select only the columns to identify which to keep
+  select(sample_id, ligation_id, numloci) %&gt;%
+  group_by(sample_id) %&gt;% 
+  # create a maxloci column that holds the most loci each sample id carries
+  mutate(maxloci = max(numloci), 
+   # create a drop column that holds the decision to keep or drop that row
+         drop = ifelse(numloci == maxloci, &quot;KEEP&quot;, &quot;DROP&quot;)) %&gt;% 
+  # keep only the columns that hold the maxloci and say &quot;KEEP&quot;
+  filter(drop == &quot;KEEP&quot;) %&gt;% 
+  ungroup() %&gt;% 
+  # keep only the columns needed to identify these &quot;keeper rows&quot;
+  select(ligation_id)
+
+# keep only the version of the sample id that has the most loci
+noregeno1 &lt;- largedf %&gt;% 
+  filter(ligation_id %in% regeno_drop$ligation_id)</code></pre>
+<!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 </div>
@@ -1849,14 +1954,47 @@ Auto-disconnecting MySQLConnection</code></pre>
 <h1>Some samples were not dropped because both regenotypes have the same number of loci.</h1>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxucmVnZW5vZCA8LSBub3JlZ2VubzEgJT4lXG4gIGZpbHRlcihkdXBsaWNhdGVkKG5vcmVnZW5vMSRzYW1wbGVfaWQpKSAlPiVcbiAgc2VsZWN0KHNhbXBsZV9pZCwgbGlnYXRpb25faWQpICU+JSBcbiAgZGlzdGluY3QoKVxuXG4jIGRyb3AgdGhlIGxpZ2F0aW9uX2lkcyBmb3IgdGhlc2UgZHVwbGljYXRlZCBzYW1wbGVzXG5ub3JlZ2VubyA8LSBub3JlZ2VubzEgJT4lIFxuICBmaWx0ZXIoIWxpZ2F0aW9uX2lkICVpbiUgcmVnZW5vZCRsaWdhdGlvbl9pZClcblxuIyBtYWtlIHN1cmUgdGhlcmUgaXMgc3RpbGwgYSB2ZXJzaW9uIGluIHRoZSBkYXRhXG50ZXN0IDwtIG5vcmVnZW5vICU+JSBcbiAgc2VsZWN0KHNhbXBsZV9pZCkgJT4lIFxuICBmaWx0ZXIoc2FtcGxlX2lkICVpbiUgcmVnZW5vZCRzYW1wbGVfaWQpXG4jIHNob3VsZCBiZSBzYW1lIG51bWJlciBvZiByb3dzIGFzIHJlZ2Vub2RcbmBgYCJ9 -->
+<pre class="r"><code>regenod &lt;- noregeno1 %&gt;%
+  filter(duplicated(noregeno1$sample_id)) %&gt;%
+  select(sample_id, ligation_id) %&gt;% 
+  distinct()
+
+# drop the ligation_ids for these duplicated samples
+noregeno &lt;- noregeno1 %&gt;% 
+  filter(!ligation_id %in% regenod$ligation_id)
+
+# make sure there is still a version in the data
+test &lt;- noregeno %&gt;% 
+  select(sample_id) %&gt;% 
+  filter(sample_id %in% regenod$sample_id)
+# should be same number of rows as regenod</code></pre>
+<!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <p>Prep for writing genepop</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-output-begin eyJkYXRhIjoiaW50ZWdlcigwKVxuIn0= -->
-<pre><code>integer(0)</code></pre>
-<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuXG4jIGNvbnZlcnQgYWxsIHRoZSBOQSBnZW5vdHlwZXMgdG8gMDAwMFxubm9yZWdlbm9baXMubmEobm9yZWdlbm8pXSA9IFwiMDAwMFwiXG4jIFRFU1QgLSBtYWtlIHN1cmUgdGhlcmUgYXJlIG5vIE5BJ3MgbGVmdFxud2hpY2goaXMubmEobm9yZWdlbm8pKSAjIHNob3VsZCByZXR1cm4gaW50ZWdlcigwKVxuXG4jICMgcmVtb3ZlIGdlbm90eXBlZCByZWNhcHR1cmVzIC0gb25seSBkbyB0aGlzIGlmIHlvdSBhcmUgYWJsc29sdXRlbHkgc3VyZSB5b3UgZG8gbm90IHdhbnQgdG8gZmluZCBuZXcgcmVjYXB0dXJlIGV2ZW50cyB3aXRoIHRoaXMgZGF0YVxuIyBsZXl0ZSA8LSByZWFkX2RiKFwiTGV5dGVcIilcbiMgcmVjYXAgPC0gbGV5dGUgJT4lIHRibChcImNsb3duZmlzaFwiKSAlPiUgXG4jICAgZmlsdGVyKCFpcy5uYShjYXBfaWQpKSAlPiUgXG4jICAgc2VsZWN0KHNhbXBsZV9pZCwgY2FwX2lkKSAlPiUgXG4jICAgY29sbGVjdCgpXG5cbiMgIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjXG4jICMgIyBURVNUIC0gbWFrZSBzdXJlIGEgbGlzdCB3YXMgZ2VuZXJhdGVkXG4jIGsgPC0gbnJvdyhyZWNhcClcbiMgayAjIDI3N1xuXG5gYGAifQ== -->
+<pre class="r"><code>
+# convert all the NA genotypes to 0000
+noregeno[is.na(noregeno)] = &quot;0000&quot;
+# TEST - make sure there are no NA&#39;s left
+which(is.na(noregeno)) # should return integer(0)
+
+# # remove genotyped recaptures - only do this if you are ablsolutely sure you do not want to find new recapture events with this data
+# leyte &lt;- read_db(&quot;Leyte&quot;)
+# recap &lt;- leyte %&gt;% tbl(&quot;clownfish&quot;) %&gt;% 
+#   filter(!is.na(cap_id)) %&gt;% 
+#   select(sample_id, cap_id) %&gt;% 
+#   collect()
+
+# ########################################################################
+# # # TEST - make sure a list was generated
+# k &lt;- nrow(recap)
+# k # 277
+</code></pre>
+<!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 </div>
@@ -1869,7 +2007,7 @@ Auto-disconnecting MySQLConnection</code></pre>
 <!-- rnb-text-end -->
 </div>
 
-<div id="rmd-source-code">LS0tCnRpdGxlOiAiUmVtb3ZlIHJlZ2Vub3R5cGVkIHNhbXBsZXMiCm91dHB1dDogCiAgZ2l0aHViX2RvY3VtZW50OiBkZWZhdWx0CiAgaHRtbF9ub3RlYm9vazogZGVmYXVsdAogIAotLS0KClRoaXMgc2NyaXB0IGlzIHdyaXR0ZW4gdG8gdGFrZSB0aGUgZmlsdGVyZWQgZ2VuZXBvcCBmaWxlIGZyb20gZERvY2VudCBhbmQKMSkgcmVhZCB0aGUgZ2VuZXBvcCBmaWxlIGludG8gUiBhcyBhIGRhdGEgZnJhbWUKMikgc3RyaXAgYW55IG5hbWVkIHNhbXBsZXMgZG93biB0byBwdXJlIGxpZ2F0aW9uIG51bWJlciwKMykgaWRlbnRpZnkgYW5kIHJlbW92ZSByZS1nZW5vdHlwZWQgc2FtcGxlcyBiYXNlZCBvbiBudW1iZXIgb2YgbG9jaSAoU05QcyksCjQpIGdlbmVyYXRlIGEgbmV3IGdlbmVwb3AgZmlsZSB0byBiZSBmZWQgdG8gY2VydnVzIGZvciBpZGVudGlmaWNhdGlvbiBvZiByZWNhcHR1cmVzLgoKIyBTZXQgdXAgd29ya3NwYWNlIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQpgYGB7ciBzZXR1cH0Ka25pdHI6Om9wdHNfY2h1bmskc2V0KGV2YWwgPSBGQUxTRSkKCiMgcGFjbWFuOjpwX2xvYWQodGlkeXIsIGRwbHlyLCBzdHJpbmdyLCByZWFkciwgY2xvd25maXNoLCBoZXJlLCBpbnN0YWxsID0gRkFMU0UpCiMgIyBsaWJyYXJ5KGRwbHlyKSAKIyAjIGxpYnJhcnkoc3RyaW5ncikKIyAjIGxpYnJhcnkocmVhZHIpCiMgIyBsaWJyYXJ5KGNsb3duZmlzaCkKIyAjIGxpYnJhcnkoaGVyZSkKIyAKIyAjIHdoaWxlIGRiIGNvbm5lY3Rpb24gdXNpbmcgaGVscGVyIGZpbGUgaXNuJ3Qgd29ya2luZyAKIyBzb3VyY2UoIn4vRG9jdW1lbnRzL2Nsb3duZmlzaC1wa2cvUi9kYl9jb25uZWN0aW9ucy5SIikKIyBsZXl0ZSA8LSByZWFkX2RiKCJMZXl0ZSIpCiMgbGFiIDwtIHJlYWRfZGIoIkxhYm9yYXRvcnkiKQpgYGAKCgpgYGB7cn0KIyBsb2FkIGRhdGEKZ2VuZWRmX3JhdyA8LSByZWFkX2dlbmVwb3AoaGVyZSgiZGF0YSIsICJzZXEzM18wM19iYWl0c19vbmx5X1NOUHMuZ2VuIikpCgojIHB1bGwgaW4gdGhlIGtub3duIGlzc3VlcyB0YWJsZQppc3MgPC0gbGFiICU+JSB0YmwoImtub3duX2lzc3VlcyIpICU+JSBjb2xsZWN0KCkKYGBgCgojIDEpIFJlYWQgdGhlIGdlbmVwb3AgIC0gZG91YmxlIGNoZWNrIGdlbmVwb3AgdG8gbWFrZSBzdXJlIHRoZSB3b3JkIHBvcCBzZXBhcmF0ZXMgdGhlIGhlYWRlciBmcm9tIHRoZSBkYXRhIG9uIGxpbmUgMyAtIG5vIHF1b3RlcwpgYGB7cn0KIyBsb2NhdGUgdGhlIGdlbmVwb3AgZmlsZSBhbmQgcmVhZCBhcyBkYXRhIGZyYW1lCmdlbmVkZiA8LSBnZW5lZGZfcmF3ICU+JSAKICByZW5hbWUobGlnYXRpb25faWQgPSBuYW1lcykgJT4lIAogICMgMikgc3RyaXAgYW55IG5hbWVkIHNhbXBsZXMgZG93biB0byBwdXJlIGxpZ2F0aW9uIG51bWJlciAtLS0tIAogIG11dGF0ZShsaWdhdGlvbl9pZCA9IHN0cl9leHRyYWN0KGxpZ2F0aW9uX2lkLCAiTFxcZCsiKSkKYGBgCgojIDMpIFJlbW92ZSBzYW1wbGVzIHdpdGgga25vd24gaXNzdWVzIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KCmBgYHtyfQojIHJlbW92ZSBpc3N1ZXMgZnJvbSBsYXJnZWRmCmdlbmVkZiA8LSBnZW5lZGYgJT4lCiAgZmlsdGVyKCFsaWdhdGlvbl9pZCAlaW4lIGlzcyRsaWdhdGlvbl9pZCkKYGBgCgoKIyBBZGQgc2FtcGxlIElEcyBhbmQgZmlzaF90YWJsZV9pZHMKCmBgYHtyfQpzYW1wbGVzIDwtIHNhbXBfZnJvbV9saWcoZ2VuZWRmKQoKIyBNZXJnZSB0aGUgdHdvIGRhdGFmcmFtZXMgc28gdGhhdCBsaWcgSURzIG1hdGNoIHVwIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCmxhcmdlZGYgPC0gbGVmdF9qb2luKGdlbmVkZiwgc2FtcGxlcywgYnkgPSAibGlnYXRpb25faWQiKSAlPiUgCiAgc2VsZWN0KHNhbXBsZV9pZCwgbGlnYXRpb25faWQsIGV2ZXJ5dGhpbmcoKSkgIyBtb3ZlIHRoZSBzYW1wbGVfaWQgY29sdW1uIHRvIHRoZSBiZWdpbm5pbmcKCiMgdGVzdHMgLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCiMgIyBtYWtlIHN1cmUgYWxsIG9mIHRoZSBMaWdhdGlvbiBpZHMgaGF2ZSBzYW1wbGUgaWRzCiMgZmlsdGVyKGxhcmdlZGYsIGlzLm5hKHNhbXBsZV9pZCkpCiMgIyByZXR1cm5zIDAgcm93cwojIG5yb3coZ2VuZWRmKSA9PSBucm93KGxhcmdlZGYpICMgc2hvdWxkIGJlIFRSVUUKIyAjICMgbG9vayBmb3IgbWlzc2luZyBuYW1lcwojIHNldGRpZmYoZ2VuZWRmJGxpZ2F0aW9uX2lkLCBsYXJnZWRmJGxpZ2F0aW9uX2lkKSAjIHNob3VsZCBiZSBjaGFyYWN0ZXIoMCkKCiMgc2hvdWxkIHJldHVybiBpbnRlZ2VyKDApCiMgZWxzZSB0cm91YmxlIDwtIGxhcmdlZGYgJT4lIGZpbHRlcihpcy5uYShsYXJnZWRmJHNhbXBsZV9pZCkpIC0gCiMgc2hvdWxkIGJlIG9uIHRoZSBrbm93biBpc3N1ZXMgdGFibGUKCiMgVEVTVCAtIG1ha2Ugc3VyZSBubyBtb3JlIG1hdGNoIHRoZSBsaXN0CiMgaiA8LSBsYXJnZWRmICU+JQojICAgZmlsdGVyKGxpZ2F0aW9uX2lkICVpbiUgaXNzJGxpZ2F0aW9uX2lkKQojIG5yb3coaikgIyBzaG91bGQgcmV0dXJuIDAKIyBybShqKQojIHJtKGdlbmVkZiwgc2FtcGxlcywgaXNzKQpgYGAKCiMgQ3JlYXRlIHRoZSBmaXNoLW9icyB0YWJsZQpgYGB7cn0KIyBjcmVhdGUKZmlzaF9nZW5zIDwtIGdldF9maXNoKCkgJT4lIAogIGZpbHRlcihzYW1wbGVfaWQgJWluJSBsYXJnZWRmJHNhbXBsZV9pZCkgJT4lIAogIHNlbGVjdChmaXNoX3RhYmxlX2lkLCBzYW1wbGVfaWQsIHRhZ19pZCkgJT4lIAogIG11dGF0ZShnZW5faWQgPSAxOm5yb3coLikpCgpmaXNoX3RhZ3MgPC0gZ2V0X2Zpc2goKSAlPiUgCiAgIyBrZWVwIGFueSBmaXNoIHRoYXQgaGF2ZSBiZWVuIHRhZ2dlZCAKICBmaWx0ZXIoIWlzLm5hKHRhZ19pZCkgJiAKICAgICAgICAgICAjIGJ1dCBub3QgZmlzaCByb3dzIHRoYXQgYXJlIGluIHRoZSBhYm92ZSB0YWJsZQogICAgICAgICAgICFmaXNoX3RhYmxlX2lkICVpbiUgZmlzaF9nZW5zJGZpc2hfdGFibGVfaWQpICU+JSAKICBzZWxlY3QoZmlzaF90YWJsZV9pZCwgc2FtcGxlX2lkLCB0YWdfaWQpICU+JSAKICAjIGFzc2lnbiBhIGdlbl9pZCB0byBldmVyeSBzYW1wbGVfaWQgaW4gdGhlIGdlbmVwb3Agd2hpY2ggaGFzIGJlZW4gc3VjY2Vzc2Z1bGx5IGdlbm90eXBlZAogIG11dGF0ZShnZW5faWQgPSBOQSkKCmZpc2hfb2JzIDwtIHJiaW5kKGZpc2hfZ2VucywgZmlzaF90YWdzKQoKIyB0ZXN0IC0gYXJlIHRoZXJlIGR1cGxpY2F0ZSByb3dzIG9mIGZpc2hfdGFibGVfaWRzCmZpc2hfb2JzICU+JSAKICBncm91cF9ieShmaXNoX3RhYmxlX2lkKSAlPiUgCiAgZmlsdGVyKG4oKSA+IDEpCgpzYXZlUkRTKGZpc2hfb2JzLCBoZXJlKCJkYXRhIiwgImZpc2gtb2JzLlJEYXRhIikpCmBgYAoKCiMgUmVtb3ZlIHJlZ2Vub3R5cGVkIHNhbXBsZXMgLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQoKIyBjb252ZXJ0IDAwMDAgdG8gTkEgaW4gdGhlIGdlbmVwb3AgZGF0YQpgYGB7cn0KbGFyZ2VkZiA8LSBsYXJnZWRmICU+JSAKICBuYV9pZiguLCAiMDAwMCIpCmBgYAoKCiMgIyBURVNUIC0gbWFrZSBzdXJlIHRoZXJlIGFyZSBubyAiMDAwMCIgbGVmdAojIHdoaWNoKGxhcmdlZGYgPT0gIjAwMDAiKSAjIHNob3VsZCByZXR1cm4gaW50ZWdlcigwKQoKIyBjb3VudCB0aGUgbnVtYmVyIG9mIGxvY2kgcGVyIGluZGl2aWR1YWwgKGhhdmUgdG8gdXNlIGZvciBsb29wKQpgYGB7cn0KIyBjcmVhdGUgYW4gb2JqZWN0IHRoYXQgaXMgdGhlIHRvdGFsIG51bWJlciBvZiBjZWxscyB0aGF0IGFyZSBub3QgTkEgZm9yIGVhY2ggcm93IGluIHRoZSBsYXJnZWRmCm51bWxvY2kgPC0gbGFyZ2VkZiAlPiUgCiAgaXMubmEgJT4lIAogIGAhYCAlPiUgCiAgcm93U3VtcwoKIyBhZGQgbnVtbG9jaSBhcyBhIGNvbHVtbgpsYXJnZWRmIDwtIGNiaW5kKGxhcmdlZGYsIG51bWxvY2kpCgoKIyAjIFRFU1QgLSBtYWtlIHN1cmUgYWxsIG9mIHRoZSBudW1sb2NpIHdlcmUgcG9wdWxhdGVkIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KIyB3aGljaChpcy5uYShsYXJnZWRmJG51bWxvY2kpKSAjIHNob3VsZCByZXR1cm4gaW50ZWdlcigwKQpgYGAKCgoKYGBge3J9CgojcnVuIHRocm91Z2ggYWxsIG9mIHRoZSBTYW1wbGVJRHMgdGhhdCBhcmUgZm91bmQgbW9yZSB0aGFuIG9uY2UgYW5kIGtlZXAgdGhlIG9uZSB3aXRoIHRoZSBtb3N0IGxvY2kKCiMgY3JlYXRlIGEgZGF0YSBmcmFtZSBvZiBzYW1wbGUgaWRzIHRvIGtlZXAgb3IgZHJvcCBiYXNlZCBvbiB0aGUgbnVtYmVyIG9mIGxvY2kgcHJlc2VudApyZWdlbm9fZHJvcCA8LSBsYXJnZWRmICU+JSAKICAjIHNlbGVjdCBvbmx5IHRoZSBjb2x1bW5zIHRvIGlkZW50aWZ5IHdoaWNoIHRvIGtlZXAKICBzZWxlY3Qoc2FtcGxlX2lkLCBsaWdhdGlvbl9pZCwgbnVtbG9jaSkgJT4lCiAgZ3JvdXBfYnkoc2FtcGxlX2lkKSAlPiUgCiAgIyBjcmVhdGUgYSBtYXhsb2NpIGNvbHVtbiB0aGF0IGhvbGRzIHRoZSBtb3N0IGxvY2kgZWFjaCBzYW1wbGUgaWQgY2FycmllcwogIG11dGF0ZShtYXhsb2NpID0gbWF4KG51bWxvY2kpLCAKICAgIyBjcmVhdGUgYSBkcm9wIGNvbHVtbiB0aGF0IGhvbGRzIHRoZSBkZWNpc2lvbiB0byBrZWVwIG9yIGRyb3AgdGhhdCByb3cKICAgICAgICAgZHJvcCA9IGlmZWxzZShudW1sb2NpID09IG1heGxvY2ksICJLRUVQIiwgIkRST1AiKSkgJT4lIAogICMga2VlcCBvbmx5IHRoZSBjb2x1bW5zIHRoYXQgaG9sZCB0aGUgbWF4bG9jaSBhbmQgc2F5ICJLRUVQIgogIGZpbHRlcihkcm9wID09ICJLRUVQIikgJT4lIAogIHVuZ3JvdXAoKSAlPiUgCiAgIyBrZWVwIG9ubHkgdGhlIGNvbHVtbnMgbmVlZGVkIHRvIGlkZW50aWZ5IHRoZXNlICJrZWVwZXIgcm93cyIKICBzZWxlY3QobGlnYXRpb25faWQpCgojIGtlZXAgb25seSB0aGUgdmVyc2lvbiBvZiB0aGUgc2FtcGxlIGlkIHRoYXQgaGFzIHRoZSBtb3N0IGxvY2kKbm9yZWdlbm8xIDwtIGxhcmdlZGYgJT4lIAogIGZpbHRlcihsaWdhdGlvbl9pZCAlaW4lIHJlZ2Vub19kcm9wJGxpZ2F0aW9uX2lkKQpgYGAKIyBTb21lIHNhbXBsZXMgd2VyZSBub3QgZHJvcHBlZCBiZWNhdXNlIGJvdGggcmVnZW5vdHlwZXMgaGF2ZSB0aGUgc2FtZSBudW1iZXIgb2YgbG9jaS4KYGBge3J9CnJlZ2Vub2QgPC0gbm9yZWdlbm8xICU+JQogIGZpbHRlcihkdXBsaWNhdGVkKG5vcmVnZW5vMSRzYW1wbGVfaWQpKSAlPiUKICBzZWxlY3Qoc2FtcGxlX2lkLCBsaWdhdGlvbl9pZCkgJT4lIAogIGRpc3RpbmN0KCkKCiMgZHJvcCB0aGUgbGlnYXRpb25faWRzIGZvciB0aGVzZSBkdXBsaWNhdGVkIHNhbXBsZXMKbm9yZWdlbm8gPC0gbm9yZWdlbm8xICU+JSAKICBmaWx0ZXIoIWxpZ2F0aW9uX2lkICVpbiUgcmVnZW5vZCRsaWdhdGlvbl9pZCkKCiMgbWFrZSBzdXJlIHRoZXJlIGlzIHN0aWxsIGEgdmVyc2lvbiBpbiB0aGUgZGF0YQp0ZXN0IDwtIG5vcmVnZW5vICU+JSAKICBzZWxlY3Qoc2FtcGxlX2lkKSAlPiUgCiAgZmlsdGVyKHNhbXBsZV9pZCAlaW4lIHJlZ2Vub2Qkc2FtcGxlX2lkKQojIHNob3VsZCBiZSBzYW1lIG51bWJlciBvZiByb3dzIGFzIHJlZ2Vub2QKYGBgCgoKUHJlcCBmb3Igd3JpdGluZyBnZW5lcG9wCmBgYHtyfQoKIyBjb252ZXJ0IGFsbCB0aGUgTkEgZ2Vub3R5cGVzIHRvIDAwMDAKbm9yZWdlbm9baXMubmEobm9yZWdlbm8pXSA9ICIwMDAwIgojIFRFU1QgLSBtYWtlIHN1cmUgdGhlcmUgYXJlIG5vIE5BJ3MgbGVmdAp3aGljaChpcy5uYShub3JlZ2VubykpICMgc2hvdWxkIHJldHVybiBpbnRlZ2VyKDApCgojICMgcmVtb3ZlIGdlbm90eXBlZCByZWNhcHR1cmVzIC0gb25seSBkbyB0aGlzIGlmIHlvdSBhcmUgYWJsc29sdXRlbHkgc3VyZSB5b3UgZG8gbm90IHdhbnQgdG8gZmluZCBuZXcgcmVjYXB0dXJlIGV2ZW50cyB3aXRoIHRoaXMgZGF0YQojIGxleXRlIDwtIHJlYWRfZGIoIkxleXRlIikKIyByZWNhcCA8LSBsZXl0ZSAlPiUgdGJsKCJjbG93bmZpc2giKSAlPiUgCiMgICBmaWx0ZXIoIWlzLm5hKGNhcF9pZCkpICU+JSAKIyAgIHNlbGVjdChzYW1wbGVfaWQsIGNhcF9pZCkgJT4lIAojICAgY29sbGVjdCgpCgojICMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIwojICMgIyBURVNUIC0gbWFrZSBzdXJlIGEgbGlzdCB3YXMgZ2VuZXJhdGVkCiMgayA8LSBucm93KHJlY2FwKQojIGsgIyAyNzcKCmBgYAoKCgojIDQpIE91dHB1dCBnZW5lcG9wIGZpbGUgLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KCmBgYHtyfQojIEJ1aWxkIHRoZSBnZW5lcG9wIGNvbXBvbmVudHMKbXNnIDwtIGMoIlRoaXMgZ2VuZXBvcCBmaWxlIHdhcyBnZW5lcmF0ZWQgdXNpbmcgYSBzY3JpcHQgY2FsbGVkIHByb2Nlc3NfZ2VuZXBvcC5SbWQgd3JpdHRlbiBieSBNaWNoZWxsZSBTdHVhcnQgIikKd3JpdGVfbGluZXMobXNnLCBwYXRoID0gc3RyX2MoaGVyZSgiZGF0YSIsICJzZXEzMy0wM19ub3JlZ2Vuby5nZW4iKSwgc2VwID0gIiIpLCBhcHBlbmQgPSBGKQoKIyBmaW5kIGFsbCBvZiB0aGUgY29sdW1uIG5hbWVzIHRoYXQgY29udGFpbiBjb250aWcgYW5kIGNvbGxhcHNlIHRoZW0gaW50byBhIGNvbW1hIHNlcGFyYXRlZCBzdHJpbmcKbG9jaSA8LSAgc3RyX2MobmFtZXMoc2VsZWN0KG5vcmVnZW5vLCBjb250YWlucygiY29udGlnIikpKSwgY29sbGFwc2UgPSAiLCIpCndyaXRlX2xpbmVzKGxvY2ksIHBhdGggPSBzdHJfYyhoZXJlKCJkYXRhIiwgInNlcTMzLTAzX25vcmVnZW5vLmdlbiIpLCBzZXAgPSAiIiksIGFwcGVuZCA9IFQpCgpwb3AgPC0gInBvcCIKd3JpdGVfbGluZXMocG9wLCBwYXRoID0gc3RyX2MoaGVyZSgiZGF0YSIsICJzZXEzMy0wM19ub3JlZ2Vuby5nZW4iKSwgc2VwID0gIiIpLCBhcHBlbmQgPSBUKQoKZ2VuZSA8LSB2ZWN0b3IoKQpzYW1wbGUgPC0gdmVjdG9yKCkKZm9yIChpIGluIDE6bnJvdyhub3JlZ2VubykpewogIGdlbmVbaV0gPC0gc3RyX2Moc2VsZWN0KG5vcmVnZW5vW2ksXSwgY29udGFpbnMoImNvbnRpZyIpKSwgY29sbGFwc2UgPSAiICIpCiAgc2FtcGxlW2ldIDwtIHN0cl9jKG5vcmVnZW5vJGxpZ2F0aW9uX2lkW2ldLCBnZW5lW2ldLCBzZXAgPSAiLCAiKQogIHdyaXRlX2xpbmVzKHNhbXBsZVtpXSwgcGF0aCA9IHN0cl9jKGhlcmUoImRhdGEiLCAic2VxMzMtMDNfbm9yZWdlbm8uZ2VuIiksIHNlcCA9ICIiKSwgYXBwZW5kID0gVCkKfQpgYGAKCg==</div>
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiUmVtb3ZlIHJlZ2Vub3R5cGVkIHNhbXBsZXMiCm91dHB1dDogCiAgZ2l0aHViX2RvY3VtZW50OiBkZWZhdWx0CiAgaHRtbF9ub3RlYm9vazogZGVmYXVsdAogIAotLS0KClRoaXMgc2NyaXB0IGlzIHdyaXR0ZW4gdG8gdGFrZSB0aGUgZmlsdGVyZWQgZ2VuZXBvcCBmaWxlIGZyb20gZERvY2VudCBhbmQKMSkgcmVhZCB0aGUgZ2VuZXBvcCBmaWxlIGludG8gUiBhcyBhIGRhdGEgZnJhbWUKMikgc3RyaXAgYW55IG5hbWVkIHNhbXBsZXMgZG93biB0byBwdXJlIGxpZ2F0aW9uIG51bWJlciwKMykgaWRlbnRpZnkgYW5kIHJlbW92ZSByZS1nZW5vdHlwZWQgc2FtcGxlcyBiYXNlZCBvbiBudW1iZXIgb2YgbG9jaSAoU05QcyksCjQpIGdlbmVyYXRlIGEgbmV3IGdlbmVwb3AgZmlsZSB0byBiZSBmZWQgdG8gY2VydnVzIGZvciBpZGVudGlmaWNhdGlvbiBvZiByZWNhcHR1cmVzLgoKIyBTZXQgdXAgd29ya3NwYWNlIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQpgYGB7ciBzZXR1cH0KIyBsb2FkIGxpYnJhcmllcwpsaWJyYXJ5KGRwbHlyKQpsaWJyYXJ5KHN0cmluZ3IpCmxpYnJhcnkocmVhZHIpCmxpYnJhcnkoaGVyZSkKCiMgbG9hZCBmdW5jdGlvbnMKIyB3aGlsZSBkYiBjb25uZWN0aW9uIHVzaW5nIGhlbHBlciBmaWxlIGlzbid0IHdvcmtpbmcKc291cmNlKCJ+L0RvY3VtZW50cy9jbG93bmZpc2gtcGtnL1IvZGJfY29ubmVjdGlvbnMuUiIpCnNvdXJjZSgifi9Eb2N1bWVudHMvY2xvd25maXNoci9SL2dlbi1kYXRhLWZ1bnMuUiIpCnNvdXJjZSgifi9Eb2N1bWVudHMvY2xvd25maXNoci9SL2xhYi1kYXRhLWZ1bnMuUiIpCnNvdXJjZSgifi9Eb2N1bWVudHMvY2xvd25maXNoLXBrZy9SL2Z1bnMtbGFiLW1ldGEuUiIpCnNvdXJjZSgifi9Eb2N1bWVudHMvY2xvd25maXNoci9SL2ZpZWxkLWRhdGEtZnVucy5SIikKCiMgY29ubmVjdCB0byBkYXRhYmFzZQpsZXl0ZSA8LSByZWFkX2RiKCJMZXl0ZSIpCmxhYiA8LSByZWFkX2RiKCJMYWJvcmF0b3J5IikKCiMgbG9hZCBkYXRhCmdlbmVkZl9yYXcgPC0gcmVhZF9nZW5lcG9wKGhlcmUoImRhdGEiLCAic2VxMzNfMDNfYmFpdHNfb25seV9TTlBzLmdlbiIpKQoKIyBwdWxsIGluIHRoZSBrbm93biBpc3N1ZXMgdGFibGUKaXNzIDwtIGxhYiAlPiUgdGJsKCJrbm93bl9pc3N1ZXMiKSAlPiUgY29sbGVjdCgpCmBgYAoKCiMgMSkgUmVhZCB0aGUgZ2VuZXBvcCAgLSBkb3VibGUgY2hlY2sgZ2VuZXBvcCB0byBtYWtlIHN1cmUgdGhlIHdvcmQgcG9wIHNlcGFyYXRlcyB0aGUgaGVhZGVyIGZyb20gdGhlIGRhdGEgb24gbGluZSAzIC0gbm8gcXVvdGVzCmBgYHtyfQojIGxvY2F0ZSB0aGUgZ2VuZXBvcCBmaWxlIGFuZCByZWFkIGFzIGRhdGEgZnJhbWUKZ2VuZWRmIDwtIGdlbmVkZl9yYXcgJT4lIAogIHJlbmFtZShsaWdhdGlvbl9pZCA9IHNhbXBsZSkgJT4lIAogICMgMikgc3RyaXAgYW55IG5hbWVkIHNhbXBsZXMgZG93biB0byBwdXJlIGxpZ2F0aW9uIG51bWJlciAtLS0tIAogIG11dGF0ZShsaWdhdGlvbl9pZCA9IHN0cl9leHRyYWN0KGxpZ2F0aW9uX2lkLCAiTFxcZCsiKSkKYGBgCgojIDIpIFJlbW92ZSBzYW1wbGVzIHdpdGgga25vd24gaXNzdWVzIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KCmBgYHtyfQojIHJlbW92ZSBpc3N1ZXMgZnJvbSBsYXJnZWRmCmdlbmVkZiA8LSBnZW5lZGYgJT4lCiAgZmlsdGVyKCFsaWdhdGlvbl9pZCAlaW4lIGlzcyRsaWdhdGlvbl9pZCkKYGBgCgoKIyBBZGQgc2FtcGxlIElEcyBhbmQgZmlzaF90YWJsZV9pZHMKCmBgYHtyfQpzYW1wbGVzIDwtIHNhbXBfZnJvbV9saWcoZ2VuZWRmKQoKIyBNZXJnZSB0aGUgdHdvIGRhdGFmcmFtZXMgc28gdGhhdCBsaWcgSURzIG1hdGNoIHVwIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCmxhcmdlZGYgPC0gbGVmdF9qb2luKGdlbmVkZiwgc2FtcGxlcywgYnkgPSAibGlnYXRpb25faWQiKSAlPiUgCiAgc2VsZWN0KHNhbXBsZV9pZCwgbGlnYXRpb25faWQsIGV2ZXJ5dGhpbmcoKSkgIyBtb3ZlIHRoZSBzYW1wbGVfaWQgY29sdW1uIHRvIHRoZSBiZWdpbm5pbmcKCiMgdGVzdHMgLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCiMgIyBtYWtlIHN1cmUgYWxsIG9mIHRoZSBMaWdhdGlvbiBpZHMgaGF2ZSBzYW1wbGUgaWRzCiMgZmlsdGVyKGxhcmdlZGYsIGlzLm5hKHNhbXBsZV9pZCkpCiMgIyByZXR1cm5zIDAgcm93cwojIG5yb3coZ2VuZWRmKSA9PSBucm93KGxhcmdlZGYpICMgc2hvdWxkIGJlIFRSVUUKIyAjICMgbG9vayBmb3IgbWlzc2luZyBuYW1lcwojIHNldGRpZmYoZ2VuZWRmJGxpZ2F0aW9uX2lkLCBsYXJnZWRmJGxpZ2F0aW9uX2lkKSAjIHNob3VsZCBiZSBjaGFyYWN0ZXIoMCkKCiMgc2hvdWxkIHJldHVybiBpbnRlZ2VyKDApCiMgZWxzZSB0cm91YmxlIDwtIGxhcmdlZGYgJT4lIGZpbHRlcihpcy5uYShsYXJnZWRmJHNhbXBsZV9pZCkpIC0gCiMgc2hvdWxkIGJlIG9uIHRoZSBrbm93biBpc3N1ZXMgdGFibGUKCiMgVEVTVCAtIG1ha2Ugc3VyZSBubyBtb3JlIG1hdGNoIHRoZSBsaXN0CiMgaiA8LSBsYXJnZWRmICU+JQojICAgZmlsdGVyKGxpZ2F0aW9uX2lkICVpbiUgaXNzJGxpZ2F0aW9uX2lkKQojIG5yb3coaikgIyBzaG91bGQgcmV0dXJuIDAKIyBybShqKQojIHJtKGdlbmVkZiwgc2FtcGxlcywgaXNzKQpgYGAKCiMgQ3JlYXRlIHRoZSBmaXNoLW9icyB0YWJsZQpgYGB7cn0KIyBjcmVhdGUKZmlzaF9nZW5zIDwtIGdldF9maXNoKCkgJT4lIAogIGZpbHRlcihzYW1wbGVfaWQgJWluJSBsYXJnZWRmJHNhbXBsZV9pZCkgJT4lIAogIHNlbGVjdChmaXNoX3RhYmxlX2lkLCBzYW1wbGVfaWQsIHRhZ19pZCkgJT4lIAogIG11dGF0ZShnZW5faWQgPSAxOm5yb3coLikpCgpmaXNoX3RhZ3MgPC0gZ2V0X2Zpc2goKSAlPiUgCiAgIyBrZWVwIGFueSBmaXNoIHRoYXQgaGF2ZSBiZWVuIHRhZ2dlZCAKICBmaWx0ZXIoIWlzLm5hKHRhZ19pZCkgJiAKICAgICAgICAgICAjIGJ1dCBub3QgZmlzaCByb3dzIHRoYXQgYXJlIGluIHRoZSBhYm92ZSB0YWJsZQogICAgICAgICAgICFmaXNoX3RhYmxlX2lkICVpbiUgZmlzaF9nZW5zJGZpc2hfdGFibGVfaWQpICU+JSAKICBzZWxlY3QoZmlzaF90YWJsZV9pZCwgc2FtcGxlX2lkLCB0YWdfaWQpICU+JSAKICAjIGFzc2lnbiBhIGdlbl9pZCB0byBldmVyeSBzYW1wbGVfaWQgaW4gdGhlIGdlbmVwb3Agd2hpY2ggaGFzIGJlZW4gc3VjY2Vzc2Z1bGx5IGdlbm90eXBlZAogIG11dGF0ZShnZW5faWQgPSBOQSkKCmZpc2hfb2JzIDwtIHJiaW5kKGZpc2hfZ2VucywgZmlzaF90YWdzKQoKIyB0ZXN0IC0gYXJlIHRoZXJlIGR1cGxpY2F0ZSByb3dzIG9mIGZpc2hfdGFibGVfaWRzCmZpc2hfb2JzICU+JSAKICBncm91cF9ieShmaXNoX3RhYmxlX2lkKSAlPiUgCiAgZmlsdGVyKG4oKSA+IDEpCgpzYXZlUkRTKGZpc2hfb2JzLCBoZXJlKCJkYXRhIiwgImZpc2gtb2JzLlJEYXRhIikpCmBgYAoKCiMgUmVtb3ZlIHJlZ2Vub3R5cGVkIHNhbXBsZXMgLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQoKIyBjb252ZXJ0IDAwMDAgdG8gTkEgaW4gdGhlIGdlbmVwb3AgZGF0YQpgYGB7cn0KbGFyZ2VkZiA8LSBsYXJnZWRmICU+JSAKICBuYV9pZiguLCAiMDAwMCIpCmBgYAoKCiMgIyBURVNUIC0gbWFrZSBzdXJlIHRoZXJlIGFyZSBubyAiMDAwMCIgbGVmdAojIHdoaWNoKGxhcmdlZGYgPT0gIjAwMDAiKSAjIHNob3VsZCByZXR1cm4gaW50ZWdlcigwKQoKIyBjb3VudCB0aGUgbnVtYmVyIG9mIGxvY2kgcGVyIGluZGl2aWR1YWwgKGhhdmUgdG8gdXNlIGZvciBsb29wKQpgYGB7cn0KIyBjcmVhdGUgYW4gb2JqZWN0IHRoYXQgaXMgdGhlIHRvdGFsIG51bWJlciBvZiBjZWxscyB0aGF0IGFyZSBub3QgTkEgZm9yIGVhY2ggcm93IGluIHRoZSBsYXJnZWRmCm51bWxvY2kgPC0gbGFyZ2VkZiAlPiUgCiAgaXMubmEgJT4lIAogIGAhYCAlPiUgCiAgcm93U3VtcwoKIyBhZGQgbnVtbG9jaSBhcyBhIGNvbHVtbgpsYXJnZWRmIDwtIGNiaW5kKGxhcmdlZGYsIG51bWxvY2kpCgoKIyAjIFRFU1QgLSBtYWtlIHN1cmUgYWxsIG9mIHRoZSBudW1sb2NpIHdlcmUgcG9wdWxhdGVkIC0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KIyB3aGljaChpcy5uYShsYXJnZWRmJG51bWxvY2kpKSAjIHNob3VsZCByZXR1cm4gaW50ZWdlcigwKQpgYGAKCgoKYGBge3J9CgojcnVuIHRocm91Z2ggYWxsIG9mIHRoZSBTYW1wbGVJRHMgdGhhdCBhcmUgZm91bmQgbW9yZSB0aGFuIG9uY2UgYW5kIGtlZXAgdGhlIG9uZSB3aXRoIHRoZSBtb3N0IGxvY2kKCiMgY3JlYXRlIGEgZGF0YSBmcmFtZSBvZiBzYW1wbGUgaWRzIHRvIGtlZXAgb3IgZHJvcCBiYXNlZCBvbiB0aGUgbnVtYmVyIG9mIGxvY2kgcHJlc2VudApyZWdlbm9fZHJvcCA8LSBsYXJnZWRmICU+JSAKICAjIHNlbGVjdCBvbmx5IHRoZSBjb2x1bW5zIHRvIGlkZW50aWZ5IHdoaWNoIHRvIGtlZXAKICBzZWxlY3Qoc2FtcGxlX2lkLCBsaWdhdGlvbl9pZCwgbnVtbG9jaSkgJT4lCiAgZ3JvdXBfYnkoc2FtcGxlX2lkKSAlPiUgCiAgIyBjcmVhdGUgYSBtYXhsb2NpIGNvbHVtbiB0aGF0IGhvbGRzIHRoZSBtb3N0IGxvY2kgZWFjaCBzYW1wbGUgaWQgY2FycmllcwogIG11dGF0ZShtYXhsb2NpID0gbWF4KG51bWxvY2kpLCAKICAgIyBjcmVhdGUgYSBkcm9wIGNvbHVtbiB0aGF0IGhvbGRzIHRoZSBkZWNpc2lvbiB0byBrZWVwIG9yIGRyb3AgdGhhdCByb3cKICAgICAgICAgZHJvcCA9IGlmZWxzZShudW1sb2NpID09IG1heGxvY2ksICJLRUVQIiwgIkRST1AiKSkgJT4lIAogICMga2VlcCBvbmx5IHRoZSBjb2x1bW5zIHRoYXQgaG9sZCB0aGUgbWF4bG9jaSBhbmQgc2F5ICJLRUVQIgogIGZpbHRlcihkcm9wID09ICJLRUVQIikgJT4lIAogIHVuZ3JvdXAoKSAlPiUgCiAgIyBrZWVwIG9ubHkgdGhlIGNvbHVtbnMgbmVlZGVkIHRvIGlkZW50aWZ5IHRoZXNlICJrZWVwZXIgcm93cyIKICBzZWxlY3QobGlnYXRpb25faWQpCgojIGtlZXAgb25seSB0aGUgdmVyc2lvbiBvZiB0aGUgc2FtcGxlIGlkIHRoYXQgaGFzIHRoZSBtb3N0IGxvY2kKbm9yZWdlbm8xIDwtIGxhcmdlZGYgJT4lIAogIGZpbHRlcihsaWdhdGlvbl9pZCAlaW4lIHJlZ2Vub19kcm9wJGxpZ2F0aW9uX2lkKQpgYGAKIyBTb21lIHNhbXBsZXMgd2VyZSBub3QgZHJvcHBlZCBiZWNhdXNlIGJvdGggcmVnZW5vdHlwZXMgaGF2ZSB0aGUgc2FtZSBudW1iZXIgb2YgbG9jaS4KYGBge3J9CnJlZ2Vub2QgPC0gbm9yZWdlbm8xICU+JQogIGZpbHRlcihkdXBsaWNhdGVkKG5vcmVnZW5vMSRzYW1wbGVfaWQpKSAlPiUKICBzZWxlY3Qoc2FtcGxlX2lkLCBsaWdhdGlvbl9pZCkgJT4lIAogIGRpc3RpbmN0KCkKCiMgZHJvcCB0aGUgbGlnYXRpb25faWRzIGZvciB0aGVzZSBkdXBsaWNhdGVkIHNhbXBsZXMKbm9yZWdlbm8gPC0gbm9yZWdlbm8xICU+JSAKICBmaWx0ZXIoIWxpZ2F0aW9uX2lkICVpbiUgcmVnZW5vZCRsaWdhdGlvbl9pZCkKCiMgbWFrZSBzdXJlIHRoZXJlIGlzIHN0aWxsIGEgdmVyc2lvbiBpbiB0aGUgZGF0YQp0ZXN0IDwtIG5vcmVnZW5vICU+JSAKICBzZWxlY3Qoc2FtcGxlX2lkKSAlPiUgCiAgZmlsdGVyKHNhbXBsZV9pZCAlaW4lIHJlZ2Vub2Qkc2FtcGxlX2lkKQojIHNob3VsZCBiZSBzYW1lIG51bWJlciBvZiByb3dzIGFzIHJlZ2Vub2QKYGBgCgoKUHJlcCBmb3Igd3JpdGluZyBnZW5lcG9wCmBgYHtyfQoKIyBjb252ZXJ0IGFsbCB0aGUgTkEgZ2Vub3R5cGVzIHRvIDAwMDAKbm9yZWdlbm9baXMubmEobm9yZWdlbm8pXSA9ICIwMDAwIgojIFRFU1QgLSBtYWtlIHN1cmUgdGhlcmUgYXJlIG5vIE5BJ3MgbGVmdAp3aGljaChpcy5uYShub3JlZ2VubykpICMgc2hvdWxkIHJldHVybiBpbnRlZ2VyKDApCgojICMgcmVtb3ZlIGdlbm90eXBlZCByZWNhcHR1cmVzIC0gb25seSBkbyB0aGlzIGlmIHlvdSBhcmUgYWJsc29sdXRlbHkgc3VyZSB5b3UgZG8gbm90IHdhbnQgdG8gZmluZCBuZXcgcmVjYXB0dXJlIGV2ZW50cyB3aXRoIHRoaXMgZGF0YQojIGxleXRlIDwtIHJlYWRfZGIoIkxleXRlIikKIyByZWNhcCA8LSBsZXl0ZSAlPiUgdGJsKCJjbG93bmZpc2giKSAlPiUgCiMgICBmaWx0ZXIoIWlzLm5hKGNhcF9pZCkpICU+JSAKIyAgIHNlbGVjdChzYW1wbGVfaWQsIGNhcF9pZCkgJT4lIAojICAgY29sbGVjdCgpCgojICMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIwojICMgIyBURVNUIC0gbWFrZSBzdXJlIGEgbGlzdCB3YXMgZ2VuZXJhdGVkCiMgayA8LSBucm93KHJlY2FwKQojIGsgIyAyNzcKCmBgYAoKCgojIDQpIE91dHB1dCBnZW5lcG9wIGZpbGUgLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0KCmBgYHtyfQojIEJ1aWxkIHRoZSBnZW5lcG9wIGNvbXBvbmVudHMKbXNnIDwtIGMoIlRoaXMgZ2VuZXBvcCBmaWxlIHdhcyBnZW5lcmF0ZWQgdXNpbmcgYSBzY3JpcHQgY2FsbGVkIHByb2Nlc3NfZ2VuZXBvcC5SbWQgd3JpdHRlbiBieSBNaWNoZWxsZSBTdHVhcnQgIikKd3JpdGVfbGluZXMobXNnLCBwYXRoID0gc3RyX2MoaGVyZSgiZGF0YSIsICJzZXEzMS0wM19ub3JlZ2Vuby5nZW4iKSwgc2VwID0gIiIpLCBhcHBlbmQgPSBGKQoKIyBmaW5kIGFsbCBvZiB0aGUgY29sdW1uIG5hbWVzIHRoYXQgY29udGFpbiBjb250aWcgYW5kIGNvbGxhcHNlIHRoZW0gaW50byBhIGNvbW1hIHNlcGFyYXRlZCBzdHJpbmcKbG9jaSA8LSAgc3RyX2MobmFtZXMoc2VsZWN0KG5vcmVnZW5vLCBjb250YWlucygiY29udGlnIikpKSwgY29sbGFwc2UgPSAiLCIpCndyaXRlX2xpbmVzKGxvY2ksIHBhdGggPSBzdHJfYyhoZXJlKCJkYXRhIiwgInNlcTMxLTAzX25vcmVnZW5vLmdlbiIpLCBzZXAgPSAiIiksIGFwcGVuZCA9IFQpCgpwb3AgPC0gInBvcCIKd3JpdGVfbGluZXMocG9wLCBwYXRoID0gc3RyX2MoaGVyZSgiZGF0YSIsICJzZXEzMS0wM19ub3JlZ2Vuby5nZW4iKSwgc2VwID0gIiIpLCBhcHBlbmQgPSBUKQoKZ2VuZSA8LSB2ZWN0b3IoKQpzYW1wbGUgPC0gdmVjdG9yKCkKIyB0aGlzIHRha2VzIGEgZmV3IG1pbnV0ZXMsIGxvb2sgYXQgdGhlIGZpbGUgc2l6ZSwgaXQgc2hvdWxkIGJlIGluY3JlYXNpbmcgc2xvd2x5Lgpmb3IgKGkgaW4gMTpucm93KG5vcmVnZW5vKSl7CiAgZ2VuZVtpXSA8LSBzdHJfYyhzZWxlY3Qobm9yZWdlbm9baSxdLCBjb250YWlucygiY29udGlnIikpLCBjb2xsYXBzZSA9ICIgIikKICBzYW1wbGVbaV0gPC0gc3RyX2Mobm9yZWdlbm8kbGlnYXRpb25faWRbaV0sIGdlbmVbaV0sIHNlcCA9ICIsICIpCiAgd3JpdGVfbGluZXMoc2FtcGxlW2ldLCBwYXRoID0gc3RyX2MoaGVyZSgiZGF0YSIsICJzZXEzMS0wM19ub3JlZ2Vuby5nZW4iKSwgc2VwID0gIiIpLCBhcHBlbmQgPSBUKQp9CmBgYAoK</div>
 
 
 
@@ -1898,6 +2036,29 @@ $(document).ready(function () {
 });
 
 </script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open')
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeSourceEmbed("05_remove-regenos.Rmd");
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
 
 <!-- dynamically load mathjax for compatibility with self-contained -->
 <script>
