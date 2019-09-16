@@ -41,10 +41,11 @@ ls /data/apcl/all_samples/20190916
 ```
 ## Remove the * file with fetch or an sftp program
 ##### Removing this is important, don't skip it ############
+Removed on 2019-09-16 at 3:10pm
 
 ## Make a directory at home to store this notebook and filtering files  
 ```{bash eval=FALSE}
-mkdir ~/02-apcl-ddocent/APCL_analysis/20190916
+mkdir ~/02-apcl-ddocent/APCL_analysis/genomics/lab-notebooks/20190916
 
 ## Copy over the reference fasta
 
@@ -57,8 +58,34 @@ ls *.F.fq.gz > namelist
 sed -i'' -e 's/.F.fq.gz//g' namelist
 ```
 
+# Try using dDocent through the conda - have to type this into the terminal window because dDocent is interactive
+```{bash}
+cd /data/apcl/all_samples/20190916
+
+source activate ddocent_env
+```
+3194 individuals
+20 out of 40 processors
+120 out of 252 max memory
+yes trim
+no assemble
+yes map
+no new parameters
+yes freebayes
+enter email
+Press control and Z simultaneously
+Type 'bg' without the quotes and press enter
+Type 'disown -h' again without the quotes and press enter
+
+
+--------------------------------------------------------------
+
 # Trim
 STACKS adds a strange _1 or _2 character to the end of processed reads, this looks for checks for errant characters and replaces them.
+```{r}
+Sys.time()
+```
+
 ```{bash eval=FALSE}
 cd /data/apcl/all_samples/20190916
 mkdir trim_reports
