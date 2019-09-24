@@ -1,0 +1,39 @@
+---
+title: "Test process rad tags in place of barcode splitter"
+output: html_notebook
+---
+
+Test process rad tags in place of barcode splitter
+
+Copy the [process radtags script](https://github.com/stuartmichelle/Genetics/blob/master/code/processr.sh) and the [readprocess.py script](https://github.com/stuartmichelle/Genetics/blob/master/code/readprocesslog.py) into the scripts directory.  
+* In this example I am copying the scripts from the last sequencing run scripts folder into the current sequencing run folder.*  
+16seq/scripts/readprocesslog.py ./scripts/
+
+- b: path to a file containing barcodes for this run.  
+- c: clean data, remove any read with an uncalled base.  
+- q: discard reads with low quality scores.  
+- renz_1 <enz>: provide the restriction enzyme used (cut site occurs on single-end read)  
+- renz_2 <enz>: if a double digest was used, provide the second restriction enzyme used (cut site occurs on the paired-end read).  
+- i: input file type, either 'bustard' for the Illumina BUSTARD format, 'bam', 'fastq' (default), or 'gzfastq' for gzipped FASTQ.  
+- adapter_1 <sequence>: provide adaptor sequence that may occur on the single-end read for filtering.
+- f: path to the input file if processing single-end sequences.
+
+**Because we are changing from reading the already demultiplexed barcoded samples to reading the pools with Illimina indices, changing from -f to -p and P**
+- p: path to a directory of files.  
+- P: files contained within directory specified by '-p' are paired.
+
+
+started at 2:25 on Monday, Sept 16, 2019  
+- files with the same names as the indices listed in the index file were created in the home directory (~) at 14:25 and I'll check back to see if they populate.
+```{bash}
+#!/bin/bash
+cd ~
+process_radtags -b ~/02-apcl-ddocent/31seq/logs/index-SEQ21_2.tsv -c -q --renz_1 pstI --renz_2 mluCI \
+-i gzfastq --adapter_1 ACACTCTTTCCCTACACGACGCTCTTCCGATCT \
+-p /local/shared/pinsky_lab/sequencing/hiseq_2018_10_03_SEQ31/lane1
+-P
+
+
+mv process_radtags.log test_31seq-process.log
+```
+
