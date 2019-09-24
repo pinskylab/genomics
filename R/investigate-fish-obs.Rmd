@@ -1,0 +1,5 @@
+---
+title: "Investigate fish-obs"
+output: html_notebook
+---
+Investigate the fish that were tag recaptures but not genetic recaptures and explain that the scanner was double checked to make sure the tag-id was not a type-o, the cervus comparison was checked to make sure they were not recaptures that the gen_id code somehow missed, and maybe even report why it was decided that they were not a recapture when looking at the cervus comparison.
