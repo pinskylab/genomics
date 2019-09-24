@@ -191,6 +191,7 @@ test <- noregeno %>%
 Prep for writing genepop
 ```{r}
 
+# convert all occurences of a value in the table to another value.
 # convert all the NA genotypes to 0000
 noregeno[is.na(noregeno)] = "0000"
 # TEST - make sure there are no NA's left

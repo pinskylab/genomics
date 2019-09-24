@@ -46,6 +46,7 @@ fish_inds <- fish_obs %>%
 # loop to make sure all recaptures of a fish get the same fish_indiv 
 for_processing <- fish_inds
 new_fish_indv <- tibble()
+Sys.time()
 while(nrow(for_processing) >= 1){
   # all rows that belong to this fish_table_id
   fti <- for_processing %>% 
@@ -88,20 +89,32 @@ while(nrow(for_processing) >= 1){
 
 }
 
+Sys.time()
 # test - are there repeat fish_table_ids - should return 0 rows
 test <- new_fish_indv %>% 
   group_by(fish_table_id) %>% 
   filter(n()> 1)
 rm(test)
 
+# add the fish_notes column from the database
+fish_notes <- leyte %>% tbl("clownfish") %>% collect() %>% 
+  filter(fish_table_id %in% new_fish_indv$fish_table_id) %>% 
+  select(fish_table_id, fish_notes)
+
+noted_fish_indv <- new_fish_indv %>% 
+  left_join(fish_notes, by = "fish_table_id") %>% 
+  rename(obs_notes = fish_notes)
+  
+
 save_loc <- here::here("data", "fish-obs.rds")
-saveRDS(new_fish_indv, file = save_loc)
+saveRDS(noted_fish_indv, file = save_loc)
+saveRDS(noted_fish_indv, here("data", "fish-obs.RData"))
 
 # save Rdata files as csv for easy reading from github
 # new_fish_indv <- readRDS(save_loc)
-write_csv(new_fish_indv, here("data", "fish-obs.csv"))
+write_csv(noted_fish_indv, here("data", "fish-obs.csv"))
 
-new_fish_indv
+noted_fish_indv
 ```
 
 
