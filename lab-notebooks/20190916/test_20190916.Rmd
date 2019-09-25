@@ -3,6 +3,13 @@ title: "2019-09-16 dDocent re-run"
 output: html_notebook
 ---
 
+```{r setup}
+library(dplyr)
+library(tidyr)
+library(readr)
+library(stringr)
+```
+
 Ran dDocent, entered manually on the command line, started on 9/16/2019
 
 - Checked in on the run at 10:30am on Tuesday, 9/17/2019 and it was running samtools on L0355.  Still a long ways to go.
