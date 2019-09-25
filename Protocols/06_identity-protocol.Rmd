@@ -19,11 +19,10 @@ library(janitor)
 library(geosphere)
 
 # load functions
-source("~/Documents/clownfish-pkg/R/db_connections.R")
-source("~/Documents/clownfishr/R/gen-data-funs.R")
-source("~/Documents/clownfishr/R/lab-data-funs.R")
-source("~/Documents/clownfish-pkg/R/funs-lab-meta.R")
-source("~/Documents/clownfishr/R/field-data-funs.R")
+source("~/db-connections.R")
+source(url("https://github.com/pinskylab/clownfishr/raw/master/R/gen-data-funs.R"))
+source(url("https://github.com/pinskylab/clownfishr/raw/master/R/field-data-funs.R"))
+source(url("https://github.com/pinskylab/clownfishr/raw/master/R/lab-data-funs.R"))
 
 # connect to databases
 leyte <- read_db("Leyte")
@@ -101,7 +100,7 @@ ggplot(idcsv, aes(x = mismatch_prop, y = matching_loci)) +
  
 ```
 #### Make a histogram of mismatch proportion
-```{r}
+```{r eval=FALSE}
 idcsv %>% 
   ggplot(aes(mismatch_prop)) +
   geom_histogram(binwidth = 0.001)
@@ -398,14 +397,15 @@ while(nrow(for_processing) >= 1){
   one_gen <- more_samps %>% 
     mutate(gen_id = min_gen)
   
-  for_processing <- anti_join(for_processing, one_gen, by = "sample_id")
-  
-  
   test <- one_gen %>% 
     distinct(gen_id)
   
   stopifnot(nrow(test)==1)
   
+  # remove this row because it is done being processed
+  for_processing <- anti_join(for_processing, one_gen, by = "sample_id")
+  
+  # add the processed rows to the output table
   gens_to_keep <- rbind(gens_to_keep, one_gen) %>% 
     distinct()
 
@@ -532,4 +532,4 @@ for (i in 1:nrow(norecaps)){
 }
 ```
 
-# Then run the recaptured-fish.Rmd protocol to make sure the gen_ids and tag_ids are all matched up in fish-obs.Rdata.
+# Now run the recaptured-fish.Rmd protocol to make sure the gen_ids and tag_ids are all matched up in fish-obs.Rdata.
