@@ -8,6 +8,7 @@ library(dplyr)
 library(tidyr)
 library(readr)
 library(stringr)
+library(purrr)
 ```
 
 Ran dDocent, entered manually on the command line, started on 9/16/2019
@@ -33,6 +34,7 @@ samples <- tibble(ligation_id = read_lines("namelist")) %>%
   mutate(ligation_id = str_replace(ligation_id, "APCL_", ""))
 
 issues <- readRDS(here::here("data", "known_issues.rds"))
+write_csv(issues, here::here("data", "known_issues.csv"))
 
 missing <- anti_join(issues, samples, by = "ligation_id") %>% 
   filter(!grepl("do not use", issue),
@@ -50,6 +52,7 @@ found <- not_missing %>%
 missing <- anti_join(missing, found, by = "ligation_id") %>% 
   arrange(ligation_id)
 
+write_csv(missing, here::here("data", "missing_from_all_samples.csv"))
 ```
 
 ```{bash}
