@@ -1,0 +1,21 @@
+ligation_id,issue
+L1349,2015-09-01: questionable sample identity
+L1607,"There was a label shift on this plate and this ligation does not match to the previous genotype - L1042, this does not appear to be APCL13_059, L1607 shows up as a potential parent for 18 offspring"
+L2249,2015-09-01: questionable sample identity
+L2451,2015-09-01: questionable sample identity
+L2532,2015-09-01: questionable sample identity
+L2533,2015-09-01: questionable sample identity
+L3021,"Is from Magbangon but matches to a sample from Palanas - never on the same plate, possible label issue"
+L3024,"distance error, matches with L0610, possible label error"
+L3111,"distance error, possible label error"
+L3112,"distance error, possible label error"
+L3122,"distance error, matches with L2754, potential extract label issue"
+L3127,"distance error, possible label error"
+L3128,"Is from Magbangon but matches to a sample from Palanas - never on the same plate, possible label issue"
+L3140,"distance error, possible label error"
+L3141,"distance error, possible label error"
+L3145,"Distance error, potiential extract labeling issue"
+L3154,"distance error, possible label error"
+L3156,"distance error, possible label error"
+L3159,"distance error, potential label issue"
+L3169,"[1] ""distance error, matches with L0424, L0722, L1738, possible labeling error (both of the other samples are from Visca, this sample is from San Agustin"

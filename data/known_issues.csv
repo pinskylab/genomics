@@ -1,0 +1,150 @@
+ligation_id,issue
+L0908,"This is from a contaminated digest, do not use"
+L0909,"This is from a contaminated digest, do not use"
+L3115,"This is from a contaminated digest, do not use"
+L0370,"matches L0742 with a distance error (~1.8km), lat longs check out, regenotype"
+L2988,"distance error, potential label issue"
+L0377,"Distance error, matches with L0974, regenotype"
+L0413,"This is not APCL13_040.  It is a fish caught in 2013 at Elementary School, probably one of APCL13_105-121 (those were on the sample plate).  Can't be 119 or 120 because those were larger than 11cm and this fish was 9.6 and 10.5 cm when caught in 2015,2016"
+L0415,"distance error, matches with L2935, compare fish on anemones to see if there is a labeling error"
+L0425,"lab error, matches exactly to L0427, until one of these matches to a different fish cannot know which one it really is."
+L0427,"lab error, matches exactly to L0425, until one of these matches to a different fish cannot know which one it really is."
+L0489,"extract plate label error, could be APCL13_535 (consecutive) or could be APCL13_537 if APCL13_534,APCL13_535 were mistype to 544, 545"
+L0490,"extract plate label error, could be APCL13_537 (consecutive) or could be APCL13_539 if APCL13_534,APCL13_535 were mistype to 544, 545"
+L0491,"extract plate label error, could be APCL13_538 (consecutive) or could be APCL13_540 if APCL13_534,APCL13_535 were mistype to 544, 545"
+L0493,"extract plate label error, could be APCL13_549 (consecutive) or could be APCL13_547 (strange tube order in freezer box)"
+L1607,"There was a label shift on this plate and this ligation does not match to the previous genotype - L1042, this does not appear to be APCL13_059, L1607 shows up as a potential parent for 18 offspring"
+L0595,"extract plate label error, could be 304 or 306"
+L0596,"Unsure which fin clip was placed in this extraction, APCL14_305 or APCL14_306, matches to APCL18_327 from Sitio Baybayon."
+L0610,"distance error, matches with L2900, possible extract label issue"
+L3145,"Distance error, potiential extract labeling issue"
+L3122,"distance error, matches with L2754, potential extract label issue"
+L0669,"extract plate label error, could be APCL13_534 (consecutive) or could be APCL13_536 if APCL13_534,APCL13_535 were mistype to 544, 545"
+L3033,"distance error, matches with L2935, compare fish on anemones to see if there is a labeling error"
+L0697,"Is from Magbangon but matches to a sample from Palanas (L0922) - never on the same plate, possible label issue"
+L0715,"This is from a contaminated digest, do not use"
+L0718,"This is from a contaminated digest, do not use"
+L0738,"distance error, matches with L2904, potential extract label issue"
+L3037,"Distance error >250m, potential label issue"
+L0781,"This is from a contaminated digest, do not use"
+L0863,"extract plate label error, could be APCL13_536 (consecutive) or could be APCL13_538 if APCL13_534,APCL13_535 were mistype to 544, 545"
+L0864,"extract plate label error, could be APCL13_539 (consecutive) or could be APCL13_541 if APCL13_534,APCL13_535 were mistype to 544, 545"
+L0865,"extract plate label error, could be APCL13_541 (consecutive) or could be APCL13_543 if APCL13_534,APCL13_535 were mistype to 544, 545"
+L0866,"extract plate label error, could be APCL13_542 (consecutive) or could be APCL13_544 if APCL13_534,APCL13_535 were mistype to 544, 545"
+L0867,"extract plate label error, could be APCL13_543 (consecutive) or could be APCL13_545 if APCL13_534,APCL13_535 were mistype to 544, 545"
+L0868,"extract plate label error, could be APCL13_547 (consecutive) or could be APCL13_553 (strange tube order in freezer box)"
+L0880,"extract plate label error, could be APCL13_540 (consecutive) or could be APCL13_542 if APCL13_534,APCL13_535 were mistype to 544, 545"
+L0912,"This group of samples all genotype as the same individual, lab error somewhere, regenotype"
+L0914,"This group of samples all genotype as the same individual, lab error somewhere, regenotype"
+L0916,"This group of samples all genotype as the same individual, lab error somewhere, regenotype"
+L0922,"Is from Palanas but matches to a sample from Magbangon (L0697), never on the same plate, regenotype"
+L0974,"This ligation matches to L5107, but this sample was captured at Palanasand that sample was captured at N. Magbangon.  There are seven possible alternate samples in the extraction plate."
+L3021,"Is from Magbangon but matches to a sample from Palanas - never on the same plate, possible label issue"
+L0973,"distance error, matches with L2754, potential extract label issue"
+L0913,Shows up as a potential parent for 15 offspring
+L3169,"[1] ""distance error, matches with L0424, L0722, L1738, possible labeling error (both of the other samples are from Visca, this sample is from San Agustin"
+L1072,"distance error, matches with L2731, regenotype"
+L1088,"distance error, matches with L2882, regenotype"
+L1216,"extract plate label error, could be APCL13_553 (consecutive) or could be APCL13_549 (strange tube order in freezer box)"
+L1238,"distance error, matches with L0846, potential label issue"
+L1241,"This is from a contaminated digest, don't use"
+L1251,"This is from a contaminated extract, don't use"
+L1276,"This is from a contaminated digest, don't use"
+L1288,"distance error, matches with L2764, potential extract labeling error
+"
+L1292,Contaminated extract
+L1345,"distance error, matches with L2818, potential extract labeling error"
+L1596,"ligation plate label error, put APCL14_303 in this spot and moved APCL13_048 down a spot, causing a shift in sample IDs for rest of pool, however, APCL14_303 was mislabeled and it's true identity cannot be determined (either 304 or 306)"
+L1627,Cannot know the id of this sample
+L1643,"didn't sequence well, cannot be sure which sample was placed in this well"
+L1644,"didn't sequence well, cannot be sure which sample was placed in this well"
+L1659,ligation plate label error
+L1667,"does not follow pattern of rest of plate, matches ?recapture? APCL14_357, APCL13_367 is also a potential ID for this sequence, distance error, matches with L0822, L2448, but these did not match each other, regenotype"
+L1668,"did not sequence well, regenotype"
+L1705,"This ligation is made from pulling a digest into the wrong well, could be a mixture of digests, don't use"
+L1726,unclear which is which
+L1727,unclear which is which
+L3111,"distance error, possible label error"
+L2250,"distance error, matches with L2904, regenotype"
+L3156,"distance error, possible label error"
+L3159,"distance error, potential label issue"
+L3128,"Is from Magbangon but matches to a sample from Palanas - never on the same plate, possible label issue"
+L3024,"distance error, matches with L0610, possible label error"
+L3141,"distance error, possible label error"
+L3154,"distance error, possible label error"
+L3112,"distance error, possible label error"
+L1616,This regenotype does not match the original nor any of the samples that were caught in other years on the same anemone.  The lack of match is due to low reads (~500).
+L3127,"distance error, possible label error"
+L2392,"This is from a contaminated digest, don't use"
+L3140,"distance error, possible label error"
+L2444,"Possible that the wrong extract was grabbed for this ligation - matches to id_error_2, regenotype"
+L0994,"This is from a contaminated digest, don't use"
+L0910,"This is from a contaminated digest, don't use"
+L0921,"This is from a contaiminated digest, don't use
+"
+L2850,"This is from a contaminated digest, don't use"
+L2529,"distance error, matches with L0747, regenotype"
+L2716,"distance error, matches with L0424, L0722, L1738, regenotype"
+L2764,"distance error, possible label error"
+L2818,"distance error, matches with L1345, regenotype"
+L2882,"distance error, matches with L1088, regenotype"
+L2900,"distance error, matches with L0610, possible label error"
+L2904,"distance error, matches with L0738, L2250, they don't match each other, possible label error"
+L2935,"distance error, matches with L0415, examine fish on both anemones to see if there is a labeling error somewhere"
+L3117,"This is from a contaminated extract, don't use"
+L0911,"This is from a contaminated digest, don't use
+"
+L3118,"A mixture of samples, unknown sample_id"
+L2245,"Changed sample_id from APCL14_131 to NULL. This sample failed to sequence.  When I went to add a note about failed sequencing to the Leyte database, APCL14_131 is not in the Leyte database because the sample # 131 collected in 2014 was an anemone, not a clownfish.  Ligation L2245 blasts to a damsel fish.  It is also hard to believe that while I was separating out vials of clownfish and anemones and labeling them as such, I would mistake an anemone sample for a clownfish sample.  I think that a clownfish sample was collected but not recorded on the data sheet."
+L4978,This ligation matches L5026 and has the same barcode number in an adjacent pool but not on the same plate.
+L5065,This ligation matches L2232 but is at a different site.  There are 5 possible fish that were caught at the right site that were also on the same plate as this ligation.
+L0626,"This ligation (from 2014) matches to L4435 and L5457 (both from 2016).  Those 2 were collected in Palanas, this was collected in N. Magbangon.  Either the fish moved or some other DNA than the one on the label went into this analysis.  We collected fish that were small enough and in the correct location to be a match for the 2016 fish, 8 are ungenotyped as of 2018."
+L0810,2015-09-01: questionable sample identity
+L0824,2015-09-01: questionable sample identity
+L0934,2015-09-01: questionable sample identity
+L1349,2015-09-01: questionable sample identity
+L0611,2015-09-01: questionable sample identity
+L0617,2015-09-01: questionable sample identity
+L0618,2015-09-01: questionable sample identity
+L2249,2015-09-01: questionable sample identity
+L2359,2015-09-01: questionable sample identity
+L2409,2015-09-01: questionable sample identity
+L2410,2015-09-01: questionable sample identity
+L2450,2015-09-01: questionable sample identity
+L2451,2015-09-01: questionable sample identity
+L2532,2015-09-01: questionable sample identity
+L2533,2015-09-01: questionable sample identity
+L2534,2015-09-01: questionable sample identity
+L2535,2015-09-01: questionable sample identity
+L2536,2015-09-01: questionable sample identity
+L2537,2015-09-01: questionable sample identity
+L2538,2015-09-01: questionable sample identity
+L2556,2015-09-01: questionable sample identity
+L2557,2015-09-01: questionable sample identity
+L2558,2015-09-01: questionable sample identity
+L2559,2015-09-01: questionable sample identity
+L5012,"matches to L4964, were in different pools but received the same barcode.  Clearly different fish.  "
+L0621,"This sample from 2014, APCL14_544 matches L5019, APCL16_254 but they are from different sites and many fish from the correct site are on the same plate for much of the lab work leading up to this ligation.  No robots were used in the making of this ligation."
+L2572,"This ligation matches L2579 but is at a different site, different size, same year.  These samples could have come into contact with each other during extraction or ligation."
+L2579,"This ligation matches L2572 but is at a different site, different size, same year.  These samples could have come into contact with each other during extraction or ligation."
+L1020,This ligation matches L5203 and L3608 but was captured at Wangag and they were captured at Palanas. The possibility of lab error cannot be ruled out because fish from Palanas were on the same digest plate.
+L4957,This ligation matches L5005 and has the same barcode number in an adjacent pool but not on the same plate.
+L0936,"This ligation matches to fish caught in Palanas but this fish was caught in Wangag and lab error cannot be ruled out.  Update: 2019-01-02, lab error is most likely because the sample that was thought to be long to this ligation, APCL14_450, was regenotyped and did not match back to this ligation. (L3145).  Removing sample_id from this ligation."
+L2837,"This ligation matches L3151 but is at a different site, different size, same year.  These samples could have come into contact with other during extraction."
+L5107,"This ligation matches to L0974, but that sample was captured at Palanas and this sample was captured at N. Magbangon.  There are one or two possible alternate samples in the digest and ligation plates."
+L5019,"This ligation matches to L0621, but that sample is at another site and is the same size 2 years earlier.  L5019 has the same barcode as 2 other samples that were captured near the location that L0621 was caught, L5211 and L4683 so lab error cannot be ruled out."
+L5050,"This ligation matches to L0687, but this sample was captured at Elementary School and that sample was captured at Poroc San Flower.  There are seven possible alternate samples in the extraction, digest, and ligation plates as well as 4 in the same pool."
+L4964,This ligation matches L5012 but that was caught in the same year at a different site.  These have the same barcode number and are in pools 92 and 93
+L1237,This ligation matches L3037 and L5267 but is at a different site.  Cannot rule out lab error as a possibility because this sample was on the same digest plate as another sample that was collected at Palanas in 2014 that has not be genotyped.
+L3151,"This ligation matches L2837 but is at a different site, different size, same year.  These samples could have come into contact with each other during extraction."
+L1637,Non-APCL specimen
+L0452,Non-APCL specimen
+L0843,Non-APCL specimen
+L1723,Non-APCL specimen
+L1638,"Non-APCL specimen,Unsure which fin clip was placed in this extraction"
+L0453,Non-APCL specimen
+L4980,This ligation is involved in 2 recapture id analysis results that are both too far to be realisitic.  This sample was on the same extraction and digest plate as one of the strange recapture results
+L4973,This sample is in the same row of a digest plate for a sample that was captured several kilometers away but returns as an identity match. I think it is contaminated
+L5021,This sample is in the same row of a digest plate for a sample that was captured several kilometers away but returns as an identity match. I think it is contaminated
+L4962,This sample is in the adjacent row of a digest plate for a sample (L5010) that was captured several kilometers away but returns as an identity match. I think it is contaminated
+L5010,This sample is in the adjacent row of a digest plate for a sample (L4962) that was captured several kilometers away but returns as an identity match. I think it is contaminated
