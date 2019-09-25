@@ -239,16 +239,60 @@ summary {
 <p>Did it include the files from known_issues?</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgYmFzaFxuXG5jcCAvZGF0YS9hcGNsL2FsbF9zYW1wbGVzLzIwMTkwOTE2L25hbWVsaXN0IC4vXG5cblxuYGBgIn0= -->
-<pre class="bash"><code>
-cp /data/apcl/all_samples/20190916/namelist ./
+<!-- rnb-source-begin eyJkYXRhIjoiY3AgL2RhdGEvYXBjbC9hbGxfc2FtcGxlcy8yMDE5MDkxNi9uYW1lbGlzdCAuLyJ9 -->
+<pre class="r"><code>cp /data/apcl/all_samples/20190916/namelist ./</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuXG5zYW1wbGVzIDwtIHRpYmJsZShsaWdhdGlvbl9pZCA9IHJlYWRfbGluZXMoXCJuYW1lbGlzdFwiKSkgJT4lIFxuICBtdXRhdGUobGlnYXRpb25faWQgPSBzdHJfcmVwbGFjZShsaWdhdGlvbl9pZCwgXCJBUENMX1wiLCBcIlwiKSlcblxuaXNzdWVzIDwtIHJlYWRSRFMoaGVyZTo6aGVyZShcImRhdGFcIiwgXCJrbm93bl9pc3N1ZXMucmRzXCIpKVxuXG5taXNzaW5nIDwtIGFudGlfam9pbihpc3N1ZXMsIHNhbXBsZXMsIGJ5ID0gXCJsaWdhdGlvbl9pZFwiKSAlPiUgXG4gIGZpbHRlcighZ3JlcGwoXCJkbyBub3QgdXNlXCIsIGlzc3VlKSxcbiAgICAgICAgICFncmVwbChcIk5vbi1BUENMXCIsIGlzc3VlKSlcblxubm90X21pc3NpbmcgPC0gbWFwX2Rmcih1bmlxdWUobWlzc2luZyRsaWdhdGlvbl9pZCksIH5zYW1wbGVzICU+JSBmaWx0ZXIoZ3JlcGwoLngsIGxpZ2F0aW9uX2lkKSkpICU+JSBcbiAgc2VwYXJhdGUobGlnYXRpb25faWQsIGludG8gPSBjKFwibGlnYXRpb25faWRcIiwgXCJyZWdlbm9cIiksIHNlcCA9IFwiXFxcXC5cIilcblxuZm91bmQgPC0gbm90X21pc3NpbmcgJT4lIFxuICBzZWxlY3QocmVnZW5vKSAlPiUgXG4gIHJlbmFtZShsaWdhdGlvbl9pZCA9IHJlZ2VubykgJT4lIFxuICByYmluZChzZWxlY3Qobm90X21pc3NpbmcsIGxpZ2F0aW9uX2lkKSkgJT4lIFxuICBmaWx0ZXIobGlnYXRpb25faWQgIT0gXCJGXCIpXG5cbm1pc3NpbmcgPC0gYW50aV9qb2luKG1pc3NpbmcsIGZvdW5kLCBieSA9IFwibGlnYXRpb25faWRcIikgJT4lIFxuICBhcnJhbmdlKGxpZ2F0aW9uX2lkKVxuXG5gYGAifQ== -->
+<pre class="r"><code>
+samples &lt;- tibble(ligation_id = read_lines(&quot;namelist&quot;)) %&gt;% 
+  mutate(ligation_id = str_replace(ligation_id, &quot;APCL_&quot;, &quot;&quot;))
+
+issues &lt;- readRDS(here::here(&quot;data&quot;, &quot;known_issues.rds&quot;))
+
+missing &lt;- anti_join(issues, samples, by = &quot;ligation_id&quot;) %&gt;% 
+  filter(!grepl(&quot;do not use&quot;, issue),
+         !grepl(&quot;Non-APCL&quot;, issue))
+
+not_missing &lt;- map_dfr(unique(missing$ligation_id), ~samples %&gt;% filter(grepl(.x, ligation_id))) %&gt;% 
+  separate(ligation_id, into = c(&quot;ligation_id&quot;, &quot;regeno&quot;), sep = &quot;\\.&quot;)
+
+found &lt;- not_missing %&gt;% 
+  select(regeno) %&gt;% 
+  rename(ligation_id = regeno) %&gt;% 
+  rbind(select(not_missing, ligation_id)) %&gt;% 
+  filter(ligation_id != &quot;F&quot;)
+
+missing &lt;- anti_join(missing, found, by = &quot;ligation_id&quot;) %&gt;% 
+  arrange(ligation_id)
+</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgYmFzaFxubWtkaXIgL2RhdGEvYXBjbC9hbGxfc2FtcGxlcy8yMDE5MDkyNVxuXG5tdiAvbG9jYWwvaG9tZS9taWNoZWxsZXMvMDItYXBjbC1kZG9jZW50L3JlZ2Vub3MvTDE2MDdfTDEwNDIuRi5mcS5neiAvZGF0YS9hcGNsL2FsbF9zYW1wbGVzLzIwMTkwOTI1L0wxNjA3LkwxMDQyLkYuZnEuZ3pcblxubXYgL2xvY2FsL2hvbWUvbWljaGVsbGVzLzAyLWFwY2wtZGRvY2VudC9yZWdlbm9zL0wwOTM2X0wzMTQ1LkYuZnEuZ3ogL2RhdGEvYXBjbC9hbGxfc2FtcGxlcy8yMDE5MDkyNS9MMDkzNi5MMzE0NS5GLmZxLmd6XG5cbm12IC9sb2NhbC9ob21lL21pY2hlbGxlcy8wMi1hcGNsLWRkb2NlbnQvcmVnZW5vcy9MMDk3M19MMzEyMi5GLmZxLmd6IC9kYXRhL2FwY2wvYWxsX3NhbXBsZXMvMjAxOTA5MjUvTDA5NzMuTDMxMjIuRi5mcS5nelxuXG5tdiAvbG9jYWwvaG9tZS9taWNoZWxsZXMvMDItYXBjbC1kZG9jZW50L3JlZ2Vub3MvTDA2OTdfTDMwMjEuRi5mcS5neiAvZGF0YS9hcGNsL2FsbF9zYW1wbGVzLzIwMTkwOTI1L0wwNjk3LkwzMDIxLkYuZnEuZ3pcblxubXYgL2xvY2FsL2hvbWUvbWljaGVsbGVzLzAyLWFwY2wtZGRvY2VudC9yZWdlbm9zL0wyNzE2X0wzMTY5LkYuZnEuZ3ogL2RhdGEvYXBjbC9hbGxfc2FtcGxlcy8yMDE5MDkyNS9MMjcxNi5MMzE2OS5GLmZxLmd6XG5cblxuXG5cblxuYGBgIn0= -->
+<pre class="bash"><code>mkdir /data/apcl/all_samples/20190925
+
+mv /local/home/michelles/02-apcl-ddocent/regenos/L1607_L1042.F.fq.gz /data/apcl/all_samples/20190925/L1607.L1042.F.fq.gz
+
+mv /local/home/michelles/02-apcl-ddocent/regenos/L0936_L3145.F.fq.gz /data/apcl/all_samples/20190925/L0936.L3145.F.fq.gz
+
+mv /local/home/michelles/02-apcl-ddocent/regenos/L0973_L3122.F.fq.gz /data/apcl/all_samples/20190925/L0973.L3122.F.fq.gz
+
+mv /local/home/michelles/02-apcl-ddocent/regenos/L0697_L3021.F.fq.gz /data/apcl/all_samples/20190925/L0697.L3021.F.fq.gz
+
+mv /local/home/michelles/02-apcl-ddocent/regenos/L2716_L3169.F.fq.gz /data/apcl/all_samples/20190925/L2716.L3169.F.fq.gz
 </code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 
-<div id="rmd-source-code">LS0tCnRpdGxlOiAiMjAxOS0wOS0xNiBkRG9jZW50IHJlLXJ1biIKb3V0cHV0OiBodG1sX25vdGVib29rCi0tLQoKUmFuIGREb2NlbnQsIGVudGVyZWQgbWFudWFsbHkgb24gdGhlIGNvbW1hbmQgbGluZSwgc3RhcnRlZCBvbiA5LzE2LzIwMTkKCi0gQ2hlY2tlZCBpbiBvbiB0aGUgcnVuIGF0IDEwOjMwYW0gb24gVHVlc2RheSwgOS8xNy8yMDE5IGFuZCBpdCB3YXMgcnVubmluZyBzYW10b29scyBvbiBMMDM1NS4gIFN0aWxsIGEgbG9uZyB3YXlzIHRvIGdvLgotIENoZWNrZWQgYXQgNjo0NWFtIG9uIFdlZG5lc2RheSwgOS8xOC8yMDE5LCBydW5uaW5nIGJlZHRvb2xzIGFuZCB3cml0aW5nIHRvIG1hcHBlZC5iZWQKLSBDaGVja2VkIGF0IDJwbSBvbiA5LzE5LzIwMTksIHJ1bm5pbmcgZnJlZWJheWVzCi0gQ2hlY2tlZCBhdCA4OjU1YW0gb24gOS8yMC8yMDE5LCBydW5uaW5nIGZyZWViYXllcwotIGNoZWNrZWQgYXQgMTE6MDBhbSBvbiA5LzIxLzIwMTksIHJ1bm5pbmcgZnJlZWJheWVzLCAyNmdpZyBvZiBtZW1vcnkgZnJlZSBpbiB0aGUgYnVmZmVycy9jYWNoZQoKRmluaXNoZWQgb24gU3VuZGF5LCA5LzIyLzIwMTkuCgpEaWQgaXQgaW5jbHVkZSB0aGUgZmlsZXMgZnJvbSBrbm93bl9pc3N1ZXM/CmBgYHtiYXNofQoKY3AgL2RhdGEvYXBjbC9hbGxfc2FtcGxlcy8yMDE5MDkxNi9uYW1lbGlzdCAuLwoKCmBgYAoK</div>
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiMjAxOS0wOS0xNiBkRG9jZW50IHJlLXJ1biIKb3V0cHV0OiBodG1sX25vdGVib29rCi0tLQoKUmFuIGREb2NlbnQsIGVudGVyZWQgbWFudWFsbHkgb24gdGhlIGNvbW1hbmQgbGluZSwgc3RhcnRlZCBvbiA5LzE2LzIwMTkKCi0gQ2hlY2tlZCBpbiBvbiB0aGUgcnVuIGF0IDEwOjMwYW0gb24gVHVlc2RheSwgOS8xNy8yMDE5IGFuZCBpdCB3YXMgcnVubmluZyBzYW10b29scyBvbiBMMDM1NS4gIFN0aWxsIGEgbG9uZyB3YXlzIHRvIGdvLgotIENoZWNrZWQgYXQgNjo0NWFtIG9uIFdlZG5lc2RheSwgOS8xOC8yMDE5LCBydW5uaW5nIGJlZHRvb2xzIGFuZCB3cml0aW5nIHRvIG1hcHBlZC5iZWQKLSBDaGVja2VkIGF0IDJwbSBvbiA5LzE5LzIwMTksIHJ1bm5pbmcgZnJlZWJheWVzCi0gQ2hlY2tlZCBhdCA4OjU1YW0gb24gOS8yMC8yMDE5LCBydW5uaW5nIGZyZWViYXllcwotIGNoZWNrZWQgYXQgMTE6MDBhbSBvbiA5LzIxLzIwMTksIHJ1bm5pbmcgZnJlZWJheWVzLCAyNmdpZyBvZiBtZW1vcnkgZnJlZSBpbiB0aGUgYnVmZmVycy9jYWNoZQoKRmluaXNoZWQgb24gU3VuZGF5LCA5LzIyLzIwMTkuCgpEaWQgaXQgaW5jbHVkZSB0aGUgZmlsZXMgZnJvbSBrbm93bl9pc3N1ZXM/CgpgYGB7YmFzaCBldmFsPUZBTFNFfQpjcCAvZGF0YS9hcGNsL2FsbF9zYW1wbGVzLzIwMTkwOTE2L25hbWVsaXN0IC4vCmBgYAoKCmBgYHtyfQoKc2FtcGxlcyA8LSB0aWJibGUobGlnYXRpb25faWQgPSByZWFkX2xpbmVzKCJuYW1lbGlzdCIpKSAlPiUgCiAgbXV0YXRlKGxpZ2F0aW9uX2lkID0gc3RyX3JlcGxhY2UobGlnYXRpb25faWQsICJBUENMXyIsICIiKSkKCmlzc3VlcyA8LSByZWFkUkRTKGhlcmU6OmhlcmUoImRhdGEiLCAia25vd25faXNzdWVzLnJkcyIpKQoKbWlzc2luZyA8LSBhbnRpX2pvaW4oaXNzdWVzLCBzYW1wbGVzLCBieSA9ICJsaWdhdGlvbl9pZCIpICU+JSAKICBmaWx0ZXIoIWdyZXBsKCJkbyBub3QgdXNlIiwgaXNzdWUpLAogICAgICAgICAhZ3JlcGwoIk5vbi1BUENMIiwgaXNzdWUpKQoKbm90X21pc3NpbmcgPC0gbWFwX2Rmcih1bmlxdWUobWlzc2luZyRsaWdhdGlvbl9pZCksIH5zYW1wbGVzICU+JSBmaWx0ZXIoZ3JlcGwoLngsIGxpZ2F0aW9uX2lkKSkpICU+JSAKICBzZXBhcmF0ZShsaWdhdGlvbl9pZCwgaW50byA9IGMoImxpZ2F0aW9uX2lkIiwgInJlZ2VubyIpLCBzZXAgPSAiXFwuIikKCmZvdW5kIDwtIG5vdF9taXNzaW5nICU+JSAKICBzZWxlY3QocmVnZW5vKSAlPiUgCiAgcmVuYW1lKGxpZ2F0aW9uX2lkID0gcmVnZW5vKSAlPiUgCiAgcmJpbmQoc2VsZWN0KG5vdF9taXNzaW5nLCBsaWdhdGlvbl9pZCkpICU+JSAKICBmaWx0ZXIobGlnYXRpb25faWQgIT0gIkYiKQoKbWlzc2luZyA8LSBhbnRpX2pvaW4obWlzc2luZywgZm91bmQsIGJ5ID0gImxpZ2F0aW9uX2lkIikgJT4lIAogIGFycmFuZ2UobGlnYXRpb25faWQpCgpgYGAKCmBgYHtiYXNofQpta2RpciAvZGF0YS9hcGNsL2FsbF9zYW1wbGVzLzIwMTkwOTI1CgptdiAvbG9jYWwvaG9tZS9taWNoZWxsZXMvMDItYXBjbC1kZG9jZW50L3JlZ2Vub3MvTDE2MDdfTDEwNDIuRi5mcS5neiAvZGF0YS9hcGNsL2FsbF9zYW1wbGVzLzIwMTkwOTI1L0wxNjA3LkwxMDQyLkYuZnEuZ3oKCm12IC9sb2NhbC9ob21lL21pY2hlbGxlcy8wMi1hcGNsLWRkb2NlbnQvcmVnZW5vcy9MMDkzNl9MMzE0NS5GLmZxLmd6IC9kYXRhL2FwY2wvYWxsX3NhbXBsZXMvMjAxOTA5MjUvTDA5MzYuTDMxNDUuRi5mcS5negoKbXYgL2xvY2FsL2hvbWUvbWljaGVsbGVzLzAyLWFwY2wtZGRvY2VudC9yZWdlbm9zL0wwOTczX0wzMTIyLkYuZnEuZ3ogL2RhdGEvYXBjbC9hbGxfc2FtcGxlcy8yMDE5MDkyNS9MMDk3My5MMzEyMi5GLmZxLmd6CgptdiAvbG9jYWwvaG9tZS9taWNoZWxsZXMvMDItYXBjbC1kZG9jZW50L3JlZ2Vub3MvTDA2OTdfTDMwMjEuRi5mcS5neiAvZGF0YS9hcGNsL2FsbF9zYW1wbGVzLzIwMTkwOTI1L0wwNjk3LkwzMDIxLkYuZnEuZ3oKCm12IC9sb2NhbC9ob21lL21pY2hlbGxlcy8wMi1hcGNsLWRkb2NlbnQvcmVnZW5vcy9MMjcxNl9MMzE2OS5GLmZxLmd6IC9kYXRhL2FwY2wvYWxsX3NhbXBsZXMvMjAxOTA5MjUvTDI3MTYuTDMxNjkuRi5mcS5negoKCgoKCmBgYAoK</div>
 
 
 

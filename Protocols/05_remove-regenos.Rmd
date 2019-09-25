@@ -46,7 +46,7 @@ iss <- lab %>% tbl("known_issues") %>% collect()
 genedf <- genedf_raw %>% 
   rename(ligation_id = sample) %>% 
   # 2) strip any named samples down to pure ligation number ---- 
-  mutate(ligation_id = str_extract(ligation_id, "L\\d+"))
+  mutate(ligation_id = str_replace(ligation_id, "APCL_", ""))
 ```
 
 # 2) Remove samples with known issues -------------------------------------
