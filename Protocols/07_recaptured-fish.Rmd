@@ -16,7 +16,6 @@ library(clownfishr)
 # library(tidylog)
  
 # load functions
-# # because the myconfig db connection is still not working
 source("~/db-connections.R")
 
 # connect to database
@@ -43,7 +42,7 @@ fish_inds <- fish_obs %>%
 # for fish that have both a tag_id and gen_id, use gen_id
   mutate(fish_indiv = ifelse(!is.na(gen_id) & !is.na(tag_id), gen_id, fish_indiv))
 
-# loop to make sure all recaptures of a fish get the same fish_indiv 
+# loop to make sure all recaptures of a fish get the same fish_indiv - takes about a minute
 for_processing <- fish_inds
 new_fish_indv <- tibble()
 Sys.time()
