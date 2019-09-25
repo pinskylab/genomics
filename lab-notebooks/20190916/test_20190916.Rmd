@@ -1,0 +1,20 @@
+---
+title: "2019-09-16 dDocent re-run"
+output: html_notebook
+---
+
+Ran dDocent, entered manually on the command line, started on 9/16/2019
+
+- Checked in on the run at 10:30am on Tuesday, 9/17/2019 and it was running samtools on L0355.  Still a long ways to go.
+- Checked at 6:45am on Wednesday, 9/18/2019, running bedtools and writing to mapped.bed
+- Checked at 2pm on 9/19/2019, running freebayes
+- Checked at 8:55am on 9/20/2019, running freebayes
+- checked at 11:00am on 9/21/2019, running freebayes, 26gig of memory free in the buffers/cache
+
+Finished on Sunday, 9/22/2019.
+
+Did it include the files from known_issues?
+```{r}
+known_issues <- readRDS(here::here("data", "known_issues"))
+```
+
