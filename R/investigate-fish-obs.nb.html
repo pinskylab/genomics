@@ -1752,27 +1752,11 @@ summary {
 <p>Investigate the fish that were tag recaptures but not genetic recaptures and explain that - the scanner was double checked to make sure the tag-id was not a type-o, - the cervus comparison was checked to make sure they were not recaptures that the gen_id code somehow missed, - and maybe even report why it was decided that they were not a recapture when looking at the cervus comparison.</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBsb2FkIGxpYnJhcmllc1xubGlicmFyeSh0aWR5dmVyc2UpXG5gYGAifQ== -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBsb2FkIGxpYnJhcmllc1xubGlicmFyeSh0aWR5dmVyc2UpXG5cbiMgbG9hZCBmdW5jdGlvbnNcbnNvdXJjZShcIn4vZGItY29ubmVjdGlvbnMuUlwiKVxuXG4jIGNvbm5lY3QgdG8gZGJcbmxleXRlIDwtIHJlYWRfZGIoXCJMZXl0ZVwiKVxuXG4jIGxvYWQgZGF0YVxuZmlzaF9vYnMgPC0gcmVhZFJEUyh1cmwoXCJodHRwczovL2dpdGh1Yi5jb20vcGluc2t5bGFiL2dlbm9taWNzL2Jsb2IvbWFzdGVyL2RhdGEvZmlzaC1vYnMucmRzP3Jhdz10cnVlXCIpKVxuXG5waXQgPC0gbGV5dGUgJT4lIHRibChcInBpdHNjYW5cIikgJT4lICBjb2xsZWN0KClcblxuZmlzaF9kYiA8LSBsZXl0ZSAlPiUgdGJsKFwiY2xvd25maXNoXCIpICU+JSAgY29sbGVjdCgpXG5cbmFuZW1fZGIgPC0gbGV5dGUgJT4lIHRibChcImFuZW1vbmVzXCIpICU+JSBjb2xsZWN0KClcblxuZGl2ZV9kYiA8LSBsZXl0ZSAlPiUgdGJsKFwiZGl2ZWluZm9cIikgJT4lICBjb2xsZWN0KClcbmBgYCJ9 -->
 <pre class="r"><code># load libraries
-library(tidyverse)</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiUmVnaXN0ZXJlZCBTMyBtZXRob2Qgb3ZlcndyaXR0ZW4gYnkgJ2RwbHlyJzpcbiAgbWV0aG9kICAgICAgICAgICBmcm9tXG4gIHByaW50LnJvd3dpc2VfZGYgICAgIFxuXHUwMDFiWzMwbeKUgOKUgCBcdTAwMWJbMW1BdHRhY2hpbmcgcGFja2FnZXNcdTAwMWJbMjJtIOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgCB0aWR5dmVyc2UgMS4yLjEg4pSA4pSAXHUwMDFiWzM5bVxuXHUwMDFiWzMwbVx1MDAxYlszMm3inJRcdTAwMWJbMzBtIFx1MDAxYlszNG1nZ3Bsb3QyXHUwMDFiWzMwbSAzLjIuMCAgICAgXHUwMDFiWzMybeKclFx1MDAxYlszMG0gXHUwMDFiWzM0bXB1cnJyICBcdTAwMWJbMzBtIDAuMy4yXG5cdTAwMWJbMzJt4pyUXHUwMDFiWzMwbSBcdTAwMWJbMzRtdGliYmxlIFx1MDAxYlszMG0gMi4xLjMgICAgIFx1MDAxYlszMm3inJRcdTAwMWJbMzBtIFx1MDAxYlszNG1kcGx5ciAgXHUwMDFiWzMwbSAwLjguM1xuXHUwMDFiWzMybeKclFx1MDAxYlszMG0gXHUwMDFiWzM0bXRpZHlyICBcdTAwMWJbMzBtIDAuOC4zICAgICBcdTAwMWJbMzJt4pyUXHUwMDFiWzMwbSBcdTAwMWJbMzRtc3RyaW5nclx1MDAxYlszMG0gMS40LjBcblx1MDAxYlszMm3inJRcdTAwMWJbMzBtIFx1MDAxYlszNG1yZWFkciAgXHUwMDFiWzMwbSAxLjMuMSAgICAgXHUwMDFiWzMybeKclFx1MDAxYlszMG0gXHUwMDFiWzM0bWZvcmNhdHNcdTAwMWJbMzBtIDAuNC4wXHUwMDFiWzM5bVxuXHUwMDFiWzMwbeKUgOKUgCBcdTAwMWJbMW1Db25mbGljdHNcdTAwMWJbMjJtIOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgOKUgCB0aWR5dmVyc2VfY29uZmxpY3RzKCkg4pSA4pSAXG5cdTAwMWJbMzFt4pyWXHUwMDFiWzMwbSBcdTAwMWJbMzRtZHBseXJcdTAwMWJbMzBtOjpcdTAwMWJbMzJtZmlsdGVyKClcdTAwMWJbMzBtICBtYXNrcyBcdTAwMWJbMzRtc3RhdHNcdTAwMWJbMzBtOjpmaWx0ZXIoKVxuXHUwMDFiWzMxbeKcllx1MDAxYlszMG0gXHUwMDFiWzM0bXB1cnJyXHUwMDFiWzMwbTo6XHUwMDFiWzMybWlzX251bGwoKVx1MDAxYlszMG0gbWFza3MgXHUwMDFiWzM0bXRlc3R0aGF0XHUwMDFiWzMwbTo6aXNfbnVsbCgpXG5cdTAwMWJbMzFt4pyWXHUwMDFiWzMwbSBcdTAwMWJbMzRtZHBseXJcdTAwMWJbMzBtOjpcdTAwMWJbMzJtbGFnKClcdTAwMWJbMzBtICAgICBtYXNrcyBcdTAwMWJbMzRtc3RhdHNcdTAwMWJbMzBtOjpsYWcoKVxuXHUwMDFiWzMxbeKcllx1MDAxYlszMG0gXHUwMDFiWzM0bWRwbHlyXHUwMDFiWzMwbTo6XHUwMDFiWzMybW1hdGNoZXMoKVx1MDAxYlszMG0gbWFza3MgXHUwMDFiWzM0bXRlc3R0aGF0XHUwMDFiWzMwbTo6bWF0Y2hlcygpXHUwMDFiWzM5bVxuIn0= -->
-<pre><code>Registered S3 method overwritten by &#39;dplyr&#39;:
-  method           from
-  print.rowwise_df     
-[30m── [1mAttaching packages[22m ────────────────────────── tidyverse 1.2.1 ──[39m
-[30m[32m✔[30m [34mggplot2[30m 3.2.0     [32m✔[30m [34mpurrr  [30m 0.3.2
-[32m✔[30m [34mtibble [30m 2.1.3     [32m✔[30m [34mdplyr  [30m 0.8.3
-[32m✔[30m [34mtidyr  [30m 0.8.3     [32m✔[30m [34mstringr[30m 1.4.0
-[32m✔[30m [34mreadr  [30m 1.3.1     [32m✔[30m [34mforcats[30m 0.4.0[39m
-[30m── [1mConflicts[22m ───────────────────────────── tidyverse_conflicts() ──
-[31m✖[30m [34mdplyr[30m::[32mfilter()[30m  masks [34mstats[30m::filter()
-[31m✖[30m [34mpurrr[30m::[32mis_null()[30m masks [34mtestthat[30m::is_null()
-[31m✖[30m [34mdplyr[30m::[32mlag()[30m     masks [34mstats[30m::lag()
-[31m✖[30m [34mdplyr[30m::[32mmatches()[30m masks [34mtestthat[30m::matches()[39m</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyBsb2FkIGZ1bmN0aW9uc1xuc291cmNlKFwifi9kYi1jb25uZWN0aW9ucy5SXCIpXG5cbiMgY29ubmVjdCB0byBkYlxubGV5dGUgPC0gcmVhZF9kYihcIkxleXRlXCIpXG5cbiMgbG9hZCBkYXRhXG5maXNoX29icyA8LSByZWFkUkRTKHVybChcImh0dHBzOi8vZ2l0aHViLmNvbS9waW5za3lsYWIvZ2Vub21pY3MvYmxvYi9tYXN0ZXIvZGF0YS9maXNoLW9icy5yZHM/cmF3PXRydWVcIikpXG5cbnBpdCA8LSBsZXl0ZSAlPiUgdGJsKFwicGl0c2NhblwiKSAlPiUgIGNvbGxlY3QoKVxuYGBgIn0= -->
-<pre class="r"><code># load functions
+library(tidyverse)
+
+# load functions
 source(&quot;~/db-connections.R&quot;)
 
 # connect to db
@@ -1781,16 +1765,9 @@ leyte &lt;- read_db(&quot;Leyte&quot;)
 # load data
 fish_obs &lt;- readRDS(url(&quot;https://github.com/pinskylab/genomics/blob/master/data/fish-obs.rds?raw=true&quot;))
 
-pit &lt;- leyte %&gt;% tbl(&quot;pitscan&quot;) %&gt;%  collect()</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiUmVnaXN0ZXJlZCBTMyBtZXRob2RzIG92ZXJ3cml0dGVuIGJ5ICdkYnBseXInOlxuICBtZXRob2QgICAgICAgICBmcm9tXG4gIHByaW50LnRibF9sYXp5ICAgICBcbiAgcHJpbnQudGJsX3NxbCAgICAgIFxuIn0= -->
-<pre><code>Registered S3 methods overwritten by &#39;dbplyr&#39;:
-  method         from
-  print.tbl_lazy     
-  print.tbl_sql      </code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuZmlzaF9kYiA8LSBsZXl0ZSAlPiUgdGJsKFwiY2xvd25maXNoXCIpICU+JSAgY29sbGVjdCgpXG5cbmFuZW1fZGIgPC0gbGV5dGUgJT4lIHRibChcImFuZW1vbmVzXCIpICU+JSBjb2xsZWN0KClcblxuZGl2ZV9kYiA8LSBsZXl0ZSAlPiUgdGJsKFwiZGl2ZWluZm9cIikgJT4lICBjb2xsZWN0KClcbmBgYCJ9 -->
-<pre class="r"><code>fish_db &lt;- leyte %&gt;% tbl(&quot;clownfish&quot;) %&gt;%  collect()
+pit &lt;- leyte %&gt;% tbl(&quot;pitscan&quot;) %&gt;%  collect()
+
+fish_db &lt;- leyte %&gt;% tbl(&quot;clownfish&quot;) %&gt;%  collect()
 
 anem_db &lt;- leyte %&gt;% tbl(&quot;anemones&quot;) %&gt;% collect()
 
@@ -1852,10 +1829,76 @@ dive_db &lt;- leyte %&gt;% tbl(&quot;diveinfo&quot;) %&gt;%  collect()</code></p
 <!-- rnb-frame-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
+</div>
+<div id="check-identity-analysis-to-see-if-these-fish-matched-to-other-fish" class="section level1">
+<h1>Check identity analysis to see if these fish matched to other fish</h1>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-frame-begin eyJtZXRhZGF0YSI6eyJjbGFzc2VzIjpbInNwZWNfdGJsX2RmIiwidGJsX2RmIiwidGJsIiwiZGF0YS5mcmFtZSJdLCJuY29sIjoyLCJucm93Ijo3fSwicmRmIjoiSDRzSUFBQUFBQUFBQTNXUlhVK0RNQlNHeno3WU1wSTVFbjhIaEEraDQ5Sm92UExDR0UxMlJ5b3dKYkpDYUJlOTlHOTdNMnloTmFNb1NlbnAwN2VuN3psOXZOMEY1czRFZ0JuTUZoT1lHVHdFNC9ucHp0NEN6S2Q4TVlFNXJNVDh5VVdYUEJEUTRtTXBOOWJYRHpmM1hwZ0VLUENSTzRMZVZSU01ZSWdpVDRkeEhDSUZ6UTVHaVkvaUFVR0o3MjcvSUVOSHY2ZGpmMFRRaUxnYUNiMUl0eFp5WitHLzFqVFpzRzJycHZwd0NEN2tWQ2hGKzc3NHIyM2JiMDFvcENXbVZGYWlvSmxoaHAxOXc4L3JjcFhUNnA2a2g1dDkwVkNXVUh5b3l6d3BNb2t0bXFjVnljNDR3RW5MdDZ4cVZsU0VaNXlLUnpZMEk1TkdBNXNqRVE0eU8zMDdrbmM3RUdhNzdmNWJ5M2g1RmsvN0srZXRUR1hJVkl1Y3ZCWWtWNFdWK0NVdjVlS0NkNjhyMUttYmdqRFZGVTZwd3lxR2xjNU1xMUtScmpZNC9RQWdHT2ZtMndJQUFBPT0ifQ== -->
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":["first_sample_id"],"name":[1],"type":["chr"],"align":["left"]},{"label":["second_sample_id"],"name":[2],"type":["chr"],"align":["left"]}],"data":[{"1":"APCL15_373270","2":"APCL16_292"},{"1":"APCL15_371463","2":"APCL16_297"},{"1":"APCL15_375761","2":"APCL16_290"},{"1":"APCL15_399571","2":"APCL16_516"},{"1":"APCL16_279","2":"APCL15_355715"},{"1":"APCL17_208","2":"APCL16_279"},{"1":"APCL17_208","2":"APCL15_355715"}],"options":{"columns":{"min":{},"max":[10],"total":[2]},"rows":{"min":[10],"max":[10],"total":[7]},"pages":{}}}
+  </script>
+</div>
+<!-- rnb-frame-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+</div>
+<div id="these-fish-have-matching-genotypes" class="section level1">
+<h1>These fish have matching genotypes</h1>
+<p>but for some reason doesn’t have the same gen_id, need to revisit 06_identity-protocol.Rmd and figure out why this hasn’t assigned properly.</p>
+<ol style="list-style-type: decimal">
+<li>APCL15_373270 matches APCL16_292</li>
+<li>APCL15_371463 matches APCL16_297<br />
+</li>
+<li>APCL15_399571 matches APCL16_516<br />
+</li>
+<li>APCL16_279 matches APCL15_355715 and APCL17_208</li>
+<li>APCL15_375761 matches APCL16_290</li>
+</ol>
+</div>
+<div id="which-samples-dont-have-matching-genotypes" class="section level1">
+<h1>Which samples don’t have matching genotypes?</h1>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxucGl0b2lfaWQgPC0gcGl0b2kgJT4lIFxuICBmaWx0ZXIoIShzYW1wbGVfaWQgJWluJSBpZF9hbmFseXNpcyRmaXJzdF9zYW1wbGVfaWQgfCBcbiAgICAgICAgICAgc2FtcGxlX2lkICVpbiUgaWRfYW5hbHlzaXMkc2Vjb25kX3NhbXBsZV9pZCkpXG5gYGAifQ== -->
+<pre class="r"><code>pitoi_id &lt;- pitoi %&gt;% 
+  filter(!(sample_id %in% id_analysis$first_sample_id | 
+           sample_id %in% id_analysis$second_sample_id))</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>APCL17_469 and APCL15_375244 don’t show up in the id_analysis at all.</p>
+<p>Check out all comparisons and see what happened.</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuIyB3aGF0IGFyZSB0aGUgbGlnYXRpb24gaWRzIGZvciB0aGVzZSBzYW1wbGVzP1xubGlncyA8LSBsaWdfZnJvbV9zYW1wKG5vdF9tYXRjaCRzYW1wbGVfaWQpXG5cbmBgYCJ9 -->
+<pre class="r"><code># what are the ligation ids for these samples?
+ligs &lt;- lig_from_samp(not_match$sample_id)
+</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiV2FybmluZyBpbiBmb3IgKGkgaW4gc2VxX2Fsb25nKGFyZ3MpKSB7IDpcbiAgY2xvc2luZyB1bnVzZWQgY29ubmVjdGlvbiA2IChodHRwczovL2dpdGh1Yi5jb20vcGluc2t5bGFiL2Nsb3duZmlzaHIvcmF3L21hc3Rlci9SL2xhYi1kYXRhLWZ1bnMuUilcbiJ9 -->
+<pre><code>Warning in for (i in seq_along(args)) { :
+  closing unused connection 6 (https://github.com/pinskylab/clownfishr/raw/master/R/lab-data-funs.R)</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>APCL15_375244 had 914 typed loci and APCL17_469 had 1000 typed loci.</p>
+<p>675 matched and 234 did not match, 26% mismatch proportion.</p>
+<p>What was the mismatch proportion with other fish?</p>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<p>For APCL15_375244, APCL17_469 is the closest match and vice versa.</p>
+</div>
+<div id="results" class="section level1">
+<h1>Results:</h1>
+<p>APCL15_375244 ligation_id L2616 and APCL17_469 ligation_id L4938 are tag recaptures but do not return as genotype matches. L2616 had 914 typed loci and L4938 had 1000 typed loci. 675 matched and 234 did not match, 26% mismatch proportion. When compared to all other fish, no fish had a lower mismatch proportion with these fish than this pair. MRS feels confident that these are the same fish, but the results are not high enough quality to officially give them them same gen_id.</p>
 <!-- rnb-text-end -->
 </div>
 
-<div id="rmd-source-code">LS0tCnRpdGxlOiAiSW52ZXN0aWdhdGUgZmlzaC1vYnMiCm91dHB1dDogaHRtbF9ub3RlYm9vawotLS0KSW52ZXN0aWdhdGUgdGhlIGZpc2ggdGhhdCB3ZXJlIHRhZyByZWNhcHR1cmVzIGJ1dCBub3QgZ2VuZXRpYyByZWNhcHR1cmVzIGFuZCBleHBsYWluIHRoYXQgCi0gdGhlIHNjYW5uZXIgd2FzIGRvdWJsZSBjaGVja2VkIHRvIG1ha2Ugc3VyZSB0aGUgdGFnLWlkIHdhcyBub3QgYSB0eXBlLW8sIAotIHRoZSBjZXJ2dXMgY29tcGFyaXNvbiB3YXMgY2hlY2tlZCB0byBtYWtlIHN1cmUgdGhleSB3ZXJlIG5vdCByZWNhcHR1cmVzIHRoYXQgdGhlIGdlbl9pZCBjb2RlIHNvbWVob3cgbWlzc2VkLCAKLSBhbmQgbWF5YmUgZXZlbiByZXBvcnQgd2h5IGl0IHdhcyBkZWNpZGVkIHRoYXQgdGhleSB3ZXJlIG5vdCBhIHJlY2FwdHVyZSB3aGVuIGxvb2tpbmcgYXQgdGhlIGNlcnZ1cyBjb21wYXJpc29uLgoKYGBge3Igc2V0dXB9CiMgbG9hZCBsaWJyYXJpZXMKbGlicmFyeSh0aWR5dmVyc2UpCgojIGxvYWQgZnVuY3Rpb25zCnNvdXJjZSgifi9kYi1jb25uZWN0aW9ucy5SIikKCiMgY29ubmVjdCB0byBkYgpsZXl0ZSA8LSByZWFkX2RiKCJMZXl0ZSIpCgojIGxvYWQgZGF0YQpmaXNoX29icyA8LSByZWFkUkRTKHVybCgiaHR0cHM6Ly9naXRodWIuY29tL3BpbnNreWxhYi9nZW5vbWljcy9ibG9iL21hc3Rlci9kYXRhL2Zpc2gtb2JzLnJkcz9yYXc9dHJ1ZSIpKQoKcGl0IDwtIGxleXRlICU+JSB0YmwoInBpdHNjYW4iKSAlPiUgIGNvbGxlY3QoKQoKZmlzaF9kYiA8LSBsZXl0ZSAlPiUgdGJsKCJjbG93bmZpc2giKSAlPiUgIGNvbGxlY3QoKQoKYW5lbV9kYiA8LSBsZXl0ZSAlPiUgdGJsKCJhbmVtb25lcyIpICU+JSBjb2xsZWN0KCkKCmRpdmVfZGIgPC0gbGV5dGUgJT4lIHRibCgiZGl2ZWluZm8iKSAlPiUgIGNvbGxlY3QoKQpgYGAKCiMjIFdoaWNoIGZpc2ggd2VyZSB0YWcgcmVjYXB0dXJlcyBidXQgbm90IGdlbmV0aWMgcmVjYXB0dXJlcz8KYGBge3J9CnRhZ19yZWNhcHMgPC0gZmlzaF9vYnMgJT4lIAogICMgZmlzaCBoYXMgYSB0YWdfaWQKICBmaWx0ZXIoIWlzLm5hKHRhZ19pZCkpICU+JSAKICBncm91cF9ieSh0YWdfaWQpICU+JSAKICAjIHRoYXQgdGFnX2lkIHdhcyBjYXB0dXJlZCBtb3JlIHRoYW4gb25jZQogIGZpbHRlcihuKCkgPiAxKSAlPiUgCiAgIyBhIHRpc3N1ZSBzYW1wbGUgd2FzIGdlbm90eXBlZCBmb3IgdGhlIGNhcHR1cmUgZXZlbnQKICBmaWx0ZXIoIWlzLm5hKGdlbl9pZCkpICU+JSAKICBncm91cF9ieSh0YWdfaWQpICU+JSAKICAjIHRoYXQgdGFnX2lkIHdhcyBnZW5vdHlwZWQgbW9yZSB0aGFuIG9uY2UKICBmaWx0ZXIobigpID4gMSkgJT4lIAogIGFycmFuZ2UodGFnX2lkKSAlPiUgCiAgIyBpbXBvcnQgYW5lbV90YWJsZV9pZCBzbyB0aGF0IGNhbiBjb25uZWN0IHRvIGFuZW1fdGFibGUKICBsZWZ0X2pvaW4oc2VsZWN0KGZpc2hfZGIsIGZpc2hfdGFibGVfaWQsIGFuZW1fdGFibGVfaWQpLCBieSA9ICJmaXNoX3RhYmxlX2lkIikgJT4lIAogICMgaW1wb3J0IGFuZW1fdGFibGUgdG8gY29ubmVjdCB0aW1lIG9mIGNhcHR1cmUKICBsZWZ0X2pvaW4oc2VsZWN0KGFuZW1fZGIsIGFuZW1fdGFibGVfaWQsIGRpdmVfdGFibGVfaWQsIGFuZW1fb2JzX3RpbWUpLCBieSA9ICJhbmVtX3RhYmxlX2lkIikgJT4lIAogICMgaW1wb3J0IGRpdmVpbmZvIHRvIGNvbm5lY3QgdG8gZGF0ZSBvZiBjYXB0dXJlCiAgbGVmdF9qb2luKHNlbGVjdChkaXZlX2RiLCBkaXZlX3RhYmxlX2lkLCBkYXRlLCBzaXRlKSkgJT4lIAogIHNlbGVjdCgtYW5lbV90YWJsZV9pZCwgLWRpdmVfdGFibGVfaWQpCgp0YWdfcmVjYXBzCmBgYAoKIyBjaGVjayBwaXQgc2NhbnMKYGBge3J9CnBpdG9pIDwtIHBpdCAlPiUgCiAgIyBtZXJnZSBjaXR5IGFuZCB0YWcgdG8gY29tcGFyZSB0byBjbG93bmZpc2ggdGFibGUKICBtdXRhdGUodGFnX2lkID0gc3RyX2MoY2l0eSwgdGFnKSkgJT4lIAogICMga2VlcCBvbmx5IHRoZSB0YWdzIGFib3ZlCiAgZmlsdGVyKHRhZ19pZCAlaW4lIHRhZ19yZWNhcHMkdGFnX2lkKSAlPiUgCiAgYXJyYW5nZSh0YWdfaWQpICU+JSAKICByZW5hbWUodGFnX3RpbWUgPSB0aW1lKSAlPiUgCiAgIyBtZXJnZSB3aXRoIHRoZSByZWNhcHMgZm9yIGNvbXBhcmlzb24KICBsZWZ0X2pvaW4odGFnX3JlY2FwcywgYnkgPSBjKCJkYXRlIiwgInRhZ19pZCIpKSAlPiUgCiAgIyBnZXQgcmlkIG9mIHJvd3MgdGhhdCBhcmVuJ3QgaW4gdGhlIGdlbm90eXBlZCByZWNhcHMgbGlzdAogIGZpbHRlcighaXMubmEoZmlzaF90YWJsZV9pZCkpICU+JSAKICBzZWxlY3QodGFnX3RpbWUsIGFuZW1fb2JzX3RpbWUsIGV2ZXJ5dGhpbmcoKSwgLWNpdHksIC10YWcpIAojICU+JSAKIyAgIGZpbHRlcihwaXRfbm90ZXMgPT0gInByZS1kaXZlIHNjYW4iKQoKcGl0b2kKCmBgYAoKCg==</div>
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiSW52ZXN0aWdhdGUgZmlzaC1vYnMiCm91dHB1dDogaHRtbF9ub3RlYm9vawotLS0KSW52ZXN0aWdhdGUgdGhlIGZpc2ggdGhhdCB3ZXJlIHRhZyByZWNhcHR1cmVzIGJ1dCBub3QgZ2VuZXRpYyByZWNhcHR1cmVzIGFuZCBleHBsYWluIHRoYXQgCi0gdGhlIHNjYW5uZXIgd2FzIGRvdWJsZSBjaGVja2VkIHRvIG1ha2Ugc3VyZSB0aGUgdGFnLWlkIHdhcyBub3QgYSB0eXBlLW8sIAotIHRoZSBjZXJ2dXMgY29tcGFyaXNvbiB3YXMgY2hlY2tlZCB0byBtYWtlIHN1cmUgdGhleSB3ZXJlIG5vdCByZWNhcHR1cmVzIHRoYXQgdGhlIGdlbl9pZCBjb2RlIHNvbWVob3cgbWlzc2VkLCAKLSBhbmQgbWF5YmUgZXZlbiByZXBvcnQgd2h5IGl0IHdhcyBkZWNpZGVkIHRoYXQgdGhleSB3ZXJlIG5vdCBhIHJlY2FwdHVyZSB3aGVuIGxvb2tpbmcgYXQgdGhlIGNlcnZ1cyBjb21wYXJpc29uLgoKYGBge3Igc2V0dXAsIG1lc3NhZ2U9RkFMU0V9CiMgbG9hZCBsaWJyYXJpZXMKbGlicmFyeSh0aWR5dmVyc2UpCgojIGxvYWQgZnVuY3Rpb25zCnNvdXJjZSgifi9kYi1jb25uZWN0aW9ucy5SIikKc291cmNlKHVybCgiaHR0cHM6Ly9naXRodWIuY29tL3BpbnNreWxhYi9jbG93bmZpc2hyL3Jhdy9tYXN0ZXIvUi9sYWItZGF0YS1mdW5zLlIiKSkKCiMgY29ubmVjdCB0byBkYgpsZXl0ZSA8LSByZWFkX2RiKCJMZXl0ZSIpCgojIGxvYWQgZGF0YQpmaXNoX29icyA8LSByZWFkUkRTKHVybCgiaHR0cHM6Ly9naXRodWIuY29tL3BpbnNreWxhYi9nZW5vbWljcy9ibG9iL21hc3Rlci9kYXRhL2Zpc2gtb2JzLnJkcz9yYXc9dHJ1ZSIpKQoKcGl0IDwtIGxleXRlICU+JSB0YmwoInBpdHNjYW4iKSAlPiUgIGNvbGxlY3QoKQoKZmlzaF9kYiA8LSBsZXl0ZSAlPiUgdGJsKCJjbG93bmZpc2giKSAlPiUgIGNvbGxlY3QoKQoKYW5lbV9kYiA8LSBsZXl0ZSAlPiUgdGJsKCJhbmVtb25lcyIpICU+JSBjb2xsZWN0KCkKCmRpdmVfZGIgPC0gbGV5dGUgJT4lIHRibCgiZGl2ZWluZm8iKSAlPiUgIGNvbGxlY3QoKQoKaWRfYW5hbHlzaXMgPC0gcmVhZFJEUyh1cmwoImh0dHBzOi8vZ2l0aHViLmNvbS9waW5za3lsYWIvZ2Vub21pY3MvYmxvYi9tYXN0ZXIvZGF0YS9pZGVudGl0eV9iaWctdGFibGUuUkRhdGE/cmF3PXRydWUiKSkKYGBgCgojIyBXaGljaCBmaXNoIHdlcmUgdGFnIHJlY2FwdHVyZXMgYnV0IG5vdCBnZW5ldGljIHJlY2FwdHVyZXM/CmBgYHtyfQp0YWdfcmVjYXBzIDwtIGZpc2hfb2JzICU+JSAKICAjIGZpc2ggaGFzIGEgdGFnX2lkCiAgZmlsdGVyKCFpcy5uYSh0YWdfaWQpKSAlPiUgCiAgZ3JvdXBfYnkodGFnX2lkKSAlPiUgCiAgIyB0aGF0IHRhZ19pZCB3YXMgY2FwdHVyZWQgbW9yZSB0aGFuIG9uY2UKICBmaWx0ZXIobigpID4gMSkgJT4lIAogICMgYSB0aXNzdWUgc2FtcGxlIHdhcyBnZW5vdHlwZWQgZm9yIHRoZSBjYXB0dXJlIGV2ZW50CiAgZmlsdGVyKCFpcy5uYShnZW5faWQpKSAlPiUgCiAgZ3JvdXBfYnkodGFnX2lkKSAlPiUgCiAgIyB0aGF0IHRhZ19pZCB3YXMgZ2Vub3R5cGVkIG1vcmUgdGhhbiBvbmNlCiAgZmlsdGVyKG4oKSA+IDEpICU+JSAKICBhcnJhbmdlKHRhZ19pZCkgJT4lIAogICMgaW1wb3J0IGFuZW1fdGFibGVfaWQgc28gdGhhdCBjYW4gY29ubmVjdCB0byBhbmVtX3RhYmxlCiAgbGVmdF9qb2luKHNlbGVjdChmaXNoX2RiLCBmaXNoX3RhYmxlX2lkLCBhbmVtX3RhYmxlX2lkKSwgYnkgPSAiZmlzaF90YWJsZV9pZCIpICU+JSAKICAjIGltcG9ydCBhbmVtX3RhYmxlIHRvIGNvbm5lY3QgdGltZSBvZiBjYXB0dXJlCiAgbGVmdF9qb2luKHNlbGVjdChhbmVtX2RiLCBhbmVtX3RhYmxlX2lkLCBkaXZlX3RhYmxlX2lkLCBhbmVtX29ic190aW1lKSwgYnkgPSAiYW5lbV90YWJsZV9pZCIpICU+JSAKICAjIGltcG9ydCBkaXZlaW5mbyB0byBjb25uZWN0IHRvIGRhdGUgb2YgY2FwdHVyZQogIGxlZnRfam9pbihzZWxlY3QoZGl2ZV9kYiwgZGl2ZV90YWJsZV9pZCwgZGF0ZSwgc2l0ZSkpICU+JSAKICBzZWxlY3QoLWFuZW1fdGFibGVfaWQsIC1kaXZlX3RhYmxlX2lkKQoKdGFnX3JlY2FwcwpgYGAKCiMgY2hlY2sgcGl0IHNjYW5zCmBgYHtyfQojIHBpdG9pID0gUElUIE9mIEludGVyZXN0IChQSVRPSSkKcGl0b2kgPC0gcGl0ICU+JSAKICAjIG1lcmdlIGNpdHkgYW5kIHRhZyB0byBjb21wYXJlIHRvIGNsb3duZmlzaCB0YWJsZQogIG11dGF0ZSh0YWdfaWQgPSBzdHJfYyhjaXR5LCB0YWcpKSAlPiUgCiAgIyBrZWVwIG9ubHkgdGhlIHRhZ3MgYWJvdmUKICBmaWx0ZXIodGFnX2lkICVpbiUgdGFnX3JlY2FwcyR0YWdfaWQpICU+JSAKICBhcnJhbmdlKHRhZ19pZCkgJT4lIAogIHJlbmFtZSh0YWdfdGltZSA9IHRpbWUpICU+JSAKICAjIG1lcmdlIHdpdGggdGhlIHJlY2FwcyBmb3IgY29tcGFyaXNvbgogIGxlZnRfam9pbih0YWdfcmVjYXBzLCBieSA9IGMoImRhdGUiLCAidGFnX2lkIikpICU+JSAKICAjIGdldCByaWQgb2Ygcm93cyB0aGF0IGFyZW4ndCBpbiB0aGUgZ2Vub3R5cGVkIHJlY2FwcyBsaXN0CiAgZmlsdGVyKCFpcy5uYShmaXNoX3RhYmxlX2lkKSkgJT4lIAogIHNlbGVjdCh0YWdfdGltZSwgYW5lbV9vYnNfdGltZSwgZXZlcnl0aGluZygpLCAtY2l0eSwgLXRhZykgCiMgJT4lIAojICAgZmlsdGVyKHBpdF9ub3RlcyA9PSAicHJlLWRpdmUgc2NhbiIpCgpwaXRvaQpgYGAKCgojIENoZWNrIGlkZW50aXR5IGFuYWx5c2lzIHRvIHNlZSBpZiB0aGVzZSBmaXNoIG1hdGNoZWQgdG8gb3RoZXIgZmlzaApgYGB7cn0KIyBpZG9pID0gSURzIE9mIEludGVyZXN0IChJRE9JKQppZG9pIDwtIGlkX2FuYWx5c2lzICU+JSAKICBmaWx0ZXIoZmlyc3Rfc2FtcGxlX2lkICVpbiUgcGl0b2kkc2FtcGxlX2lkIHwgc2Vjb25kX3NhbXBsZV9pZCAlaW4lIHBpdG9pJHNhbXBsZV9pZCkgJT4lIAogIHNlbGVjdChmaXJzdF9zYW1wbGVfaWQsIHNlY29uZF9zYW1wbGVfaWQpCgppZG9pCgpwaXRvaV9pZCA8LSBwaXRvaSAlPiUgCiAgZmlsdGVyKHNhbXBsZV9pZCAlaW4lIGlkX2FuYWx5c2lzJGZpcnN0X3NhbXBsZV9pZCB8IAogICAgICAgICAgIHNhbXBsZV9pZCAlaW4lIGlkX2FuYWx5c2lzJHNlY29uZF9zYW1wbGVfaWQpCmBgYAojIFRoZXNlIGZpc2ggaGF2ZSBtYXRjaGluZyBnZW5vdHlwZXMKYnV0IGZvciBzb21lIHJlYXNvbiBkb2Vzbid0IGhhdmUgdGhlIHNhbWUgZ2VuX2lkLCBuZWVkIHRvIHJldmlzaXQgMDZfaWRlbnRpdHktcHJvdG9jb2wuUm1kIGFuZCBmaWd1cmUgb3V0IHdoeSB0aGlzIGhhc24ndCBhc3NpZ25lZCBwcm9wZXJseS4gIAoKMS4gQVBDTDE1XzM3MzI3MCBtYXRjaGVzIEFQQ0wxNl8yOTIgCjIuIEFQQ0wxNV8zNzE0NjMgbWF0Y2hlcyBBUENMMTZfMjk3ICAKMy4gQVBDTDE1XzM5OTU3MSBtYXRjaGVzIEFQQ0wxNl81MTYgIAo0LiBBUENMMTZfMjc5IG1hdGNoZXMgQVBDTDE1XzM1NTcxNSBhbmQgQVBDTDE3XzIwOAo1LiBBUENMMTVfMzc1NzYxIG1hdGNoZXMgQVBDTDE2XzI5MAoKIyBXaGljaCBzYW1wbGVzIGRvbid0IGhhdmUgbWF0Y2hpbmcgZ2Vub3R5cGVzPwpgYGB7cn0Kbm90X21hdGNoIDwtIHBpdG9pICU+JSAKICBmaWx0ZXIoIShzYW1wbGVfaWQgJWluJSBpZF9hbmFseXNpcyRmaXJzdF9zYW1wbGVfaWQgfCAKICAgICAgICAgICBzYW1wbGVfaWQgJWluJSBpZF9hbmFseXNpcyRzZWNvbmRfc2FtcGxlX2lkKSkKYGBgCgpBUENMMTdfNDY5IGFuZCBBUENMMTVfMzc1MjQ0IGRvbid0IHNob3cgdXAgaW4gdGhlIGlkX2FuYWx5c2lzIGF0IGFsbC4KCkNoZWNrIG91dCBhbGwgY29tcGFyaXNvbnMgYW5kIHNlZSB3aGF0IGhhcHBlbmVkLgpgYGB7cn0KIyB3aGF0IGFyZSB0aGUgbGlnYXRpb24gaWRzIGZvciB0aGVzZSBzYW1wbGVzPwpsaWdzIDwtIGxpZ19mcm9tX3NhbXAobm90X21hdGNoJHNhbXBsZV9pZCkgJT4lIAogIGZpbHRlcighaXMubmEobGlnYXRpb25faWQpKQoKYmlnIDwtIHJlYWRSRFModXJsKCJodHRwczovL2dpdGh1Yi5jb20vcGluc2t5bGFiL2dlbm9taWNzL2Jsb2IvbWFzdGVyL2RhdGEvYWxsLWlkZW50aXR5LWNvbXBhcmlzaW9ucy5SRGF0YT9yYXc9dHJ1ZSIpKQoKb3VyXzJfZmlzaCA8LSBiaWcgJT4lIAogIGZpbHRlcihmaXJzdF9pZCAlaW4lIGxpZ3MkbGlnYXRpb25faWQgJiBzZWNvbmRfaWQgJWluJSBsaWdzJGxpZ2F0aW9uX2lkKQpgYGAKQVBDTDE1XzM3NTI0NCBoYWQgOTE0IHR5cGVkIGxvY2kgYW5kIApBUENMMTdfNDY5IGhhZCAxMDAwIHR5cGVkIGxvY2kuCgo2NzUgbWF0Y2hlZCBhbmQgMjM0IGRpZCBub3QgbWF0Y2gsIDI2JSBtaXNtYXRjaCBwcm9wb3J0aW9uLgoKV2hhdCB3YXMgdGhlIG1pc21hdGNoIHByb3BvcnRpb24gd2l0aCBvdGhlciBmaXNoPwpgYGB7cn0KQVBDTDE1XzM3NTI0NF9maXJzdCA8LSBiaWcgJT4lIAogIGZpbHRlcihmaXJzdF9pZCA9PSAiTDI2MTYiKSAlPiUgCiAgYXJyYW5nZShtaXNtYXRjaF9wcm9wKQoKQVBDTDE1XzM3NTI0NF9zZWNvbmQgPC0gYmlnICU+JSAKICBmaWx0ZXIoc2Vjb25kX2lkID09ICJMMjYxNiIpICU+JSAKICBhcnJhbmdlKG1pc21hdGNoX3Byb3ApCgpBUENMMTdfNDY5X2ZpcnN0IDwtIGJpZyAlPiUgCiAgZmlsdGVyKGZpcnN0X2lkID09ICJMNDkzOCIpICU+JSAKICBhcnJhbmdlKG1pc21hdGNoX3Byb3ApCgpBUENMMTdfNDY5X3NlY29uZCA8LSBiaWcgJT4lIAogIGZpbHRlcihzZWNvbmRfaWQgPT0gIkw0OTM4IikgJT4lIAogIGFycmFuZ2UobWlzbWF0Y2hfcHJvcCkKYGBgCkZvciBBUENMMTVfMzc1MjQ0LCBBUENMMTdfNDY5IGlzIHRoZSBjbG9zZXN0IG1hdGNoIGFuZCB2aWNlIHZlcnNhLgoKIyBSZXN1bHRzOgpBUENMMTVfMzc1MjQ0IGxpZ2F0aW9uX2lkIEwyNjE2IGFuZCBBUENMMTdfNDY5IGxpZ2F0aW9uX2lkIEw0OTM4IGFyZSB0YWcgcmVjYXB0dXJlcyBidXQgZG8gbm90IHJldHVybiBhcyBnZW5vdHlwZSBtYXRjaGVzLiAgTDI2MTYgaGFkIDkxNCB0eXBlZCBsb2NpIGFuZCBMNDkzOCBoYWQgMTAwMCB0eXBlZCBsb2NpLiA2NzUgbWF0Y2hlZCBhbmQgMjM0IGRpZCBub3QgbWF0Y2gsIDI2JSBtaXNtYXRjaCBwcm9wb3J0aW9uLiBXaGVuIGNvbXBhcmVkIHRvIGFsbCBvdGhlciBmaXNoLCBubyBmaXNoIGhhZCBhIGxvd2VyIG1pc21hdGNoIHByb3BvcnRpb24gd2l0aCB0aGVzZSBmaXNoIHRoYW4gdGhpcyBwYWlyLiAgTVJTIGZlZWxzIGNvbmZpZGVudCB0aGF0IHRoZXNlIGFyZSB0aGUgc2FtZSBmaXNoLCBidXQgdGhlIHJlc3VsdHMgYXJlIG5vdCBoaWdoIGVub3VnaCBxdWFsaXR5IHRvIG9mZmljaWFsbHkgZ2l2ZSB0aGVtIHRoZW0gc2FtZSBnZW5faWQuCg==</div>
 
 
 

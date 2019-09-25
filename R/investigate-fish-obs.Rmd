@@ -7,12 +7,13 @@ Investigate the fish that were tag recaptures but not genetic recaptures and exp
 - the cervus comparison was checked to make sure they were not recaptures that the gen_id code somehow missed, 
 - and maybe even report why it was decided that they were not a recapture when looking at the cervus comparison.
 
-```{r setup}
+```{r setup, message=FALSE}
 # load libraries
 library(tidyverse)
 
 # load functions
 source("~/db-connections.R")
+source(url("https://github.com/pinskylab/clownfishr/raw/master/R/lab-data-funs.R"))
 
 # connect to db
 leyte <- read_db("Leyte")
@@ -27,6 +28,8 @@ fish_db <- leyte %>% tbl("clownfish") %>%  collect()
 anem_db <- leyte %>% tbl("anemones") %>% collect()
 
 dive_db <- leyte %>% tbl("diveinfo") %>%  collect()
+
+id_analysis <- readRDS(url("https://github.com/pinskylab/genomics/blob/master/data/identity_big-table.RData?raw=true"))
 ```
 
 ## Which fish were tag recaptures but not genetic recaptures?
@@ -56,6 +59,7 @@ tag_recaps
 
 # check pit scans
 ```{r}
+# pitoi = PIT Of Interest (PITOI)
 pitoi <- pit %>% 
   # merge city and tag to compare to clownfish table
   mutate(tag_id = str_c(city, tag)) %>% 
@@ -72,7 +76,75 @@ pitoi <- pit %>%
 #   filter(pit_notes == "pre-dive scan")
 
 pitoi
-
 ```
 
 
+# Check identity analysis to see if these fish matched to other fish
+```{r}
+# idoi = IDs Of Interest (IDOI)
+idoi <- id_analysis %>% 
+  filter(first_sample_id %in% pitoi$sample_id | second_sample_id %in% pitoi$sample_id) %>% 
+  select(first_sample_id, second_sample_id)
+
+idoi
+
+pitoi_id <- pitoi %>% 
+  filter(sample_id %in% id_analysis$first_sample_id | 
+           sample_id %in% id_analysis$second_sample_id)
+```
+# These fish have matching genotypes
+but for some reason doesn't have the same gen_id, need to revisit 06_identity-protocol.Rmd and figure out why this hasn't assigned properly.  
+
+1. APCL15_373270 matches APCL16_292 
+2. APCL15_371463 matches APCL16_297  
+3. APCL15_399571 matches APCL16_516  
+4. APCL16_279 matches APCL15_355715 and APCL17_208
+5. APCL15_375761 matches APCL16_290
+
+# Which samples don't have matching genotypes?
+```{r}
+not_match <- pitoi %>% 
+  filter(!(sample_id %in% id_analysis$first_sample_id | 
+           sample_id %in% id_analysis$second_sample_id))
+```
+
+APCL17_469 and APCL15_375244 don't show up in the id_analysis at all.
+
+Check out all comparisons and see what happened.
+```{r}
+# what are the ligation ids for these samples?
+ligs <- lig_from_samp(not_match$sample_id) %>% 
+  filter(!is.na(ligation_id))
+
+big <- readRDS(url("https://github.com/pinskylab/genomics/blob/master/data/all-identity-comparisions.RData?raw=true"))
+
+our_2_fish <- big %>% 
+  filter(first_id %in% ligs$ligation_id & second_id %in% ligs$ligation_id)
+```
+APCL15_375244 had 914 typed loci and 
+APCL17_469 had 1000 typed loci.
+
+675 matched and 234 did not match, 26% mismatch proportion.
+
+What was the mismatch proportion with other fish?
+```{r}
+APCL15_375244_first <- big %>% 
+  filter(first_id == "L2616") %>% 
+  arrange(mismatch_prop)
+
+APCL15_375244_second <- big %>% 
+  filter(second_id == "L2616") %>% 
+  arrange(mismatch_prop)
+
+APCL17_469_first <- big %>% 
+  filter(first_id == "L4938") %>% 
+  arrange(mismatch_prop)
+
+APCL17_469_second <- big %>% 
+  filter(second_id == "L4938") %>% 
+  arrange(mismatch_prop)
+```
+For APCL15_375244, APCL17_469 is the closest match and vice versa.
+
+# Results:
+APCL15_375244 ligation_id L2616 and APCL17_469 ligation_id L4938 are tag recaptures but do not return as genotype matches.  L2616 had 914 typed loci and L4938 had 1000 typed loci. 675 matched and 234 did not match, 26% mismatch proportion. When compared to all other fish, no fish had a lower mismatch proportion with these fish than this pair.  MRS feels confident that these are the same fish, but the results are not high enough quality to officially give them them same gen_id.
