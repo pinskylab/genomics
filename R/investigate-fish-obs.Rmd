@@ -2,4 +2,77 @@
 title: "Investigate fish-obs"
 output: html_notebook
 ---
-Investigate the fish that were tag recaptures but not genetic recaptures and explain that the scanner was double checked to make sure the tag-id was not a type-o, the cervus comparison was checked to make sure they were not recaptures that the gen_id code somehow missed, and maybe even report why it was decided that they were not a recapture when looking at the cervus comparison.
+Investigate the fish that were tag recaptures but not genetic recaptures and explain that 
+- the scanner was double checked to make sure the tag-id was not a type-o, 
+- the cervus comparison was checked to make sure they were not recaptures that the gen_id code somehow missed, 
+- and maybe even report why it was decided that they were not a recapture when looking at the cervus comparison.
+
+```{r setup}
+# load libraries
+library(tidyverse)
+
+# load functions
+source("~/db-connections.R")
+
+# connect to db
+leyte <- read_db("Leyte")
+
+# load data
+fish_obs <- readRDS(url("https://github.com/pinskylab/genomics/blob/master/data/fish-obs.rds?raw=true"))
+
+pit <- leyte %>% tbl("pitscan") %>%  collect()
+
+fish_db <- leyte %>% tbl("clownfish") %>%  collect()
+
+anem_db <- leyte %>% tbl("anemones") %>% collect()
+
+dive_db <- leyte %>% tbl("diveinfo") %>%  collect()
+```
+
+## Which fish were tag recaptures but not genetic recaptures?
+```{r}
+tag_recaps <- fish_obs %>% 
+  # fish has a tag_id
+  filter(!is.na(tag_id)) %>% 
+  group_by(tag_id) %>% 
+  # that tag_id was captured more than once
+  filter(n() > 1) %>% 
+  # a tissue sample was genotyped for the capture event
+  filter(!is.na(gen_id)) %>% 
+  group_by(tag_id) %>% 
+  # that tag_id was genotyped more than once
+  filter(n() > 1) %>% 
+  arrange(tag_id) %>% 
+  # import anem_table_id so that can connect to anem_table
+  left_join(select(fish_db, fish_table_id, anem_table_id), by = "fish_table_id") %>% 
+  # import anem_table to connect time of capture
+  left_join(select(anem_db, anem_table_id, dive_table_id, anem_obs_time), by = "anem_table_id") %>% 
+  # import diveinfo to connect to date of capture
+  left_join(select(dive_db, dive_table_id, date, site)) %>% 
+  select(-anem_table_id, -dive_table_id)
+
+tag_recaps
+```
+
+# check pit scans
+```{r}
+pitoi <- pit %>% 
+  # merge city and tag to compare to clownfish table
+  mutate(tag_id = str_c(city, tag)) %>% 
+  # keep only the tags above
+  filter(tag_id %in% tag_recaps$tag_id) %>% 
+  arrange(tag_id) %>% 
+  rename(tag_time = time) %>% 
+  # merge with the recaps for comparison
+  left_join(tag_recaps, by = c("date", "tag_id")) %>% 
+  # get rid of rows that aren't in the genotyped recaps list
+  filter(!is.na(fish_table_id)) %>% 
+  select(tag_time, anem_obs_time, everything(), -city, -tag) 
+# %>% 
+#   filter(pit_notes == "pre-dive scan")
+
+pitoi
+
+```
+
+
