@@ -14,7 +14,10 @@ Ran dDocent, entered manually on the command line, started on 9/16/2019
 Finished on Sunday, 9/22/2019.
 
 Did it include the files from known_issues?
-```{r}
-known_issues <- readRDS(here::here("data", "known_issues"))
+```{bash}
+
+cp /data/apcl/all_samples/20190916/namelist ./
+
+
 ```
 
