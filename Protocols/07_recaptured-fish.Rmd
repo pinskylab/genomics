@@ -12,7 +12,7 @@ This notebook finds fish that were tag recaptured and genetically recaptured and
 # load libraries
 library(tidyverse)
 library(here)
-library(clownfishr)
+# library(clownfishr)
 # library(tidylog)
  
 # load functions
@@ -101,9 +101,16 @@ fish_notes <- leyte %>% tbl("clownfish") %>% collect() %>%
   select(fish_table_id, fish_notes)
 
 noted_fish_indv <- new_fish_indv %>% 
-  left_join(fish_notes, by = "fish_table_id") %>% 
-  rename(obs_notes = fish_notes)
-  
+  left_join(fish_notes, by = "fish_table_id") 
+
+# do notes columns match?
+fix_notes <- noted_fish_indv %>% 
+  filter(fish_notes != obs_notes)
+
+if(nrow(fix_notes == 0)){
+  noted_fish_indv <- noted_fish_indv %>% 
+    select(-fish_notes)
+}
 
 save_loc <- here::here("data", "fish-obs.rds")
 saveRDS(noted_fish_indv, file = save_loc)
