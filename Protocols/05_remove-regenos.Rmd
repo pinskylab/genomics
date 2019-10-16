@@ -97,8 +97,10 @@ largedf <- left_join(genedf, samples, by = "ligation_id") %>%
 ```{r}
 # create
 fish_gens <- get_fish() %>% 
+  # all fish that have been successfully genotyped
   filter(sample_id %in% largedf$sample_id) %>% 
   select(fish_table_id, sample_id, tag_id) %>% 
+  # create gen_id column
   mutate(gen_id = 1:nrow(.))
 
 fish_tags <- get_fish() %>% 
@@ -112,7 +114,7 @@ fish_tags <- get_fish() %>%
 
 fish_obs <- rbind(fish_gens, fish_tags)
 
-# test - are there duplicate rows of fish_table_ids
+# test - are there duplicate rows of fish_table_ids? - should return 0
 fish_obs %>% 
   group_by(fish_table_id) %>% 
   filter(n() > 1)
