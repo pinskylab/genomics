@@ -14,7 +14,7 @@ library(tidyverse)
 library(lubridate)
 library(here)
 library(RMySQL)
-library(clownfishr)
+# library(clownfishr)
 library(janitor)
 library(geosphere)
 
@@ -70,7 +70,7 @@ The no regenos genepop should be stored on github and downloaded onto the window
 ### Import the data into R
  
 ```{r message=FALSE}
-idcsv_raw <- read_csv("https://github.com/pinskylab/genomics/raw/master/data/seq03-33_identity/33-03_seq_identity_ID.csv", col_types = cols(
+idcsv_raw <- read_csv("https://github.com/pinskylab/genomics/raw/master/data/seq03-31_identity/31-03_seq_identity_ID.csv", col_types = cols(
   `First ID` = col_character(),
   `Loci typed` = col_integer(),
   `Second ID` = col_character(),
@@ -225,11 +225,12 @@ rm(lat, second)
 ```
 
 # Write big table into a file 
-```{r}
-# saveRDS(idcsv, here::here("data", "identity_big-table.RData"))
-# write_csv(idcsv, here::here("data", "identity_big-table.csv"))
+```{r eval=FALSE}
+saveRDS(idcsv, here::here("data", "identity_big-table.rds"))
+saveRDS(idcsv, here::here("data", "identity_big-table.RData"))
+write_csv(idcsv, here::here("data", "identity_big-table.csv"))
 
-# idcsv <- readRDS(here::here("data", "identity_big-table.RData"))
+idcsv <- readRDS(here::here("data", "identity_big-table.rds"))
 ```
 
 # Does the first gen_id match the second gen id?
@@ -416,7 +417,7 @@ gens_to_keep <- gens_to_keep %>%
 }
 
 
-# all of the sample_ids in recap_gen_ids are  in gens to keep
+# all of the sample_ids in recap_gen_ids are  in gens to keep test should return 0 rows
 # test <- anti_join(recap_gen_ids, gens_to_keep, by = "sample_id")
 
 
@@ -424,16 +425,17 @@ gens_to_keep <- gens_to_keep %>%
 num_gens <- gens_to_keep %>%
   group_by(new_gen_id) %>%
   count()
+(max(num_gens$n)) # should be a reasonable number like 5 (not 32!)
 
 # change the gen_ids in the fish_obs file to reflect the recaptures
 fish_obs <- read_csv("https://github.com/pinskylab/genomics/raw/master/data/fish-obs.csv", col_types = cols(
   fish_table_id = col_double(),
   sample_id = col_character(),
   tag_id = col_character(), # because numeric uses scientific notation and loses the end numbers
-  gen_id = col_double(),
-  fish_indiv = col_character() # because numeric uses scientific notation and loses the end numbers
+  gen_id = col_double()
 ))
 
+# no fish_indiv column yet
 
 fish_obs <- left_join(fish_obs, gens_to_keep, by = "sample_id")
 fish_obs <- fish_obs %>% 
