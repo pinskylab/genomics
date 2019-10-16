@@ -442,6 +442,7 @@ fish_obs <- fish_obs %>%
   mutate(gen_id = ifelse(!is.na(new_gen_id) & gen_id != new_gen_id, new_gen_id, gen_id)) %>% 
   select(-new_gen_id)
 
+saveRDS(fish_obs, here::here("data", "fish-obs.rds"))
 saveRDS(fish_obs, here::here("data", "fish-obs.RData"))
 write_csv(fish_obs, here::here("data", "fish-obs.csv"))
 ```
