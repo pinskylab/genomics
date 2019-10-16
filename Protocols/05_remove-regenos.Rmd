@@ -33,7 +33,7 @@ leyte <- read_db("Leyte")
 lab <- read_db("Laboratory")
 
 # load data
-genedf_raw <- read_genepop(here("data", "seq33_03_baits_only_SNPs.gen"))
+genedf_raw <- read_genepop(here("data", "seq31_03_baits_only_SNPs.gen"))
 
 # pull in the known issues table
 iss <- lab %>% tbl("known_issues") %>% collect()
@@ -46,7 +46,13 @@ iss <- lab %>% tbl("known_issues") %>% collect()
 genedf <- genedf_raw %>% 
   rename(ligation_id = sample) %>% 
   # 2) strip any named samples down to pure ligation number ---- 
-  mutate(ligation_id = str_replace(ligation_id, "APCL_", ""))
+  mutate(ligation_id = str_replace(ligation_id, "APCL_", ""), 
+         # remove any .F from samples
+         ligation_id = str_replace(ligation_id, ".F", ""), 
+         # remove any regenotype named from samples so that they can find their sample_id (same sample id for both regenotypes)
+         ligation_id = str_replace(ligation_id, ".L\\d+", ""), 
+         # one name isn't going on its own
+         ligation_id = str_replace(ligation_id, ".L3352", ""))
 ```
 
 # 2) Remove samples with known issues -------------------------------------
@@ -70,9 +76,9 @@ largedf <- left_join(genedf, samples, by = "ligation_id") %>%
 # tests ------------------------------------------------------------------
 # # make sure all of the Ligation ids have sample ids
 # filter(largedf, is.na(sample_id))
-# # returns 0 rows
+# returns 0 rows
 # nrow(genedf) == nrow(largedf) # should be TRUE
-# # # look for missing names
+# # look for missing names
 # setdiff(genedf$ligation_id, largedf$ligation_id) # should be character(0)
 
 # should return integer(0)
@@ -111,6 +117,7 @@ fish_obs %>%
   group_by(fish_table_id) %>% 
   filter(n() > 1)
 
+saveRDS(fish_obs, here("data", "fish-obs.rds"))
 saveRDS(fish_obs, here("data", "fish-obs.RData"))
 write_csv(fish_obs, here("data", "fish-obs.csv"))
 ```
