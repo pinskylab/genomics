@@ -4,6 +4,8 @@ output:
   github_document: default
   html_notebook: default
 ---
+DO NOT RUN THIS SCRIPT WITHOUT RUNNING 05 AND 06 FIRST.  THIS SCRIPT IS NOT INTENDED TO RUN ON A PRE-EXISTING FISH-OBS FILE THAT CONTAINS A NOTES COLUMN AND A FISH_INDIV COLUMN.
+
 This notebook finds fish that were tag recaptured and genetically recaptured and connects all of the observations of those fish, assigning them an individual id (fish_indiv) so all rows involving one fish can be found.
 
 ```{r setup, include=FALSE}
@@ -29,9 +31,7 @@ fish_obs <- read_csv("https://github.com/pinskylab/genomics/raw/master/data/fish
   fish_table_id = col_double(),
   sample_id = col_character(),
   tag_id = col_character(), # because numeric uses scientific notation and loses the end numbers
-  gen_id = col_double(),
-  fish_indiv = col_character() # because numeric uses scientific notation and loses the end numbers
-))
+  gen_id = col_double()))
 
 # assign a fish_indiv to each fish
 fish_inds <- fish_obs %>% 
@@ -45,6 +45,8 @@ fish_inds <- fish_obs %>%
 # loop to make sure all recaptures of a fish get the same fish_indiv - takes about a minute
 for_processing <- fish_inds
 new_fish_indv <- tibble()
+
+#this takes about 25 seconds
 Sys.time()
 while(nrow(for_processing) >= 1){
   # all rows that belong to this fish_table_id
@@ -89,6 +91,7 @@ while(nrow(for_processing) >= 1){
 }
 
 Sys.time()
+
 # test - are there repeat fish_table_ids - should return 0 rows
 test <- new_fish_indv %>% 
   group_by(fish_table_id) %>% 
@@ -101,19 +104,13 @@ fish_notes <- leyte %>% tbl("clownfish") %>% collect() %>%
   select(fish_table_id, fish_notes)
 
 noted_fish_indv <- new_fish_indv %>% 
-  left_join(fish_notes, by = "fish_table_id") 
+  left_join(fish_notes, by = "fish_table_id") %>% 
+  rename(obs_notes = fish_notes)
 
-# do notes columns match?
-fix_notes <- noted_fish_indv %>% 
-  filter(fish_notes != obs_notes)
 
-if(nrow(fix_notes == 0)){
-  noted_fish_indv <- noted_fish_indv %>% 
-    select(-fish_notes)
-}
 
-save_loc <- here::here("data", "fish-obs.rds")
-saveRDS(noted_fish_indv, file = save_loc)
+
+saveRDS(noted_fish_indv, here::here("data", "fish-obs.rds"))
 saveRDS(noted_fish_indv, here("data", "fish-obs.RData"))
 
 # save Rdata files as csv for easy reading from github
