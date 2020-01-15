@@ -1,36 +1,6 @@
 Processing HiSEQ data
 ================
 
-  - [Prepare the analysis space on the
-    server](#prepare-the-analysis-space-on-the-server)
-      - [Create a directory for the files (mkdir) in the
-        pinsky\_lab/sequencing folder, use the naming scheme
-        type\_of\_sequencer\_year\_month\_day\_SEQ\#\#:
-        hiseq\_2014\_08\_07\_SEQ04](#create-a-directory-for-the-files-mkdir-in-the-pinsky_labsequencing-folder-use-the-naming-scheme-type_of_sequencer_year_month_day_seq-hiseq_2014_08_07_seq04)
-      - [Enter the newly made
-        directory](#enter-the-newly-made-directory)
-      - [Retrieve files from the
-        sequencer](#retrieve-files-from-the-sequencer)
-      - [Update where files are saved on amphiprion in the sequencing
-        table of the sql database, enter data by
-        hand](#update-where-files-are-saved-on-amphiprion-in-the-sequencing-table-of-the-sql-database-enter-data-by-hand)
-      - [Make a working directory](#make-a-working-directory)
-      - [Create an index file in R](#create-an-index-file-in-r)
-      - [Create a names file in R](#create-a-names-file-in-r)
-      - [Copy barcodes file in your logs directory from the logs
-        directory of the last sequencing run only if you used the same
-        barcodes, don’t include barcodes you didn’t
-        use.](#copy-barcodes-file-in-your-logs-directory-from-the-logs-directory-of-the-last-sequencing-run-only-if-you-used-the-same-barcodes-dont-include-barcodes-you-didnt-use.)
-  - [Barcode splitter](#barcode-splitter)
-  - [Process radtags](#process-radtags)
-  - [Rename the output of
-    process\_radtags](#rename-the-output-of-process_radtags)
-  - [Once all of these steps are complete, move to the
-    callSNPs\_template
-    file.](#once-all-of-these-steps-are-complete-move-to-the-callsnps_template-file.)
-      - [Footnote: Details of process\_radtags
-        options](#footnote-details-of-process_radtags-options)
-
 This method is designed to import and process hiseq output through
 calling SNPs.
 
@@ -83,8 +53,8 @@ cd /local/shared/pinsky_lab/sequencing/hiseq_2016_10_25_SEQ17
 
 #### Retrieve files from the sequencer
 
-  - Princeton now emails a link to the data (you must sign in with
-    credentials)
+  - Princeton now emails a link to the data at htseq.princeton.edu (you
+    must sign in with credentials)
     
     1.  Click the link
     

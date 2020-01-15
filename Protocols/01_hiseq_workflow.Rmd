@@ -46,7 +46,7 @@ cd /local/shared/pinsky_lab/sequencing/hiseq_2016_10_25_SEQ17
 ```
 #### Retrieve files from the sequencer  
 
-  - Princeton now emails a link to the data (you must sign in with credentials)  
+  - Princeton now emails a link to the data at htseq.princeton.edu (you must sign in with credentials)  
   
     
     i. Click the link  
