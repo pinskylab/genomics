@@ -17,7 +17,7 @@ consider going to an OARC training session
 Amarel system and how to plan for and submit jobs. Also a basic
 familiarity with the command line and bash scripting are very helpful.
 If you need to first brush up on the command line, there are many good
-tutorials online, including Codecademy.
+tutorials online, including Codecademy.  
 
 ## **Overview of Amarel & slurm**:
 
@@ -160,6 +160,8 @@ If you request email notification in your sbatch script then you'll also get an 
 	#SBATCH --mail-type=ALL 
 
 You can control how preempted jobs are dealt with when you set the parameters for the slurm scheduler. My example run_fsc.sh script told slurm to not requeue preempted jobs, so any jobs that do get preempted are canceled.
+
+Preemption can be avoided because you are eligible to belong to more than one owner group.  Once you have a general amarel account, you can be added to the Ecology owned node, the Pinsky owned node, and the Jensen owned node.  Belonging to these nodes allows you to use them in your slurm.  Belonging to these groups adds you a group, for example Malin's group is "g_mlp195" (g for group).  Once you belong to his group, you can access his partition: p_mlp195 (p for partition), and storage: f_mlp195 (f for files).  You can call the other group partitions by using this same format.
 
 ### **Setting up a keyless ssh connection**:
 
