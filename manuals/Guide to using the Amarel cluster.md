@@ -26,7 +26,7 @@ called slurm to manage and schedule jobs. To submit jobs to the slurm
 scheduler, you’ll use the sbatch and srun commands depending on the
 specifications of your job. It is a good idea to skim through the slurm,
 sbatch and srun man pages. The Amarel User Guide
-(<http://rci.rutgers.edu/~gc563/amarel/>) also has very useful
+(<https://rutgers-oarc.github.io/training/guides/Cluster_User_Guide/>) also has very useful
 information on how to connect to Amarel, install software and run jobs.
 Finally, the OARC staff are very helpful and can assist with any issues
 (<help@oarc.rutgers.edu>). I highly recommend testing small versions of
