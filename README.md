@@ -30,7 +30,7 @@ Our reference.fasta file was assembled by Jon Puritz using dDocent and
 
 ### Navigation
 
-#### Protocols 
+#### [Protocols](Protocols)
 Step by step guides to processing sequencing data.  Make a copy of these files and update that copy with the specifics you encountered during your analysis to serve as a lab notebook.  The protocols listed in the steps above. If vieiwng on github, the .md files are the easiest way to view these files. If you want to run the scripts, open the .Rmd files through RStudio or render them with regular R by typing into the R command line:
 
 ``` r
@@ -59,15 +59,20 @@ Manufacturer manuals and guides.
 ## [plots](plots)
 
 [all-mismatch-prop.png](plots/all-mismatch-prop.png)
-- graph of the mismatch proportions of all comparisons of identity analysis.
+- graph of the mismatch proportions of all comparisons of identity analysis.  
+
 [plot-clownfish-at-size-change-M-to-F.md](plots/plot-clownfish-at-size-change-from-M-to-F.md)
 - graphic output version of the code to produce plots.  
+
 [plot-clownfish-at-size-change-M-to-F.Rmd](plots/plot-clownfish-at-size-change-from-M-to-F.Rmd)
 - notebook to produce size distrubtion plots.  
+
 [plot-clownfish-at-size-change-M-to-F\_figures](plots/plot-clownfish-at-size-change-from-M-to-F_files/figure-markdown_github)
 - folder holding png images of the size distribution plots.  
+
 [recap-mismatch-prop.png](plots/recap-mismatch-prop.png)
-- graph of the mismatch proportions of potentially recaptured fish.
+- graph of the mismatch proportions of potentially recaptured fish.  
+
 [where\_caught.pdf](plots/where_caught.pdf)
 - a pdf of a plot of the number of fish captured on the same anemone or
 different anemones from the original capture.
