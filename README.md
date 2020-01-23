@@ -30,18 +30,33 @@ Our reference.fasta file was assembled by Jon Puritz using dDocent and
 
 ### Navigation
 
-#### Pubs
+#### Protocols 
+Step by step guides to processing sequencing data.  Make a copy of these files and update that copy with the specifics you encountered during your analysis to serve as a lab notebook.  The protocols listed in the steps above. If vieiwng on github, the .md files are the easiest way to view these files. If you want to run the scripts, open the .Rmd files through RStudio or render them with regular R by typing into the R command line:
 
-A manuscript in progress by Michelle.
+``` r
+rmarkdown::render("file_name.Rmd")
+```
 
-#### Data
+#### R
+Old scripts that are no longer used but may be helpful for problem solving.
 
-Data files required to run the scripts. **Quick note**: Due to a type-o
-that was propogated through data file names, the data set is called
-seq03-33 but actually only contains SEQ03 through SEQ31, and only the
-sequencing runs that contain APCL data.
+#### data
 
-## Plots
+Data files required to run the scripts. 
+
+#### filtering
+
+Scripts for filtering vcf files.
+
+#### lab-notebooks
+
+Records of how sample runs were processed. A copy of the protocol step was saved into this folder and renamed to represent the samples that were being worked on. These are best viewed as html files.
+
+#### manuals
+
+Manufacturer manuals and guides.
+
+## plots
 
 [plot-clownfish-at-size-change-M-to-F.md](https://github.com/pinskylab/genomics/blob/master/plots/plot-clownfish-at-size-change-from-M-to-F.md)
 - graphic output version of the code to produce plots.  
@@ -53,25 +68,4 @@ sequencing runs that contain APCL data.
 - a pdf of a plot of the number of fish captured on the same anemone or
 different anemones from the original capture.
 
-## Protocols
 
-The protocols listed in the steps above. If vieiwng on github, the .md
-files are the easiest way to view these files. If you want to run the
-scripts, open the .Rmd files through RStudio or render them with regular
-R by typing into the R command line:
-
-``` r
-rmarkdown::render("file_name.Rmd")
-```
-
-## R
-
-Old scripts that are no longer used but may be helpful for problem
-solving.
-
-## lab-notebooks
-
-Records of how sample runs were processed. I save a copy of the protocol
-step into this folder and rename it to represent the samples that are
-being worked on. These are best viewed as html files
-[here](https://pinskylab.github.io/genomics/lab-notebooks)
