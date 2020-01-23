@@ -37,34 +37,38 @@ Step by step guides to processing sequencing data.  Make a copy of these files a
 rmarkdown::render("file_name.Rmd")
 ```
 
-#### R
+#### [R](R)
 Old scripts that are no longer used but may be helpful for problem solving.
 
-#### data
+#### [data](data)
 
 Data files required to run the scripts. 
 
-#### filtering
+#### [filtering](filtering)
 
 Scripts for filtering vcf files.
 
-#### lab-notebooks
+#### [lab-notebooks](lab-notebooks)
 
 Records of how sample runs were processed. A copy of the protocol step was saved into this folder and renamed to represent the samples that were being worked on. These are best viewed as html files.
 
-#### manuals
+#### [manuals](manuals)
 
 Manufacturer manuals and guides.
 
-## plots
+## [plots](plots)
 
-[plot-clownfish-at-size-change-M-to-F.md](https://github.com/pinskylab/genomics/blob/master/plots/plot-clownfish-at-size-change-from-M-to-F.md)
+[all-mismatch-prop.png](plots/all-mismatch-prop.png)
+- graph of the mismatch proportions of all comparisons of identity analysis.
+[plot-clownfish-at-size-change-M-to-F.md](plots/plot-clownfish-at-size-change-from-M-to-F.md)
 - graphic output version of the code to produce plots.  
-[plot-clownfish-at-size-change-M-to-F.Rmd](https://github.com/pinskylab/genomics/blob/master/plots/plot-clownfish-at-size-change-from-M-to-F.Rmd)
+[plot-clownfish-at-size-change-M-to-F.Rmd](plots/plot-clownfish-at-size-change-from-M-to-F.Rmd)
 - notebook to produce size distrubtion plots.  
-[plot-clownfish-at-size-change-M-to-F\_figures](https://github.com/pinskylab/genomics/tree/master/plots/plot-clownfish-at-size-change-from-M-to-F_files/figure-markdown_github)
+[plot-clownfish-at-size-change-M-to-F\_figures](plots/plot-clownfish-at-size-change-from-M-to-F_files/figure-markdown_github)
 - folder holding png images of the size distribution plots.  
-[where\_caught.pdf](https://github.com/pinskylab/genomics/blob/master/plots/where_caught.pdf)
+[recap-mismatch-prop.png](plots/recap-mismatch-prop.png)
+- graph of the mismatch proportions of potentially recaptured fish.
+[where\_caught.pdf](plots/where_caught.pdf)
 - a pdf of a plot of the number of fish captured on the same anemone or
 different anemones from the original capture.
 
