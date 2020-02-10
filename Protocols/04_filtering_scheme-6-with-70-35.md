@@ -17,27 +17,9 @@ SNP FILTERING
             effective](#replot-to-make-sure-the-changes-were-effective)
           - [Quality/depth ratio](#qualitydepth-ratio)
           - [ratio mapping quality](#ratio-mapping-quality)
-  - [`{r eval=FALSE} # # temp <- read.table(here("data",
-    "filtering_step3ABQDPTH.MQM"), col.names = "MQM") # # mapqual <-
-    read.table(here("data", "filtering_step3ABQDPTH.MQMR"), col.names =
-    "MQMR") # # mapqual <- bind_cols(mapqual, temp) %>% # mutate(ratio =
-    MQM/MQMR) # # filter <- mapqual %>% # filter(ratio < 0.25 | ratio
-    > 1.75) # # ggplot(mapqual, aes(x = MQM, y = MQMR)) + #
-    geom_point(shape = 1) + # geom_abline(intercept = 0, slope = 1, size
-    = 1, color = "red", linetype = "dashed") + # geom_abline(intercept
-    = 0, slope = 4, size = 1, color = "darkblue", linetype = "dashed") +
-    # geom_abline(intercept = 0, slope = 0.571, size = 1, color =
-    "darkblue", linetype = "dashed") + # geom_point(data = filter, aes(x
-    = MQM, y = MQMR), shape = 1, color = "red") + #
-    scale_x_continuous(limits = c(0, 65)) + # scale_y_continuous(limits
-    = c(0, 65)) + # labs(x = "mean mapping quality alt allele ", y =
-    "mean mapping quality ref allele ") + # theme_standard #
-    #`](#r-evalfalse-temp---read.tableheredata-filtering_step3abqdpth.mqm-col.names-mqm-mapqual---read.tableheredata-filtering_step3abqdpth.mqmr-col.names-mqmr-mapqual---bind_colsmapqual-temp-mutateratio-mqmmqmr-filter---mapqual-filterratio-0.25-ratio-1.75-ggplotmapqual-aesx-mqm-y-mqmr-geom_pointshape-1-geom_ablineintercept-0-slope-1-size-1-color-red-linetype-dashed-geom_ablineintercept-0-slope-4-size-1-color-darkblue-linetype-dashed-geom_ablineintercept-0-slope-0.571-size-1-color-darkblue-linetype-dashed-geom_pointdata-filter-aesx-mqm-y-mqmr-shape-1-color-red-scale_x_continuouslimits-c0-65-scale_y_continuouslimits-c0-65-labsx-mean-mapping-quality-alt-allele-y-mean-mapping-quality-ref-allele-theme_standard)
-      - [Maximum depth & Quality](#maximum-depth-quality)
-      - [Plot stats after FIL\_6
-        filters](#plot-stats-after-fil_6-filters)
-      - [Step 4: Filter Missing data
-        loci/indv](#step-4-filter-missing-data-lociindv)
+          - [Maximum depth & Quality](#maximum-depth-quality)
+          - [Plot stats after FIL\_6-filters](#plot-stats-after-fil_6-filters)
+      - [Step 4: Filter Missing data-loci/indv](#step-4-filter-missing-data-loci/indv)
       - [Step 5](#step-5)
           - [Plot stats for filtered data
             set](#plot-stats-for-filtered-data-set)
