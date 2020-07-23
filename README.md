@@ -7,7 +7,7 @@ Genomics in the Pinsky Lab
     [field](https://github.com/pinskylab/field) repository.  
 
   - Sample processing through sequence submission can be found in the
-    [laboratory](https://github.com/pinskylab/pinskylab_methods/tree/master/genomics/laboratory)
+    [laboratory](https://github.com/pinskylab/laboratory)
     repository.  
 
   - Sequence processing through identity analysis (mark recapture) can
